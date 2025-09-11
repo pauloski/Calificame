@@ -2879,18 +2879,37 @@ async function descargarListadoCompleto() {
         /**
          * Descarga la plantilla CSV
          */
-      function descargarPlantillaCSV() {
+  function descargarPlantillaCSV() {
     const headers = [
-        'nombreEstudiante', 'fecha', 'nombreDocente', 'asignatura', 'carrera', 
-        'universidad', 'tituloEvaluacion', 'descripcionEvaluacion', 'lista',
-        'criterio1_nombre', 'criterio1_evaluacion',
-        'criterio2_nombre', 'criterio2_evaluacion',
-        'criterio3_nombre', 'criterio3_evaluacion',
-        'feedbackDocente', 'puntosAdicionales', 'justificacionPuntos'
+        'nombreEstudiante',
+        'fecha',
+        'nombreDocente',
+        'asignatura',
+        'carrera',
+        'universidad',
+        'tituloEvaluacion',
+        'descripcionEvaluacion',
+        'lista',
+        'criterio1_nombre',
+        'criterio1_evaluacion',
+        'criterio2_nombre',
+        'criterio2_evaluacion',
+        'criterio3_nombre',
+        'criterio3_evaluacion',
+        'feedbackDocente',
+        'puntosAdicionales',
+        'puntosAgregar',
+        'justificacionPuntos'
     ];
     
-    const csvContent = headers.join(',') + '\n' + 
-        'Juan Pérez,2024-03-15,María González,Matemáticas,Ingeniería,Universidad ABC,Examen Final,Evaluación básica,Grupo A,Resolución de Problemas,3,Participación en Clase,2,Trabajo en Equipo,3,Excelente desempeño,0.5,Participación sobresaliente';
+    const ejemplos = [
+        // Ejemplo 1: Agregar a lista existente
+        'Juan Pérez,2024-03-15,María González,Matemáticas,Ingeniería,Universidad ABC,Examen Final,Evaluación básica,Grupo A,Resolución de Problemas,3,Participación en Clase,2,Trabajo en Equipo,3,Excelente desempeño,true,0.5,Participación sobresaliente',
+        // Ejemplo 2: Crear nueva lista
+        'Ana García,2024-03-15,María González,Matemáticas,Ingeniería,Universidad ABC,Examen Final,Evaluación básica,Nueva Lista,Resolución de Problemas,3,Participación en Clase,2,Trabajo en Equipo,3,Buen desempeño,false,0,',
+    ].join('\n');
+    
+    const csvContent = headers.join(',') + '\n' + ejemplos;
     
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -2904,6 +2923,8 @@ async function descargarListadoCompleto() {
     
     showToast('Plantilla CSV descargada exitosamente.', 'success');
 }
+
+
 
         /**
          * Procesa el archivo CSV subido
@@ -2970,16 +2991,16 @@ async function descargarListadoCompleto() {
             return reportesGenerados;
         }
 
-        /**
-         * Genera un reporte desde una fila CSV
-         */
-    
+  /**
+ * Genera un reporte desde una fila CSV
+ */
 async function generarReporteDesdeCSV(headers, valores) {
     const datos = {};
     headers.forEach((header, index) => {
         datos[header] = valores[index] || '';
     });
     
+    // Validar campos obligatorios
     const camposObligatorios = ['nombreEstudiante', 'fecha', 'nombreDocente', 'asignatura', 'carrera'];
     for (const campo of camposObligatorios) {
         if (!datos[campo]) {
@@ -2987,38 +3008,81 @@ async function generarReporteDesdeCSV(headers, valores) {
         }
     }
 
-    // Manejar la lista especificada en el CSV
-    let listaId = null;
+    // Crear estructura del reporte
+    const reporte = {
+        id: crypto.randomUUID(),
+        infoGeneral: {
+            nombreEstudiante: datos.nombreEstudiante,
+            fecha: datos.fecha,
+            nombreDocente: datos.nombreDocente,
+            asignatura: datos.asignatura,
+            carrera: datos.carrera,
+            universidad: datos.universidad || currentUser.university,
+            tituloEvaluacion: datos.tituloEvaluacion,
+            descripcionEvaluacion: datos.descripcionEvaluacion
+        },
+        configuracion: {
+            notaMinima: 1.0,
+            notaMaxima: 7.0,
+            notaAprobacion: 4.0,
+            exigencia: 60,
+            incremento: 0.1
+        },
+        nivelesDesempeno: [...nivelesDesempeno],
+        criterios: [],
+        feedback: {
+            comentario: datos.feedbackDocente || '',
+            puntosAdicionales: datos.puntosAdicionales === 'true',
+            puntosAgregar: parseFloat(datos.puntosAgregar) || 0,
+            justificacionPuntos: datos.justificacionPuntos || ''
+        },
+        resultados: {
+            notaFinal: 0,
+            puntajeTotal: 0,
+            puntajeMaximo: 0,
+            porcentajeLogro: 0
+        },
+        fechaCreacion: new Date().toISOString(),
+        usuarioId: currentUser.id
+    };
+
+    // Procesar criterios
+    let criterioIndex = 1;
+    while (datos[`criterio${criterioIndex}_nombre`]) {
+        reporte.criterios.push({
+            nombre: datos[`criterio${criterioIndex}_nombre`],
+            evaluacion: parseInt(datos[`criterio${criterioIndex}_evaluacion`]) || 0,
+            excelente: "Nivel excelente",
+            bueno: "Nivel bueno",
+            regular: "Nivel regular",
+            insuficiente: "Nivel insuficiente"
+        });
+        criterioIndex++;
+    }
+
+    // Manejar asignación a lista
     if (datos.lista) {
         try {
-            // Buscar si la lista ya existe
             const listas = await fetchAPI('/lists');
-            const listaExistente = listas.find(l => l.name.toLowerCase() === datos.lista.toLowerCase());
+            let listaExistente = listas.find(l => l.name.toLowerCase() === datos.lista.toLowerCase());
             
-            if (listaExistente) {
-                listaId = listaExistente.id;
-            } else {
+            if (!listaExistente) {
                 // Crear nueva lista si no existe
                 const nuevaLista = await fetchAPI('/lists', {
                     method: 'POST',
                     body: JSON.stringify({ name: datos.lista })
                 });
-                listaId = nuevaLista.id;
+                reporte.listaId = nuevaLista.id;
+            } else {
+                reporte.listaId = listaExistente.id;
             }
         } catch (error) {
             console.warn('Error al procesar lista:', error);
         }
     }
-    
-    // ... resto del código de generación de reporte ...
-    
-    return {
-        ...reporte,
-        listaId // Agregar el ID de la lista al reporte
-    };
+
+    return reporte;
 }
-
-
 
         /**
          * Obtiene el nivel por puntaje

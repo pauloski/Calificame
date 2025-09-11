@@ -3184,38 +3184,49 @@ async function generarReporteDesdeCSV(headers, valores) {
             return nivel ? nivel.nombre : 'No definido';
         }
 
-        /**
-         * Procesa los reportes generados masivamente
-         */
-  
+/**
+ * Procesa los reportes generados masivamente
+ */
 async function procesarReportesMasivos(reportesNuevos) {
+    if (!Array.isArray(reportesNuevos) || reportesNuevos.length === 0) {
+        throw new Error('No hay reportes válidos para procesar');
+    }
+
     const sobrescribir = document.getElementById('sobrescribirReportes').checked;
     let reportesActualizados = 0;
     let reportesNuevosCount = 0;
     const listasProcesadas = new Set();
     
     try {
+        // Obtener todos los reportes existentes una sola vez
+        const reportesExistentes = await fetchAPI('/reports');
+        
         for (const reporteNuevo of reportesNuevos) {
+            if (!reporteNuevo || !reporteNuevo.infoGeneral) {
+                console.warn('Reporte inválido encontrado:', reporteNuevo);
+                continue;
+            }
+
             if (reporteNuevo.listaId) {
                 listasProcesadas.add(reporteNuevo.listaId);
             }
 
-            const existingReports = await fetchAPI('/reports/search', {
-                method: 'POST',
-                body: JSON.stringify({ 
-                    title: reporteNuevo.infoGeneral.tituloEvaluacion,
-                    student: reporteNuevo.infoGeneral.nombreEstudiante
-                })
-            });
+            // Buscar si existe un reporte con el mismo título y estudiante
+            const reporteExistente = reportesExistentes.find(r => 
+                r.infoGeneral.tituloEvaluacion === reporteNuevo.infoGeneral.tituloEvaluacion &&
+                r.infoGeneral.nombreEstudiante === reporteNuevo.infoGeneral.nombreEstudiante
+            );
 
             try {
-                if (existingReports.length > 0 && sobrescribir) {
-                    await fetchAPI(`/reports/${existingReports[0].id}`, {
+                if (reporteExistente && sobrescribir) {
+                    // Actualizar reporte existente
+                    await fetchAPI(`/reports/${reporteExistente.id}`, {
                         method: 'PUT',
                         body: JSON.stringify(reporteNuevo)
                     });
                     reportesActualizados++;
-                } else if (existingReports.length === 0) {
+                } else if (!reporteExistente) {
+                    // Crear nuevo reporte
                     await fetchAPI('/reports', {
                         method: 'POST',
                         body: JSON.stringify(reporteNuevo)
@@ -3223,10 +3234,11 @@ async function procesarReportesMasivos(reportesNuevos) {
                     reportesNuevosCount++;
                 }
             } catch (error) {
-                console.error('Error procesando reporte:', error);
+                console.error('Error procesando reporte individual:', error);
             }
         }
 
+        // Actualizar UI con resultados
         const container = document.getElementById('resultadosCarga');
         const estadisticas = document.getElementById('estadisticasCarga');
         estadisticas.innerHTML = `
@@ -3261,17 +3273,17 @@ async function procesarReportesMasivos(reportesNuevos) {
         `;
         container.style.display = 'block';
         showToast('Carga masiva completada exitosamente!', 'success');
+        
+        // Recargar datos
         await cargarReportesGuardados();
-        await loadLists(); // Recargar listas después de procesar
+        await loadLists();
 
     } catch (error) {
         console.error('Error en procesamiento masivo:', error);
         showToast('Error durante el procesamiento masivo: ' + error.message, 'error');
+        throw error;
     }
 }
-
-
-
 
         // ==========================================
         // INICIALIZACIÓN

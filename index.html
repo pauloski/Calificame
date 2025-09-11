@@ -1090,11 +1090,11 @@
     </div>
 
 
-   <!--
+  
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.0/jspdf.plugin.autotable.min.js"></script>
--->  
+
 
     <script>
         // ==========================================
@@ -1110,32 +1110,6 @@
             { nombre: 'Excelente', puntaje: 3 }
         ];
 
-
-/**
- * Carga todas las librerías necesarias para la generación de PDF.
- */
-async function loadPdfLibraries() {
-  // Usar un singleton para evitar recargas múltiples.
-  if (window.pdfLibsLoaded) {
-      return Promise.resolve();
-  }
-
-  const scriptPromises = [
-    loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"),
-    loadScript("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"),
-    loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.0/jspdf.plugin.autotable.min.js")
-  ];
-
-  try {
-    await Promise.all(scriptPromises);
-    console.log("Librerías PDF cargadas exitosamente.");
-    window.pdfLibsLoaded = true;
-  } catch (error) {
-    console.error("Error al cargar las librerías PDF:", error);
-    showToast("No se pudieron cargar las librerías de PDF. Intente recargar la página.", "error");
-    throw error;
-  }
-}
 
 
 
@@ -1458,8 +1432,7 @@ function loadScript(src) {
             loadLists();
             cargarReportesGuardados();
 
-              // Agrega esta línea para iniciar la carga de las librerías PDF
-  loadPdfLibraries();
+
         }
 
 
@@ -2583,184 +2556,135 @@ function loadScript(src) {
         // GENERAR REPORTES PDF
         // ==========================================
 /**
- * Genera y descarga un PDF a partir de un elemento HTML.
- * @param {HTMLElement} element El elemento a convertir en PDF.
- * @param {string} fileName El nombre del archivo de descarga.
+ * Genera y descarga un PDF del elemento especificado
  */
 async function generarPDF(element, fileName) {
-  if (!element) {
-    showToast('Error: El elemento a generar PDF no existe.', 'error');
-    return;
-  }
+    if (!element) {
+        showToast('Error: El elemento a generar PDF no existe.', 'error');
+        return;
+    }
 
-  // Deshabilitar botones de acción para la captura
-  const actionsContainer = element.querySelector('.card-actions, .modal-actions');
-  const displayStyle = actionsContainer ? actionsContainer.style.display : null;
-  if (actionsContainer) {
-      actionsContainer.style.display = 'none';
-  }
+    try {
+        // Ocultar elementos que no queremos en el PDF
+        const actionsContainer = element.querySelector('.card-actions, .modal-actions');
+        if (actionsContainer) {
+            actionsContainer.style.display = 'none';
+        }
 
-  try {
-    const canvas = await html2canvas(element, { scale: 2 });
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new window.jsPDF({
-      orientation: 'p',
-      unit: 'mm',
-      format: 'a4',
-    });
+        // Generar el canvas
+        const canvas = await html2canvas(element, {
+            scale: 2,
+            useCORS: true,
+            logging: false
+        });
 
-    const imgProps = pdf.getImageProperties(imgData);
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+        // Crear PDF
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'mm', 'a4');
 
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-    pdf.save(fileName);
-    showToast('PDF generado y descargado con éxito.', 'success');
-  } catch (error) {
-    console.error('Error al generar PDF:', error);
-    showToast('Error al generar el PDF. Intente de nuevo más tarde.', 'error');
-  } finally {
-      // Restaurar la visualización de los botones
-      if (actionsContainer) {
-          actionsContainer.style.display = displayStyle;
-      }
-  }
+        // Calcular dimensiones
+        const imgData = canvas.toDataURL('image/jpeg', 1.0);
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const imgWidth = canvas.width;
+        const imgHeight = canvas.height;
+        const ratio = Math.min(pageWidth / imgWidth, pageHeight / imgHeight);
+        const imgX = (pageWidth - imgWidth * ratio) / 2;
+        const imgY = 0;
+
+        // Agregar imagen al PDF
+        pdf.addImage(imgData, 'JPEG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+
+        // Guardar PDF
+        pdf.save(fileName);
+        showToast('PDF generado exitosamente', 'success');
+
+    } catch (error) {
+        console.error('Error al generar PDF:', error);
+        showToast('Error al generar el PDF', 'error');
+    } finally {
+        // Restaurar elementos ocultos
+        const actionsContainer = element.querySelector('.card-actions, .modal-actions');
+        if (actionsContainer) {
+            actionsContainer.style.display = 'block';
+        }
+    }
 }
 
-        
-
-        // ==========================================
-        // DESCARGA DE REPORTES PDF
-        // ==========================================
-
-        /**
-         * Descarga el reporte actual como PDF
-         
-        function descargarReportePDF() {
-            if (!currentReport) {
-                showToast('Error: No hay reporte para descargar.', 'error');
-                return;
-            }
-            showToast('Generando PDF... (Esta funcionalidad requiere una implementación de servidor para generar el PDF)', 'info');
-        }*/
-
+/**
+ * Descarga el reporte actual como PDF
+ */
 async function descargarReportePDF() {
-  try {
-    await loadPdfLibraries(); // Asegura que las librerías estén listas
     if (!currentReport) {
         showToast('Error: No hay reporte para descargar.', 'error');
         return;
     }
     const previewContent = document.getElementById('reportPreviewContent');
-    const fileName = `reporte_${currentReport.infoGeneral.nombreEstudiante}.pdf`;
-    generarPDF(previewContent, fileName);
-  } catch (error) {
-    // El error ya se maneja en loadPdfLibraries
-  }
+    const fileName = `reporte_${currentReport.infoGeneral.nombreEstudiante.replace(/ /g, '_')}.pdf`;
+    await generarPDF(previewContent, fileName);
 }
 
-        /**
-         * Descarga un reporte guardado como PDF
-       
-        function descargarReporteGuardadoPDF() {
-            showToast('Generando PDF... (Esta funcionalidad requiere una implementación de servidor para generar el PDF)', 'info');
-        }
-  */
-
-async function descargarReporteGuardadoPDF() {
-  try {
-    await loadPdfLibraries(); // Espera a que las librerías estén listas
-    const modal = document.getElementById('vistaReporteModal');
-    const reporteId = modal.dataset.reporteId;
-    if (!reporteId) {
-        showToast('Error: No se encontró el reporte para descargar.', 'error');
-        return;
-    }
-    const reporteElement = document.getElementById('vistaReporteContent');
-    const reportTitle = reporteElement.querySelector('.report-title').textContent;
-    const studentName = reporteElement.querySelector('.report-info-item span:first-child').textContent;
-    const fileName = `reporte_${studentName.replace(/ /g, '_')}_${reportTitle.replace(/ /g, '_')}.pdf`;
-    generarPDF(reporteElement, fileName);
-  } catch (error) {
-    // El error ya se maneja en loadPdfLibraries
-  }
-}
-
-        /**
-         * Descarga el listado completo de reportes como PDF
-       
-        function descargarListadoCompleto() {
-            showToast('Generando PDF del listado... (Esta funcionalidad requiere una implementación de servidor para generar el PDF)', 'info');
-        }
-  */
 /**
- * Genera y descarga un PDF con una tabla del listado de reportes.
+ * Descarga un reporte guardado como PDF
  */
-async function generarListadoPDF() {
+async function descargarReporteGuardadoPDF() {
+    const modal = document.getElementById('vistaReporteModal');
+    const reporteContent = document.getElementById('vistaReporteContent');
+    const fileName = `reporte_guardado_${Date.now()}.pdf`;
+    await generarPDF(reporteContent, fileName);
+}
+
+/**
+ * Genera y descarga el listado completo de reportes
+ */
+async function descargarListadoCompleto() {
     try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        // Configurar el título
+        doc.setFontSize(16);
+        doc.text("Listado de Reportes de Evaluación", 15, 15);
+
+        // Obtener los reportes
         const reportes = await fetchAPI('/reports');
-        if (!reportes.length === 0) {
+        if (reportes.length === 0) {
             showToast('No hay reportes para generar el listado.', 'info');
             return;
         }
 
-        const doc = new window.jsPDF();
-        
-        // Título del documento
-        doc.setFontSize(18);
-        doc.text("Listado de Reportes de Evaluación", 14, 20);
-
-        // Definir las columnas de la tabla
-        const columns = [
-            "ID", "Fecha", "Estudiante", "Evaluación", "Asignatura", "Nota Final"
-        ];
-
-        // Mapear los datos de los reportes a filas de la tabla
-        const rows = reportes.map(r => [
-            r.id.substring(0, 8),
-            new Date(r.infoGeneral.fecha).toLocaleDateString(),
+        // Preparar los datos para la tabla
+        const headers = [['Estudiante', 'Evaluación', 'Fecha', 'Nota', 'Asignatura']];
+        const data = reportes.map(r => [
             r.infoGeneral.nombreEstudiante,
             r.infoGeneral.tituloEvaluacion,
-            r.infoGeneral.asignatura,
-            r.resultados.notaFinal
+            new Date(r.infoGeneral.fecha).toLocaleDateString(),
+            r.resultados.notaFinal,
+            r.infoGeneral.asignatura
         ]);
 
-        // Generar la tabla usando jspdf-autotable
+        // Generar la tabla
         doc.autoTable({
-            startY: 30,
-            head: [columns],
-            body: rows,
-            theme: 'striped',
-            headStyles: { fillColor: [66, 153, 225] },
-            columnStyles: {
-                0: { cellWidth: 20 },
-                1: { cellWidth: 20 },
-                2: { cellWidth: 35 },
-                3: { cellWidth: 40 },
-                4: { cellWidth: 30 },
-                5: { cellWidth: 20 },
+            head: headers,
+            body: data,
+            startY: 25,
+            theme: 'grid',
+            styles: {
+                fontSize: 8,
+                cellPadding: 3
+            },
+            headStyles: {
+                fillColor: [66, 139, 202]
             }
         });
 
-        doc.save("listado_reportes_evaluacion.pdf");
-        showToast('Listado PDF generado y descargado.', 'success');
+        doc.save('listado_reportes.pdf');
+        showToast('Listado PDF generado exitosamente', 'success');
     } catch (error) {
-        console.error('Error al generar el listado PDF:', error);
-        showToast('Error al generar el listado PDF. Intente de nuevo más tarde.', 'error');
+        console.error('Error al generar listado PDF:', error);
+        showToast('Error al generar el listado PDF', 'error');
     }
 }
-
-
-
-async function descargarListadoCompleto() {
-  try {
-    await loadPdfLibraries(); // Espera a que las librerías estén listas
-    generarListadoPDF();
-  } catch (error) {
-    // El error ya se maneja en loadPdfLibraries
-  }
-}
-
 
         // ==========================================
         // CARGA MASIVA

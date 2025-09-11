@@ -2612,6 +2612,7 @@ async function cargarReportesGuardados() {
         // ==========================================
         // GENERAR REPORTES PDF
         // ==========================================
+
 /**
  * Genera y descarga un PDF del elemento especificado
  */
@@ -2622,32 +2623,54 @@ async function generarPDF(element, fileName) {
     }
 
     try {
+        // Crear un contenedor temporal con padding
+        const container = document.createElement('div');
+        container.style.padding = '40px'; // Agregar padding general
+        container.style.maxWidth = '800px'; // Limitar el ancho máximo
+        container.style.margin = '0 auto'; // Centrar el contenido
+        
+        // Clonar el contenido original
+        const contentClone = element.cloneNode(true);
+        container.appendChild(contentClone);
+        document.body.appendChild(container);
+
         // Ocultar elementos que no queremos en el PDF
-        const actionsContainer = element.querySelector('.card-actions, .modal-actions');
+        const actionsContainer = container.querySelector('.card-actions, .modal-actions');
         if (actionsContainer) {
             actionsContainer.style.display = 'none';
         }
 
-        // Generar el canvas
-        const canvas = await html2canvas(element, {
+        // Asegurarse de que la información general tenga el espaciado correcto
+        const reportInfo = container.querySelector('.report-info');
+        if (reportInfo) {
+            reportInfo.style.padding = '20px';
+            reportInfo.style.marginBottom = '30px';
+        }
+
+        // Generar el canvas con el nuevo contenedor
+        const canvas = await html2canvas(container, {
             scale: 2,
             useCORS: true,
-            logging: false
+            logging: false,
+            windowWidth: 800, // Ancho fijo para mejor control
+            width: 800
         });
 
         // Crear PDF
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF('p', 'mm', 'a4');
 
-        // Calcular dimensiones
+        // Calcular dimensiones manteniendo proporciones
         const imgData = canvas.toDataURL('image/jpeg', 1.0);
         const pageWidth = pdf.internal.pageSize.getWidth();
         const pageHeight = pdf.internal.pageSize.getHeight();
         const imgWidth = canvas.width;
         const imgHeight = canvas.height;
         const ratio = Math.min(pageWidth / imgWidth, pageHeight / imgHeight);
-        const imgX = (pageWidth - imgWidth * ratio) / 2;
-        const imgY = 0;
+        
+        // Centrar la imagen en la página
+        const imgX = (pageWidth - (imgWidth * ratio)) / 2;
+        const imgY = 20; // Margen superior fijo
 
         // Agregar imagen al PDF
         pdf.addImage(imgData, 'JPEG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
@@ -2656,17 +2679,15 @@ async function generarPDF(element, fileName) {
         pdf.save(fileName);
         showToast('PDF generado exitosamente', 'success');
 
+        // Limpiar: remover el contenedor temporal
+        document.body.removeChild(container);
+
     } catch (error) {
         console.error('Error al generar PDF:', error);
         showToast('Error al generar el PDF', 'error');
-    } finally {
-        // Restaurar elementos ocultos
-        const actionsContainer = element.querySelector('.card-actions, .modal-actions');
-        if (actionsContainer) {
-            actionsContainer.style.display = 'block';
-        }
     }
 }
+
 
 /**
  * Descarga el reporte actual como PDF
@@ -2770,7 +2791,7 @@ async function descargarListadoCompleto() {
                 fillColor: [66, 139, 202]
             },
             footStyles: {
-                fillColor: [240, 240, 240]
+                fillColor: [60, 60, 60]
             },
             // Agregar totales al pie de la tabla
             foot: [[

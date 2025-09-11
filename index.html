@@ -2365,9 +2365,6 @@ async function cargarReportesGuardados() {
                     <div class="card-header">
                         <div>
                             <div class="card-title">${reporte.infoGeneral.tituloEvaluacion}</div>
-                            <div style="color: #718096; font-size: 0.875rem;">
-                                Creado el ${fechaCreacion}
-                            </div>
                         </div>
                         <div class="grade-badge">${reporte.resultados.notaFinal || 'N/A'}</div>
                     </div>
@@ -2695,27 +2692,63 @@ async function descargarReporteGuardadoPDF() {
 }
 
 /**
- * Genera y descarga el listado completo de reportes
+ * Genera y descarga el listado de reportes filtrados en PDF
  */
 async function descargarListadoCompleto() {
     try {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
 
+        // Obtener los filtros actuales
+        const listaFiltro = document.getElementById('filtroLista').value;
+        const busqueda = document.getElementById('busquedaReporte').value.toLowerCase();
+
+        // Filtrar los reportes del cache según los criterios actuales
+        const reportesFiltrados = window.reportesCache.filter(reporte => {
+            let cumpleFiltroLista = true;
+            let cumpleBusqueda = true;
+
+            // Aplicar filtro de lista
+            if (listaFiltro) {
+                cumpleFiltroLista = reporte.listaId == listaFiltro;
+            }
+
+            // Aplicar filtro de búsqueda
+            if (busqueda) {
+                const textoReporte = `
+                    ${reporte.infoGeneral.nombreEstudiante} 
+                    ${reporte.infoGeneral.tituloEvaluacion} 
+                    ${reporte.infoGeneral.asignatura}
+                `.toLowerCase();
+                cumpleBusqueda = textoReporte.includes(busqueda);
+            }
+
+            return cumpleFiltroLista && cumpleBusqueda;
+        });
+
+        if (reportesFiltrados.length === 0) {
+            showToast('No hay reportes que cumplan con los filtros actuales.', 'info');
+            return;
+        }
+
         // Configurar el título
         doc.setFontSize(16);
         doc.text("Listado de Reportes de Evaluación", 15, 15);
 
-        // Obtener los reportes
-        const reportes = await fetchAPI('/reports');
-        if (reportes.length === 0) {
-            showToast('No hay reportes para generar el listado.', 'info');
-            return;
+        // Agregar información de los filtros aplicados
+        if (listaFiltro) {
+            const listaSeleccionada = document.querySelector('#filtroLista option:checked').textContent;
+            doc.setFontSize(10);
+            doc.text(`Lista: ${listaSeleccionada}`, 15, 25);
+        }
+        if (busqueda) {
+            doc.setFontSize(10);
+            doc.text(`Búsqueda: "${busqueda}"`, 15, listaFiltro ? 32 : 25);
         }
 
         // Preparar los datos para la tabla
         const headers = [['Estudiante', 'Evaluación', 'Fecha', 'Nota', 'Asignatura']];
-        const data = reportes.map(r => [
+        const data = reportesFiltrados.map(r => [
             r.infoGeneral.nombreEstudiante,
             r.infoGeneral.tituloEvaluacion,
             new Date(r.infoGeneral.fecha).toLocaleDateString(),
@@ -2727,7 +2760,7 @@ async function descargarListadoCompleto() {
         doc.autoTable({
             head: headers,
             body: data,
-            startY: 25,
+            startY: (listaFiltro || busqueda) ? 40 : 25,
             theme: 'grid',
             styles: {
                 fontSize: 8,
@@ -2735,10 +2768,29 @@ async function descargarListadoCompleto() {
             },
             headStyles: {
                 fillColor: [66, 139, 202]
-            }
+            },
+            footStyles: {
+                fillColor: [240, 240, 240]
+            },
+            // Agregar totales al pie de la tabla
+            foot: [[
+                'Total Reportes:',
+                `${reportesFiltrados.length} reportes`,
+                '',
+                `Promedio: ${(reportesFiltrados.reduce((sum, r) => sum + r.resultados.notaFinal, 0) / reportesFiltrados.length).toFixed(1)}`,
+                ''
+            ]]
         });
 
-        doc.save('listado_reportes.pdf');
+        // Generar nombre del archivo según los filtros
+        let fileName = 'listado_reportes';
+        if (listaFiltro) {
+            const listaSeleccionada = document.querySelector('#filtroLista option:checked').textContent;
+            fileName += `_${listaSeleccionada.replace(/ /g, '_')}`;
+        }
+        fileName += '.pdf';
+
+        doc.save(fileName);
         showToast('Listado PDF generado exitosamente', 'success');
     } catch (error) {
         console.error('Error al generar listado PDF:', error);

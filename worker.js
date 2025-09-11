@@ -336,7 +336,7 @@ async function createList(request, env, userId) {
 // ==========================================
 // EXPORT
 // ==========================================
-
+/*
 export default {
   async fetch(request, env) {
     try {
@@ -348,6 +348,20 @@ export default {
       // Sirve el archivo estático index.html para todas las demás rutas
       const response = await env.ASSETS.fetch(request);
       return response;
+    } catch (e) {
+      return errorResponse(e.message, 500);
+    }
+  },
+};*/
+
+
+export default {
+  async fetch(request, env) {
+    try {
+      // Cloudflare Pages maneja automáticamente las solicitudes de activos estáticos.
+      // Si la URL no es un activo estático, la solicitud llega a este Worker.
+      // Por lo tanto, no se necesita el `startsWith('/api')`.
+      return handleRequest(request, env);
     } catch (e) {
       return errorResponse(e.message, 500);
     }

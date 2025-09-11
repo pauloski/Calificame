@@ -1,5 +1,3 @@
-// src/worker.js
-
 /**
  * Cloudflare Worker actúa como un proxy para la base de datos D1.
  * Maneja la autenticación y las operaciones CRUD.
@@ -90,31 +88,31 @@ async function handleRequest(request, env) {
     return errorResponse('Invalid token', 401);
   }
 
-  request.userId = user.id;
+  const userId = user.id;
 
-  switch (path) {
-    case '/reports':
-      if (request.method === 'GET') return getReports(request, env);
-      if (request.method === 'POST') return createReport(request, env);
-      break;
-    case path.match(/\/reports\/([a-zA-Z0-9-]+)/)?.[0]:
-      const reportId = path.split('/')[2];
-      if (request.method === 'GET') return getReport(request, env, reportId);
-      if (request.method === 'PUT') return updateReport(request, env, reportId);
-      if (request.method === 'DELETE') return deleteReport(request, env, reportId);
-      break;
-    case '/reports/search':
-      if (request.method === 'POST') return searchReports(request, env);
-      break;
-    case '/lists':
-      if (request.method === 'GET') return getLists(request, env);
-      if (request.method === 'POST') return createList(request, env);
-      break;
-    default:
-      return errorResponse('Not Found', 404);
+  if (path === '/reports') {
+    if (request.method === 'GET') return getReports(request, env, userId);
+    if (request.method === 'POST') return createReport(request, env, userId);
+    return errorResponse('Method Not Allowed', 405);
+  } else if (path.startsWith('/reports/')) {
+    const parts = path.split('/');
+    if (parts.length === 3) {
+      const reportId = parts[2];
+      if (request.method === 'GET') return getReport(request, env, userId, reportId);
+      if (request.method === 'PUT') return updateReport(request, env, userId, reportId);
+      if (request.method === 'DELETE') return deleteReport(request, env, userId, reportId);
+    }
+    return errorResponse('Not Found', 404);
+  } else if (path === '/reports/search') {
+    if (request.method === 'POST') return searchReports(request, env, userId);
+    return errorResponse('Method Not Allowed', 405);
+  } else if (path === '/lists') {
+    if (request.method === 'GET') return getLists(request, env, userId);
+    if (request.method === 'POST') return createList(request, env, userId);
+    return errorResponse('Method Not Allowed', 405);
+  } else {
+    return errorResponse('Not Found', 404);
   }
-
-  return errorResponse('Method Not Allowed', 405);
 }
 
 // ==========================================
@@ -124,10 +122,13 @@ async function handleRequest(request, env) {
 async function handleAuth(request, path, env) {
   switch (path) {
     case '/auth/register':
+      if (request.method !== 'POST') return errorResponse('Method Not Allowed', 405);
       return registerUser(request, env);
     case '/auth/login':
+      if (request.method !== 'POST') return errorResponse('Method Not Allowed', 405);
       return loginUser(request, env);
     case '/auth/me':
+      if (request.method !== 'GET') return errorResponse('Method Not Allowed', 405);
       const token = extractToken(request);
       if (!token) {
         return errorResponse('Authentication required', 401);
@@ -198,8 +199,7 @@ async function findUserByToken(token, db) {
 // REPORTS CRUD
 // ==========================================
 
-async function getReports(request, env) {
-  const userId = request.userId;
+async function getReports(request, env, userId) {
   const { results } = await env.DB.prepare('SELECT * FROM reports WHERE user_id = ?').bind(userId).all();
   const reports = results.map(r => ({
     ...r,
@@ -213,8 +213,7 @@ async function getReports(request, env) {
   return jsonResponse(reports);
 }
 
-async function getReport(request, env, id) {
-  const userId = request.userId;
+async function getReport(request, env, userId, id) {
   const report = await env.DB.prepare('SELECT * FROM reports WHERE id = ? AND user_id = ?').bind(id, userId).first();
   if (!report) {
     return errorResponse('Report not found', 404);
@@ -231,14 +230,14 @@ async function getReport(request, env, id) {
   return jsonResponse(parsedReport);
 }
 
-async function createReport(request, env) {
-  const userId = request.userId;
+async function createReport(request, env, userId) {
   try {
-    const { infoGeneral, configuracion, nivelesDesempeno, criterios, feedback, resultados, listaId } = await request.json();
+    const { id, infoGeneral, configuracion, nivelesDesempeno, criterios, feedback, resultados, listaId } = await request.json();
     const result = await env.DB.prepare(
-      `INSERT INTO reports (user_id, list_id, info_general, configuracion, niveles_desempeno, criterios, feedback, resultados) 
+      `INSERT INTO reports (id, user_id, list_id, info_general, configuracion, niveles_desempeno, criterios, feedback, resultados) 
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
     ).bind(
+      id,
       userId,
       listaId || null,
       JSON.stringify(infoGeneral),
@@ -248,18 +247,17 @@ async function createReport(request, env) {
       JSON.stringify(feedback),
       JSON.stringify(resultados)
     ).run();
-    return jsonResponse({ id: result.meta.last_row_id }, 201);
+    return jsonResponse({ id: id }, 201);
   } catch (err) {
     return errorResponse(err.message, 500);
   }
 }
 
-async function updateReport(request, env, id) {
-  const userId = request.userId;
+async function updateReport(request, env, userId, id) {
   try {
     const { infoGeneral, configuracion, nivelesDesempeno, criterios, feedback, resultados, listaId } = await request.json();
     const result = await env.DB.prepare(
-      `UPDATE reports SET info_general = ?, configuracion = ?, niveles_desempeno = ?, criterios = ?, feedback = ?, resultados = ?, list_id = ? 
+      `UPDATE reports SET info_general = ?, configuracion = ?, niveles_desempeno = ?, criterios = ?, feedback = ?, resultados = ?, list_id = ?, updated_at = CURRENT_TIMESTAMP
        WHERE id = ? AND user_id = ?`
     ).bind(
       JSON.stringify(infoGeneral),
@@ -281,8 +279,7 @@ async function updateReport(request, env, id) {
   }
 }
 
-async function deleteReport(request, env, id) {
-  const userId = request.userId;
+async function deleteReport(request, env, userId, id) {
   const result = await env.DB.prepare('DELETE FROM reports WHERE id = ? AND user_id = ?').bind(id, userId).run();
   if (result.meta.rows_affected === 0) {
     return errorResponse('Report not found or not authorized.', 404);
@@ -290,8 +287,7 @@ async function deleteReport(request, env, id) {
   return jsonResponse({ message: 'Report deleted' });
 }
 
-async function searchReports(request, env) {
-  const userId = request.userId;
+async function searchReports(request, env, userId) {
   try {
     const { title, student } = await request.json();
     const { results } = await env.DB.prepare(
@@ -318,14 +314,12 @@ async function searchReports(request, env) {
 // LISTS CRUD
 // ==========================================
 
-async function getLists(request, env) {
-  const userId = request.userId;
+async function getLists(request, env, userId) {
   const { results } = await env.DB.prepare('SELECT * FROM lists WHERE user_id = ?').bind(userId).all();
   return jsonResponse(results);
 }
 
-async function createList(request, env) {
-  const userId = request.userId;
+async function createList(request, env, userId) {
   try {
     const { name } = await request.json();
     if (!name) {

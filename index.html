@@ -2926,70 +2926,162 @@ async function descargarListadoCompleto() {
 
 
 
-        /**
-         * Procesa el archivo CSV subido
-         */
-       async function procesarArchivoCSV() {
+   /**
+ * Procesa el archivo CSV subido
+ */
+async function procesarArchivoCSV() {
     if (!window.selectedCSVFile) {
         showToast('Por favor seleccione un archivo CSV primero.', 'error');
         return;
     }
 
     try {
-        const reader = new FileReader();
+        const fileContent = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.onerror = (e) => reject(e);
+            reader.readAsText(window.selectedCSVFile);
+        });
+
+        // Parsear CSV y generar reportes
+        const reportesGenerados = await parsearCSV(fileContent);
         
-        reader.onload = async (e) => {
-            try {
-                const csv = e.target.result;
-                const reportesGenerados = await parsearCSV(csv);
-                
-                if (reportesGenerados.length > 0) {
-                    await procesarReportesMasivos(reportesGenerados);
-                } else {
-                    showToast('No se encontraron datos válidos en el archivo CSV.', 'error');
-                }
-            } catch (error) {
-                console.error('Error procesando CSV:', error);
-                showToast('Error al procesar el archivo CSV: ' + error.message, 'error');
-            }
-        };
-        
-        reader.readAsText(window.selectedCSVFile);
-        
+        if (reportesGenerados && reportesGenerados.length > 0) {
+            await procesarReportesMasivos(reportesGenerados);
+        } else {
+            showToast('No se encontraron datos válidos en el archivo CSV.', 'error');
+        }
     } catch (error) {
-        console.error('Error leyendo archivo:', error);
-        showToast('Error al leer el archivo: ' + error.message, 'error');
+        console.error('Error procesando CSV:', error);
+        showToast('Error al procesar el archivo: ' + error.message, 'error');
     }
 }
 
-        /**
-         * Parsea el contenido CSV y genera reportes
-         */
-        function parsearCSV(csvContent) {
-            const lineas = csvContent.split('\n').filter(linea => linea.trim());
-            if (lineas.length < 2) {
-                throw new Error('El archivo CSV debe tener al menos una fila de encabezados y una fila de datos.');
+/**
+ * Parsea el contenido CSV y genera reportes
+ */
+async function parsearCSV(csvContent) {
+    const lineas = csvContent.split('\n').filter(linea => linea.trim());
+    if (lineas.length < 2) {
+        throw new Error('El archivo CSV debe tener al menos una fila de encabezados y una fila de datos.');
+    }
+    
+    const headers = lineas[0].split(',').map(h => h.trim());
+    const reportesGenerados = [];
+    
+    for (let i = 1; i < lineas.length; i++) {
+        const valores = lineas[i].split(',').map(v => v.trim());
+        if (valores.length < headers.length) continue;
+        
+        try {
+            const reporte = await generarReporteDesdeCSV(headers, valores);
+            if (reporte) {
+                reportesGenerados.push(reporte);
             }
-            
-            const headers = lineas[0].split(',').map(h => h.trim());
-            const reportesGenerados = [];
-            
-            for (let i = 1; i < lineas.length; i++) {
-                const valores = lineas[i].split(',').map(v => v.trim());
-                if (valores.length < headers.length) continue;
-                
-                try {
-                    const reporte = generarReporteDesdeCSV(headers, valores);
-                    if (reporte) {
-                        reportesGenerados.push(reporte);
-                    }
-                } catch (error) {
-                    console.warn(`Error en fila ${i + 1}:`, error.message);
-                }
-            }
-            
-            return reportesGenerados;
+        } catch (error) {
+            console.warn(`Error en fila ${i + 1}:`, error.message);
         }
+    }
+    
+    return reportesGenerados;
+}
+
+/**
+ * Procesa los reportes generados masivamente
+ */
+async function procesarReportesMasivos(reportesNuevos) {
+    if (!Array.isArray(reportesNuevos) || reportesNuevos.length === 0) {
+        throw new Error('No hay reportes válidos para procesar');
+    }
+
+    const sobrescribir = document.getElementById('sobrescribirReportes').checked;
+    let reportesActualizados = 0;
+    let reportesNuevosCount = 0;
+    const listasProcesadas = new Set();
+    
+    try {
+        for (const reporteNuevo of reportesNuevos) {
+            if (!reporteNuevo || !reporteNuevo.infoGeneral || !reporteNuevo.infoGeneral.tituloEvaluacion) {
+                console.warn('Reporte inválido encontrado:', reporteNuevo);
+                continue;
+            }
+
+            if (reporteNuevo.listaId) {
+                listasProcesadas.add(reporteNuevo.listaId);
+            }
+
+            // Resto del código de procesamiento...
+            const existingReports = await fetchAPI('/reports/search', {
+                method: 'POST',
+                body: JSON.stringify({ 
+                    title: reporteNuevo.infoGeneral.tituloEvaluacion,
+                    student: reporteNuevo.infoGeneral.nombreEstudiante
+                })
+            });
+
+            try {
+                if (existingReports.length > 0 && sobrescribir) {
+                    await fetchAPI(`/reports/${existingReports[0].id}`, {
+                        method: 'PUT',
+                        body: JSON.stringify(reporteNuevo)
+                    });
+                    reportesActualizados++;
+                } else if (existingReports.length === 0) {
+                    await fetchAPI('/reports', {
+                        method: 'POST',
+                        body: JSON.stringify(reporteNuevo)
+                    });
+                    reportesNuevosCount++;
+                }
+            } catch (error) {
+                console.error('Error procesando reporte individual:', error);
+            }
+        }
+
+        // Actualizar UI con resultados
+        const container = document.getElementById('resultadosCarga');
+        const estadisticas = document.getElementById('estadisticasCarga');
+        estadisticas.innerHTML = `
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                <div class="result-item">
+                    <div class="result-value">${reportesNuevos.length}</div>
+                    <div class="result-label">Reportes Procesados</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-value">${reportesNuevosCount}</div>
+                    <div class="result-label">Reportes Nuevos</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-value">${reportesActualizados}</div>
+                    <div class="result-label">Reportes Actualizados</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-value">${listasProcesadas.size}</div>
+                    <div class="result-label">Listas Procesadas</div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 1.5rem;">
+                <h4>Resumen de Importación:</h4>
+                <ul>
+                    <li>✅ ${reportesNuevos.length} reportes procesados exitosamente</li>
+                    <li>➕ ${reportesNuevosCount} reportes agregados como nuevos</li>
+                    <li>🔄 ${reportesActualizados} reportes actualizados</li>
+                    <li>📁 ${listasProcesadas.size} listas procesadas</li>
+                </ul>
+            </div>
+        `;
+        container.style.display = 'block';
+        showToast('Carga masiva completada exitosamente!', 'success');
+        await cargarReportesGuardados();
+        await loadLists();
+
+    } catch (error) {
+        console.error('Error en procesamiento masivo:', error);
+        showToast('Error durante el procesamiento masivo: ' + error.message, 'error');
+        throw error;
+    }
+}
 
   /**
  * Genera un reporte desde una fila CSV

@@ -3083,7 +3083,8 @@ async function procesarReportesMasivos(reportesNuevos) {
     }
 }
 
-  /**
+
+/**
  * Genera un reporte desde una fila CSV
  */
 async function generarReporteDesdeCSV(headers, valores) {
@@ -3100,7 +3101,57 @@ async function generarReporteDesdeCSV(headers, valores) {
         }
     }
 
-    // Crear estructura del reporte
+    // Procesar criterios y calcular puntajes
+    let criterios = [];
+    let puntajeTotal = 0;
+    let puntajeMaximo = 0;
+    let criterioIndex = 1;
+    
+    while (datos[`criterio${criterioIndex}_nombre`]) {
+        const evaluacion = parseInt(datos[`criterio${criterioIndex}_evaluacion`]) || 0;
+        const nivelAlcanzado = obtenerNivelPorPuntaje(evaluacion);
+        
+        criterios.push({
+            nombre: datos[`criterio${criterioIndex}_nombre`],
+            evaluacion: evaluacion,
+            nivelAlcanzado: nivelAlcanzado,
+            excelente: "Excelente desempeño",
+            bueno: "Buen desempeño",
+            regular: "Regular desempeño",
+            insuficiente: "Insuficiente desempeño"
+        });
+        
+        puntajeTotal += evaluacion;
+        puntajeMaximo += Math.max(...nivelesDesempeno.map(n => n.puntaje));
+        criterioIndex++;
+    }
+
+    // Calcular nota final
+    const notaMinima = 1.0;
+    const notaMaxima = 7.0;
+    const notaAprobacion = 4.0;
+    const exigencia = 60;
+    
+    const porcentajeLogro = (puntajeTotal / puntajeMaximo) * 100;
+    
+    let notaFinal;
+    if (porcentajeLogro >= exigencia) {
+        const factorExtra = (porcentajeLogro - exigencia) / (100 - exigencia);
+        notaFinal = notaAprobacion + (factorExtra * (notaMaxima - notaAprobacion));
+    } else {
+        const factorBase = porcentajeLogro / exigencia;
+        notaFinal = notaMinima + (factorBase * (notaAprobacion - notaMinima));
+    }
+
+    // Ajustar nota por puntos adicionales
+    if (datos.puntosAdicionales === 'true' && datos.puntosAgregar) {
+        notaFinal += parseFloat(datos.puntosAgregar) || 0;
+    }
+
+    // Asegurar que la nota esté dentro del rango permitido
+    notaFinal = Math.max(notaMinima, Math.min(notaMaxima, notaFinal));
+    notaFinal = Math.round(notaFinal * 10) / 10; // Redondear a 1 decimal
+
     const reporte = {
         id: crypto.randomUUID(),
         infoGeneral: {
@@ -3114,14 +3165,14 @@ async function generarReporteDesdeCSV(headers, valores) {
             descripcionEvaluacion: datos.descripcionEvaluacion
         },
         configuracion: {
-            notaMinima: 1.0,
-            notaMaxima: 7.0,
-            notaAprobacion: 4.0,
-            exigencia: 60,
+            notaMinima: notaMinima,
+            notaMaxima: notaMaxima,
+            notaAprobacion: notaAprobacion,
+            exigencia: exigencia,
             incremento: 0.1
         },
         nivelesDesempeno: [...nivelesDesempeno],
-        criterios: [],
+        criterios: criterios,
         feedback: {
             comentario: datos.feedbackDocente || '',
             puntosAdicionales: datos.puntosAdicionales === 'true',
@@ -3129,28 +3180,14 @@ async function generarReporteDesdeCSV(headers, valores) {
             justificacionPuntos: datos.justificacionPuntos || ''
         },
         resultados: {
-            notaFinal: 0,
-            puntajeTotal: 0,
-            puntajeMaximo: 0,
-            porcentajeLogro: 0
+            notaFinal: notaFinal,
+            puntajeTotal: puntajeTotal,
+            puntajeMaximo: puntajeMaximo,
+            porcentajeLogro: porcentajeLogro
         },
         fechaCreacion: new Date().toISOString(),
         usuarioId: currentUser.id
     };
-
-    // Procesar criterios
-    let criterioIndex = 1;
-    while (datos[`criterio${criterioIndex}_nombre`]) {
-        reporte.criterios.push({
-            nombre: datos[`criterio${criterioIndex}_nombre`],
-            evaluacion: parseInt(datos[`criterio${criterioIndex}_evaluacion`]) || 0,
-            excelente: "Nivel excelente",
-            bueno: "Nivel bueno",
-            regular: "Nivel regular",
-            insuficiente: "Nivel insuficiente"
-        });
-        criterioIndex++;
-    }
 
     // Manejar asignación a lista
     if (datos.lista) {
@@ -3159,7 +3196,6 @@ async function generarReporteDesdeCSV(headers, valores) {
             let listaExistente = listas.find(l => l.name.toLowerCase() === datos.lista.toLowerCase());
             
             if (!listaExistente) {
-                // Crear nueva lista si no existe
                 const nuevaLista = await fetchAPI('/lists', {
                     method: 'POST',
                     body: JSON.stringify({ name: datos.lista })
@@ -3175,6 +3211,7 @@ async function generarReporteDesdeCSV(headers, valores) {
 
     return reporte;
 }
+
 
         /**
          * Obtiene el nivel por puntaje

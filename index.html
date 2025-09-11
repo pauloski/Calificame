@@ -1089,6 +1089,12 @@
         </div>
     </div>
 
+
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.0/jspdf.plugin.autotable.min.js"></script>
+
+
     <script>
         // ==========================================
         // VARIABLES GLOBALES Y CONFIGURACIÓN
@@ -2508,34 +2514,176 @@
             }
         }
 
+
+
+        // ==========================================
+        // GENERAR REPORTES PDF
+        // ==========================================
+/**
+ * Genera y descarga un PDF a partir de un elemento HTML.
+ * @param {HTMLElement} element El elemento a convertir en PDF.
+ * @param {string} fileName El nombre del archivo de descarga.
+ */
+async function generarPDF(element, fileName) {
+  if (!element) {
+    showToast('Error: El elemento a generar PDF no existe.', 'error');
+    return;
+  }
+
+  // Deshabilitar botones de acción para la captura
+  const actionsContainer = element.querySelector('.card-actions, .modal-actions');
+  const displayStyle = actionsContainer ? actionsContainer.style.display : null;
+  if (actionsContainer) {
+      actionsContainer.style.display = 'none';
+  }
+
+  try {
+    const canvas = await html2canvas(element, { scale: 2 });
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new window.jsPDF({
+      orientation: 'p',
+      unit: 'mm',
+      format: 'a4',
+    });
+
+    const imgProps = pdf.getImageProperties(imgData);
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    pdf.save(fileName);
+    showToast('PDF generado y descargado con éxito.', 'success');
+  } catch (error) {
+    console.error('Error al generar PDF:', error);
+    showToast('Error al generar el PDF. Intente de nuevo más tarde.', 'error');
+  } finally {
+      // Restaurar la visualización de los botones
+      if (actionsContainer) {
+          actionsContainer.style.display = displayStyle;
+      }
+  }
+}
+
+        
+
         // ==========================================
         // DESCARGA DE REPORTES PDF
         // ==========================================
 
         /**
          * Descarga el reporte actual como PDF
-         */
+         
         function descargarReportePDF() {
             if (!currentReport) {
                 showToast('Error: No hay reporte para descargar.', 'error');
                 return;
             }
             showToast('Generando PDF... (Esta funcionalidad requiere una implementación de servidor para generar el PDF)', 'info');
-        }
+        }*/
+
+function descargarReportePDF() {
+    if (!currentReport) {
+        showToast('Error: No hay reporte para descargar.', 'error');
+        return;
+    }
+    const previewContent = document.getElementById('reportPreviewContent');
+    const fileName = `reporte_${currentReport.infoGeneral.nombreEstudiante}.pdf`;
+    generarPDF(previewContent, fileName);
+}
+
 
         /**
          * Descarga un reporte guardado como PDF
-         */
+       
         function descargarReporteGuardadoPDF() {
             showToast('Generando PDF... (Esta funcionalidad requiere una implementación de servidor para generar el PDF)', 'info');
         }
+  */
+
+function descargarReporteGuardadoPDF() {
+    const modal = document.getElementById('vistaReporteModal');
+    const reporteId = modal.dataset.reporteId;
+    if (!reporteId) {
+        showToast('Error: No se encontró el reporte para descargar.', 'error');
+        return;
+    }
+    const reporteElement = document.getElementById('vistaReporteContent');
+    const reportTitle = reporteElement.querySelector('.report-title').textContent;
+    const studentName = reporteElement.querySelector('.report-info-item span:first-child').textContent;
+    const fileName = `reporte_${studentName.replace(/ /g, '_')}_${reportTitle.replace(/ /g, '_')}.pdf`;
+    generarPDF(reporteElement, fileName);
+}
 
         /**
          * Descarga el listado completo de reportes como PDF
-         */
+       
         function descargarListadoCompleto() {
             showToast('Generando PDF del listado... (Esta funcionalidad requiere una implementación de servidor para generar el PDF)', 'info');
         }
+  */
+/**
+ * Genera y descarga un PDF con una tabla del listado de reportes.
+ */
+async function generarListadoPDF() {
+    try {
+        const reportes = await fetchAPI('/reports');
+        if (!reportes.length === 0) {
+            showToast('No hay reportes para generar el listado.', 'info');
+            return;
+        }
+
+        const doc = new window.jsPDF();
+        
+        // Título del documento
+        doc.setFontSize(18);
+        doc.text("Listado de Reportes de Evaluación", 14, 20);
+
+        // Definir las columnas de la tabla
+        const columns = [
+            "ID", "Fecha", "Estudiante", "Evaluación", "Asignatura", "Nota Final"
+        ];
+
+        // Mapear los datos de los reportes a filas de la tabla
+        const rows = reportes.map(r => [
+            r.id.substring(0, 8),
+            new Date(r.infoGeneral.fecha).toLocaleDateString(),
+            r.infoGeneral.nombreEstudiante,
+            r.infoGeneral.tituloEvaluacion,
+            r.infoGeneral.asignatura,
+            r.resultados.notaFinal
+        ]);
+
+        // Generar la tabla usando jspdf-autotable
+        doc.autoTable({
+            startY: 30,
+            head: [columns],
+            body: rows,
+            theme: 'striped',
+            headStyles: { fillColor: [66, 153, 225] },
+            columnStyles: {
+                0: { cellWidth: 20 },
+                1: { cellWidth: 20 },
+                2: { cellWidth: 35 },
+                3: { cellWidth: 40 },
+                4: { cellWidth: 30 },
+                5: { cellWidth: 20 },
+            }
+        });
+
+        doc.save("listado_reportes_evaluacion.pdf");
+        showToast('Listado PDF generado y descargado.', 'success');
+    } catch (error) {
+        console.error('Error al generar el listado PDF:', error);
+        showToast('Error al generar el listado PDF. Intente de nuevo más tarde.', 'error');
+    }
+}
+
+
+
+function descargarListadoCompleto() {
+    generarListadoPDF();
+}
+
 
         // ==========================================
         // CARGA MASIVA

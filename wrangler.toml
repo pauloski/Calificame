@@ -7,5 +7,5 @@ database_name = "evaluacion-docente-db"
 database_id = "3ef202f2-6274-40ee-87e2-8252433e764b"
 
 [site]
-bucket = "./src/"
+bucket = "./"
 entry-point = "worker.js"

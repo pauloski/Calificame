@@ -2879,60 +2879,67 @@ async function descargarListadoCompleto() {
         /**
          * Descarga la plantilla CSV
          */
-        function descargarPlantillaCSV() {
-            const headers = [
-                'nombreEstudiante', 'fecha', 'nombreDocente', 'asignatura', 'carrera', 
-                'universidad', 'tituloEvaluacion', 'descripcionEvaluacion',
-                'criterio1_nombre', 'criterio1_evaluacion',
-                'criterio2_nombre', 'criterio2_evaluacion',
-                'criterio3_nombre', 'criterio3_evaluacion',
-                'feedbackDocente', 'puntosAdicionales', 'justificacionPuntos'
-            ];
-            
-            const csvContent = headers.join(',') + '\n' + 
-                'Juan Pérez,2024-03-15,María González,Matemáticas,Ingeniería,Universidad ABC,Examen Final,Evaluación de conocimientos básicos,Resolución de Problemas,3,Participación en Clase,2,Trabajo en Equipo,3,Excelente desempeño en todas las áreas,0.5,Participación sobresaliente';
-            
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            
-            link.setAttribute('href', url);
-            link.setAttribute('download', 'plantilla_reportes.csv');
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            showToast('Plantilla CSV descargada exitosamente.', 'success');
-        }
+      function descargarPlantillaCSV() {
+    const headers = [
+        'nombreEstudiante', 'fecha', 'nombreDocente', 'asignatura', 'carrera', 
+        'universidad', 'tituloEvaluacion', 'descripcionEvaluacion', 'lista',
+        'criterio1_nombre', 'criterio1_evaluacion',
+        'criterio2_nombre', 'criterio2_evaluacion',
+        'criterio3_nombre', 'criterio3_evaluacion',
+        'feedbackDocente', 'puntosAdicionales', 'justificacionPuntos'
+    ];
+    
+    const csvContent = headers.join(',') + '\n' + 
+        'Juan Pérez,2024-03-15,María González,Matemáticas,Ingeniería,Universidad ABC,Examen Final,Evaluación básica,Grupo A,Resolución de Problemas,3,Participación en Clase,2,Trabajo en Equipo,3,Excelente desempeño,0.5,Participación sobresaliente';
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'plantilla_reportes.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    showToast('Plantilla CSV descargada exitosamente.', 'success');
+}
 
         /**
          * Procesa el archivo CSV subido
          */
-        async function procesarArchivoCSV() {
-            if (!window.selectedCSVFile) {
-                showToast('Por favor seleccione un archivo CSV primero.', 'error');
-                return;
-            }
-            
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                try {
-                    const csv = e.target.result;
-                    const reportesGenerados = parsearCSV(csv);
-                    
-                    if (reportesGenerados.length > 0) {
-                        await procesarReportesMasivos(reportesGenerados);
-                    } else {
-                        showToast('No se encontraron datos válidos en el archivo CSV.', 'error');
-                    }
-                } catch (error) {
-                    showToast('Error al procesar el archivo CSV: ' + error.message, 'error');
+       async function procesarArchivoCSV() {
+    if (!window.selectedCSVFile) {
+        showToast('Por favor seleccione un archivo CSV primero.', 'error');
+        return;
+    }
+
+    try {
+        const reader = new FileReader();
+        
+        reader.onload = async (e) => {
+            try {
+                const csv = e.target.result;
+                const reportesGenerados = await parsearCSV(csv);
+                
+                if (reportesGenerados.length > 0) {
+                    await procesarReportesMasivos(reportesGenerados);
+                } else {
+                    showToast('No se encontraron datos válidos en el archivo CSV.', 'error');
                 }
-            };
-            
-            reader.readAsText(window.selectedCSVFile);
-        }
+            } catch (error) {
+                console.error('Error procesando CSV:', error);
+                showToast('Error al procesar el archivo CSV: ' + error.message, 'error');
+            }
+        };
+        
+        reader.readAsText(window.selectedCSVFile);
+        
+    } catch (error) {
+        console.error('Error leyendo archivo:', error);
+        showToast('Error al leer el archivo: ' + error.message, 'error');
+    }
+}
 
         /**
          * Parsea el contenido CSV y genera reportes
@@ -2966,102 +2973,52 @@ async function descargarListadoCompleto() {
         /**
          * Genera un reporte desde una fila CSV
          */
-        function generarReporteDesdeCSV(headers, valores) {
-            const datos = {};
-            headers.forEach((header, index) => {
-                datos[header] = valores[index] || '';
-            });
-            
-            const camposObligatorios = ['nombreEstudiante', 'fecha', 'nombreDocente', 'asignatura', 'carrera'];
-            for (const campo of camposObligatorios) {
-                if (!datos[campo]) {
-                    throw new Error(`Campo obligatorio faltante: ${campo}`);
-                }
-            }
-            
-            const infoGeneral = {
-                nombreEstudiante: datos.nombreEstudiante,
-                fecha: datos.fecha,
-                nombreDocente: datos.nombreDocente,
-                asignatura: datos.asignatura,
-                carrera: datos.carrera,
-                universidad: datos.universidad || currentUser.university,
-                tituloEvaluacion: datos.tituloEvaluacion || 'Evaluación Importada',
-                descripcionEvaluacion: datos.descripcionEvaluacion || ''
-            };
-            
-            const criterios = [];
-            for (let i = 1; i <= 10; i++) {
-                const nombreCriterio = datos[`criterio${i}_nombre`];
-                const evaluacionCriterio = datos[`criterio${i}_evaluacion`];
-                
-                if (nombreCriterio && evaluacionCriterio !== '') {
-                    criterios.push({
-                        nombre: nombreCriterio,
-                        excelente: 'Cumple completamente con el criterio',
-                        bueno: 'Cumple adecuadamente con el criterio',
-                        regular: 'Cumple parcialmente con el criterio',
-                        insuficiente: 'No cumple con el criterio',
-                        evaluacion: parseFloat(evaluacionCriterio) || 0,
-                        nivelAlcanzado: obtenerNivelPorPuntaje(parseFloat(evaluacionCriterio) || 0)
-                    });
-                }
-            }
-            
-            if (criterios.length === 0) {
-                throw new Error('No se encontraron criterios válidos');
-            }
-            
-            const puntajeTotal = criterios.reduce((sum, c) => sum + parseFloat(c.evaluacion), 0);
-            const puntajeMaximo = criterios.length * Math.max(...nivelesDesempeno.map(n => n.puntaje));
-            const porcentajeLogro = (puntajeTotal / puntajeMaximo) * 100;
-            
-            const notaMinima = 1.0;
-            const notaMaxima = 7.0;
-            const notaAprobacion = 4.0;
-            const exigencia = 60;
-            
-            let notaFinal;
-            if (porcentajeLogro >= exigencia) {
-                const factorExtra = (porcentajeLogro - exigencia) / (100 - exigencia);
-                notaFinal = notaAprobacion + (factorExtra * (notaMaxima - notaAprobacion));
-            } else {
-                const factorBase = porcentajeLogro / exigencia;
-                notaFinal = notaMinima + (factorBase * (notaAprobacion - notaMinima));
-            }
-            
-            const puntosAdicionales = parseFloat(datos.puntosAdicionales) || 0;
-            if (puntosAdicionales > 0) {
-                notaFinal += puntosAdicionales;
-            }
-            notaFinal = Math.max(notaMinima, Math.min(notaMaxima, notaFinal));
-            
-            return {
-                infoGeneral,
-                configuracion: {
-                    notaMinima,
-                    notaMaxima,
-                    notaAprobacion,
-                    exigencia,
-                    incremento: 0.1
-                },
-                nivelesDesempeno: [...nivelesDesempeno],
-                criterios,
-                feedback: {
-                    comentario: datos.feedbackDocente || '',
-                    puntosAdicionales: puntosAdicionales > 0,
-                    puntosAgregar: puntosAdicionales,
-                    justificacionPuntos: datos.justificacionPuntos || ''
-                },
-                resultados: {
-                    puntajeTotal,
-                    puntajeMaximo,
-                    porcentajeLogro: Math.round(porcentajeLogro),
-                    notaFinal: Math.round(notaFinal * 10) / 10
-                },
-                fechaCreacion: new Date().toISOString()
-            };
+    
+async function generarReporteDesdeCSV(headers, valores) {
+    const datos = {};
+    headers.forEach((header, index) => {
+        datos[header] = valores[index] || '';
+    });
+    
+    const camposObligatorios = ['nombreEstudiante', 'fecha', 'nombreDocente', 'asignatura', 'carrera'];
+    for (const campo of camposObligatorios) {
+        if (!datos[campo]) {
+            throw new Error(`Campo obligatorio faltante: ${campo}`);
         }
+    }
+
+    // Manejar la lista especificada en el CSV
+    let listaId = null;
+    if (datos.lista) {
+        try {
+            // Buscar si la lista ya existe
+            const listas = await fetchAPI('/lists');
+            const listaExistente = listas.find(l => l.name.toLowerCase() === datos.lista.toLowerCase());
+            
+            if (listaExistente) {
+                listaId = listaExistente.id;
+            } else {
+                // Crear nueva lista si no existe
+                const nuevaLista = await fetchAPI('/lists', {
+                    method: 'POST',
+                    body: JSON.stringify({ name: datos.lista })
+                });
+                listaId = nuevaLista.id;
+            }
+        } catch (error) {
+            console.warn('Error al procesar lista:', error);
+        }
+    }
+    
+    // ... resto del código de generación de reporte ...
+    
+    return {
+        ...reporte,
+        listaId // Agregar el ID de la lista al reporte
+    };
+}
+
+
 
         /**
          * Obtiene el nivel por puntaje
@@ -3074,23 +3031,30 @@ async function descargarListadoCompleto() {
         /**
          * Procesa los reportes generados masivamente
          */
-        async function procesarReportesMasivos(reportesNuevos) {
-            const sobrescribir = document.getElementById('sobrescribirReportes').checked;
-            let reportesActualizados = 0;
-            let reportesNuevosCount = 0;
-            
-            for (const reporteNuevo of reportesNuevos) {
-                const existingReports = await fetchAPI('/reports/search', {
-                    method: 'POST',
-                    body: JSON.stringify({ 
-                        title: reporteNuevo.infoGeneral.tituloEvaluacion,
-                        student: reporteNuevo.infoGeneral.nombreEstudiante
-                    })
-                });
+  
+async function procesarReportesMasivos(reportesNuevos) {
+    const sobrescribir = document.getElementById('sobrescribirReportes').checked;
+    let reportesActualizados = 0;
+    let reportesNuevosCount = 0;
+    const listasProcesadas = new Set();
+    
+    try {
+        for (const reporteNuevo of reportesNuevos) {
+            if (reporteNuevo.listaId) {
+                listasProcesadas.add(reporteNuevo.listaId);
+            }
 
+            const existingReports = await fetchAPI('/reports/search', {
+                method: 'POST',
+                body: JSON.stringify({ 
+                    title: reporteNuevo.infoGeneral.tituloEvaluacion,
+                    student: reporteNuevo.infoGeneral.nombreEstudiante
+                })
+            });
+
+            try {
                 if (existingReports.length > 0 && sobrescribir) {
-                    const existingReport = existingReports[0];
-                    await fetchAPI(`/reports/${existingReport.id}`, {
+                    await fetchAPI(`/reports/${existingReports[0].id}`, {
                         method: 'PUT',
                         body: JSON.stringify(reporteNuevo)
                     });
@@ -3102,40 +3066,56 @@ async function descargarListadoCompleto() {
                     });
                     reportesNuevosCount++;
                 }
+            } catch (error) {
+                console.error('Error procesando reporte:', error);
             }
-
-            const container = document.getElementById('resultadosCarga');
-            const estadisticas = document.getElementById('estadisticasCarga');
-            estadisticas.innerHTML = `
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                    <div class="result-item">
-                        <div class="result-value">${reportesNuevos.length}</div>
-                        <div class="result-label">Reportes Procesados</div>
-                    </div>
-                    <div class="result-item">
-                        <div class="result-value">${reportesNuevosCount}</div>
-                        <div class="result-label">Reportes Nuevos</div>
-                    </div>
-                    <div class="result-item">
-                        <div class="result-value">${reportesActualizados}</div>
-                        <div class="result-label">Reportes Actualizados</div>
-                    </div>
-                </div>
-                
-                <div style="margin-top: 1.5rem;">
-                    <h4>Resumen de Importación:</h4>
-                    <ul>
-                        <li>✅ ${reportesNuevos.length} reportes procesados exitosamente</li>
-                        <li>➕ ${reportesNuevosCount} reportes agregados como nuevos</li>
-                        <li>🔄 ${reportesActualizados} reportes actualizados</li>
-                        <li>📊 Todos los reportes fueron guardados en la lista "Carga Masiva"</li>
-                    </ul>
-                </div>
-            `;
-            container.style.display = 'block';
-            showToast('Carga masiva completada exitosamente!', 'success');
-            await cargarReportesGuardados();
         }
+
+        const container = document.getElementById('resultadosCarga');
+        const estadisticas = document.getElementById('estadisticasCarga');
+        estadisticas.innerHTML = `
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                <div class="result-item">
+                    <div class="result-value">${reportesNuevos.length}</div>
+                    <div class="result-label">Reportes Procesados</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-value">${reportesNuevosCount}</div>
+                    <div class="result-label">Reportes Nuevos</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-value">${reportesActualizados}</div>
+                    <div class="result-label">Reportes Actualizados</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-value">${listasProcesadas.size}</div>
+                    <div class="result-label">Listas Procesadas</div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 1.5rem;">
+                <h4>Resumen de Importación:</h4>
+                <ul>
+                    <li>✅ ${reportesNuevos.length} reportes procesados exitosamente</li>
+                    <li>➕ ${reportesNuevosCount} reportes agregados como nuevos</li>
+                    <li>🔄 ${reportesActualizados} reportes actualizados</li>
+                    <li>📁 ${listasProcesadas.size} listas procesadas</li>
+                </ul>
+            </div>
+        `;
+        container.style.display = 'block';
+        showToast('Carga masiva completada exitosamente!', 'success');
+        await cargarReportesGuardados();
+        await loadLists(); // Recargar listas después de procesar
+
+    } catch (error) {
+        console.error('Error en procesamiento masivo:', error);
+        showToast('Error durante el procesamiento masivo: ' + error.message, 'error');
+    }
+}
+
+
+
 
         // ==========================================
         // INICIALIZACIÓN

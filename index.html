@@ -1116,16 +1116,21 @@
  */
 async function loadPdfLibraries() {
   try {
+    // 1. Cargar la librería principal de jsPDF.
     await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
-    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js");
+    
+    // 2. Cargar el plugin autotable DESPUÉS de la librería principal.
     await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.0/jspdf.plugin.autotable.min.js");
+
+    // 3. Cargar html2canvas, que no tiene una dependencia estricta con las otras dos.
+    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js");
+    
     console.log("Librerías PDF cargadas exitosamente.");
   } catch (error) {
     console.error("Error al cargar las librerías PDF:", error);
     showToast("No se pudieron cargar las librerías de PDF. Intente recargar la página.", "error");
   }
 }
-
 
 
 

@@ -3107,22 +3107,30 @@ async function generarReporteDesdeCSV(headers, valores) {
     let puntajeMaximo = 0;
     let criterioIndex = 1;
     
+    // Definir niveles de evaluación por defecto si no existen
+    const nivelesBase = [
+        { nombre: 'Insuficiente', puntaje: 0 },
+        { nombre: 'Regular', puntaje: 1 },
+        { nombre: 'Bueno', puntaje: 2 },
+        { nombre: 'Excelente', puntaje: 3 }
+    ];
+
     while (datos[`criterio${criterioIndex}_nombre`]) {
         const evaluacion = parseInt(datos[`criterio${criterioIndex}_evaluacion`]) || 0;
-        const nivelAlcanzado = obtenerNivelPorPuntaje(evaluacion);
+        const nivel = nivelesBase.find(n => n.puntaje === evaluacion);
         
         criterios.push({
             nombre: datos[`criterio${criterioIndex}_nombre`],
             evaluacion: evaluacion,
-            nivelAlcanzado: nivelAlcanzado,
-            excelente: "Excelente desempeño",
-            bueno: "Buen desempeño",
-            regular: "Regular desempeño",
-            insuficiente: "Insuficiente desempeño"
+            nivelAlcanzado: nivel ? nivel.nombre : 'No definido',
+            excelente: "Nivel excelente (3 pts)",
+            bueno: "Nivel bueno (2 pts)",
+            regular: "Nivel regular (1 pt)",
+            insuficiente: "Nivel insuficiente (0 pts)"
         });
         
         puntajeTotal += evaluacion;
-        puntajeMaximo += Math.max(...nivelesDesempeno.map(n => n.puntaje));
+        puntajeMaximo += 3; // Máximo puntaje posible por criterio
         criterioIndex++;
     }
 
@@ -3145,7 +3153,8 @@ async function generarReporteDesdeCSV(headers, valores) {
 
     // Ajustar nota por puntos adicionales
     if (datos.puntosAdicionales === 'true' && datos.puntosAgregar) {
-        notaFinal += parseFloat(datos.puntosAgregar) || 0;
+        const puntosExtra = parseFloat(datos.puntosAgregar) || 0;
+        notaFinal += puntosExtra;
     }
 
     // Asegurar que la nota esté dentro del rango permitido
@@ -3161,8 +3170,8 @@ async function generarReporteDesdeCSV(headers, valores) {
             asignatura: datos.asignatura,
             carrera: datos.carrera,
             universidad: datos.universidad || currentUser.university,
-            tituloEvaluacion: datos.tituloEvaluacion,
-            descripcionEvaluacion: datos.descripcionEvaluacion
+            tituloEvaluacion: datos.tituloEvaluacion || 'Sin título',
+            descripcionEvaluacion: datos.descripcionEvaluacion || ''
         },
         configuracion: {
             notaMinima: notaMinima,
@@ -3171,7 +3180,7 @@ async function generarReporteDesdeCSV(headers, valores) {
             exigencia: exigencia,
             incremento: 0.1
         },
-        nivelesDesempeno: [...nivelesDesempeno],
+        nivelesDesempeno: [...nivelesBase],
         criterios: criterios,
         feedback: {
             comentario: datos.feedbackDocente || '',
@@ -3211,8 +3220,6 @@ async function generarReporteDesdeCSV(headers, valores) {
 
     return reporte;
 }
-
-
         /**
          * Obtiene el nivel por puntaje
          */

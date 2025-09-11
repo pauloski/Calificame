@@ -1115,20 +1115,25 @@
  * Carga todas las librerías necesarias para la generación de PDF.
  */
 async function loadPdfLibraries() {
-  try {
-    // 1. Cargar la librería principal de jsPDF.
-    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
-    
-    // 2. Cargar el plugin autotable DESPUÉS de la librería principal.
-    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.0/jspdf.plugin.autotable.min.js");
+  // Usar un singleton para evitar recargas múltiples.
+  if (window.pdfLibsLoaded) {
+      return Promise.resolve();
+  }
 
-    // 3. Cargar html2canvas, que no tiene una dependencia estricta con las otras dos.
-    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js");
-    
+  const scriptPromises = [
+    loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"),
+    loadScript("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"),
+    loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.0/jspdf.plugin.autotable.min.js")
+  ];
+
+  try {
+    await Promise.all(scriptPromises);
     console.log("Librerías PDF cargadas exitosamente.");
+    window.pdfLibsLoaded = true;
   } catch (error) {
     console.error("Error al cargar las librerías PDF:", error);
     showToast("No se pudieron cargar las librerías de PDF. Intente recargar la página.", "error");
+    throw error;
   }
 }
 
@@ -2639,7 +2644,9 @@ async function generarPDF(element, fileName) {
             showToast('Generando PDF... (Esta funcionalidad requiere una implementación de servidor para generar el PDF)', 'info');
         }*/
 
-function descargarReportePDF() {
+async function descargarReportePDF() {
+  try {
+    await loadPdfLibraries(); // Asegura que las librerías estén listas
     if (!currentReport) {
         showToast('Error: No hay reporte para descargar.', 'error');
         return;
@@ -2647,8 +2654,10 @@ function descargarReportePDF() {
     const previewContent = document.getElementById('reportPreviewContent');
     const fileName = `reporte_${currentReport.infoGeneral.nombreEstudiante}.pdf`;
     generarPDF(previewContent, fileName);
+  } catch (error) {
+    // El error ya se maneja en loadPdfLibraries
+  }
 }
-
 
         /**
          * Descarga un reporte guardado como PDF
@@ -2658,7 +2667,9 @@ function descargarReportePDF() {
         }
   */
 
-function descargarReporteGuardadoPDF() {
+async function descargarReporteGuardadoPDF() {
+  try {
+    await loadPdfLibraries(); // Espera a que las librerías estén listas
     const modal = document.getElementById('vistaReporteModal');
     const reporteId = modal.dataset.reporteId;
     if (!reporteId) {
@@ -2670,6 +2681,9 @@ function descargarReporteGuardadoPDF() {
     const studentName = reporteElement.querySelector('.report-info-item span:first-child').textContent;
     const fileName = `reporte_${studentName.replace(/ /g, '_')}_${reportTitle.replace(/ /g, '_')}.pdf`;
     generarPDF(reporteElement, fileName);
+  } catch (error) {
+    // El error ya se maneja en loadPdfLibraries
+  }
 }
 
         /**
@@ -2738,8 +2752,13 @@ async function generarListadoPDF() {
 
 
 
-function descargarListadoCompleto() {
+async function descargarListadoCompleto() {
+  try {
+    await loadPdfLibraries(); // Espera a que las librerías estén listas
     generarListadoPDF();
+  } catch (error) {
+    // El error ya se maneja en loadPdfLibraries
+  }
 }
 
 

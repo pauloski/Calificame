@@ -1,0 +1,2891 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plataforma de Evaluación Docente</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 0;
+            margin-bottom: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #4a5568;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .nav-btn {
+            padding: 0.5rem 1rem;
+            background: #4299e1;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: #3182ce;
+            transform: translateY(-2px);
+        }
+
+        .nav-btn.active {
+            background: #2d3748;
+        }
+
+        .main-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .form-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: #f8fafc;
+            border-radius: 12px;
+            border-left: 4px solid #4299e1;
+        }
+
+        .form-section h3 {
+            color: #2d3748;
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .form-control {
+            padding: 0.75rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #4299e1;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: #4299e1;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #3182ce;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .btn-danger {
+            background: #f56565;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #e53e3e;
+        }
+
+        .btn-success {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #38a169;
+        }
+
+        .login-container {
+            max-width: 400px;
+            margin: 5rem auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .login-header h2 {
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+        }
+
+        .login-tabs {
+            display: flex;
+            margin-bottom: 2rem;
+            background: #f1f5f9;
+            border-radius: 8px;
+            padding: 4px;
+        }
+
+        .login-tab {
+            flex: 1;
+            padding: 0.75rem;
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .login-tab.active {
+            background: white;
+            color: #4299e1;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        .table th {
+            background: #4a5568;
+            color: white;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .table td {
+            padding: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .table tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #a0aec0;
+        }
+
+        .modal-close:hover {
+            color: #4a5568;
+        }
+
+        .criteria-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .criteria-table th,
+        .criteria-table td {
+            border: 1px solid #e2e8f0;
+            padding: 0.75rem;
+            text-align: left;
+        }
+
+        .criteria-table th {
+            background: #f8fafc;
+            font-weight: 600;
+        }
+
+        .criteria-table textarea {
+            width: 100%;
+            min-height: 60px;
+            border: none;
+            resize: vertical;
+        }
+
+        .criteria-table select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+        }
+
+        .level-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .level-item input {
+            flex: 1;
+        }
+
+        .level-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .level-actions button {
+            padding: 0.25rem 0.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .card-field {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-field label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #718096;
+            margin-bottom: 0.25rem;
+        }
+
+        .card-field span {
+            font-weight: 500;
+            color: #2d3748;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .card-actions .btn {
+            font-size: 0.875rem;
+            padding: 0.5rem 1rem;
+        }
+
+        .grade-badge {
+            background: #48bb78;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .filter-section {
+            background: #f8fafc;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 1rem;
+            align-items: end;
+            flex-wrap: wrap;
+        }
+
+        .report-preview {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .report-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .report-title {
+            font-size: 1.75rem;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 1rem;
+        }
+
+        .report-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .report-info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .report-info-label {
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .report-results {
+            background: #f8fafc;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .report-results h3 {
+            color: #2d3748;
+            margin-bottom: 1rem;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            text-align: center;
+        }
+
+        .result-item {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+        }
+
+        .result-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #4299e1;
+        }
+
+        .result-label {
+            font-size: 0.875rem;
+            color: #718096;
+            margin-top: 0.25rem;
+        }
+
+        .criteria-details {
+            margin-bottom: 2rem;
+        }
+
+        .criteria-details h3 {
+            color: #2d3748;
+            margin-bottom: 1rem;
+        }
+
+        .criteria-table-report {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        .criteria-table-report th,
+        .criteria-table-report td {
+            border: 1px solid #e2e8f0;
+            padding: 0.75rem;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .criteria-table-report th {
+            background: #f8fafc;
+            font-weight: 600;
+        }
+
+        .feedback-section {
+            background: #f8fafc;
+            padding: 1.5rem;
+            border-radius: 8px;
+        }
+
+        .feedback-section h3 {
+            color: #2d3748;
+            margin-bottom: 1rem;
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            background: #48bb78;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1001;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.error {
+            background: #f56565;
+        }
+
+        .upload-area {
+            border: 2px dashed #cbd5e0;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            transition: border-color 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            border-color: #4299e1;
+        }
+
+        .upload-area.dragover {
+            border-color: #4299e1;
+            background: #f0f8ff;
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .nav-menu {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .card-info {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .report-info {
+                grid-template-columns: 1fr;
+            }
+
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Página de Login -->
+    <div id="loginPage" class="page active">
+        <div class="login-container">
+            <div class="login-header">
+                <h2>Plataforma de Evaluación Docente</h2>
+                <p>Accede o registra tu cuenta</p>
+            </div>
+            
+            <div class="login-tabs">
+                <button class="login-tab active" data-tab="login">Iniciar Sesión</button>
+                <button class="login-tab" data-tab="register">Registrarse</button>
+            </div>
+
+            <!-- Formulario de Login -->
+            <form id="loginForm" class="tab-content active">
+                <div class="form-group">
+                    <label>Correo Electrónico</label>
+                    <input type="email" class="form-control" id="loginEmail" required>
+                </div>
+                <div class="form-group">
+                    <label>Contraseña</label>
+                    <input type="password" class="form-control" id="loginPassword" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+                    Iniciar Sesión
+                </button>
+            </form>
+
+            <!-- Formulario de Registro -->
+            <form id="registerForm" class="tab-content" style="display: none;">
+                <div class="form-group">
+                    <label>Nombre Completo</label>
+                    <input type="text" class="form-control" id="registerName" required>
+                </div>
+                <div class="form-group">
+                    <label>Correo Electrónico</label>
+                    <input type="email" class="form-control" id="registerEmail" required>
+                </div>
+                <div class="form-group">
+                    <label>Universidad</label>
+                    <input type="text" class="form-control" id="registerUniversity" required>
+                </div>
+                <div class="form-group">
+                    <label>Contraseña</label>
+                    <input type="password" class="form-control" id="registerPassword" required>
+                </div>
+                <div class="form-group">
+                    <label>Confirmar Contraseña</label>
+                    <input type="password" class="form-control" id="confirmPassword" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+                    Registrarse
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Aplicación Principal -->
+    <div id="mainApp" class="page">
+        <div class="header">
+            <div class="header-content">
+                <div class="logo">EvalúaDocente</div>
+                <nav class="nav-menu">
+                    <button class="nav-btn active" data-page="nuevo-reporte">Nuevo Reporte</button>
+                    <button class="nav-btn" data-page="reportes-guardados">Reportes Guardados</button>
+                    <button class="nav-btn" data-page="carga-masiva">Carga Masiva</button>
+                    <button class="nav-btn" id="logoutBtn">Cerrar Sesión</button>
+                </nav>
+            </div>
+        </div>
+
+        <div class="container">
+            <!-- Página: Nuevo Reporte -->
+            <div id="nuevo-reporte" class="page active">
+                <div class="main-content">
+                    <h2 style="margin-bottom: 2rem; color: #2d3748;">Crear Nuevo Reporte de Evaluación</h2>
+                    
+                    <form id="reportForm">
+                        <!-- Sección 1: Información General -->
+                        <div class="form-section">
+                            <h3>📋 Información General</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Nombre del Estudiante *</label>
+                                    <input type="text" class="form-control" id="nombreEstudiante" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Fecha *</label>
+                                    <input type="date" class="form-control" id="fecha" required>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Nombre del Docente *</label>
+                                    <input type="text" class="form-control" id="nombreDocente" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Asignatura *</label>
+                                    <input type="text" class="form-control" id="asignatura" required>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Carrera *</label>
+                                    <input type="text" class="form-control" id="carrera" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Universidad *</label>
+                                    <input type="text" class="form-control" id="universidad" required>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Título de la Evaluación / Taller *</label>
+                                    <input type="text" class="form-control" id="tituloEvaluacion" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Descripción de la Evaluación</label>
+                                <textarea class="form-control" id="descripcionEvaluacion" rows="3" placeholder="Describa brevemente la evaluación o taller..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Sección 2: Configuración del Instrumento -->
+                        <div class="form-section">
+                            <h3>⚙️ Configuración del Instrumento de Evaluación</h3>
+                            
+                            <!-- Escala de Calificación -->
+                            <h4 style="margin-bottom: 1rem; color: #4a5568;">Escala de Calificación</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Nota Mínima *</label>
+                                    <input type="number" step="0.1" class="form-control" id="notaMinima" value="1.0" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Nota Máxima *</label>
+                                    <input type="number" step="0.1" class="form-control" id="notaMaxima" value="7.0" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Nota de Aprobación *</label>
+                                    <input type="number" step="0.1" class="form-control" id="notaAprobacion" value="4.0" required>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Exigencia (%) *</label>
+                                    <input type="number" min="1" max="100" class="form-control" id="exigencia" value="60" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Incremento (opcional)</label>
+                                    <input type="number" step="0.1" class="form-control" id="incremento" value="0.1">
+                                </div>
+                            </div>
+
+                            <!-- Niveles de Desempeño -->
+                            <h4 style="margin: 2rem 0 1rem 0; color: #4a5568;">Niveles de Desempeño</h4>
+                            <div id="nivelesDesempeno">
+                                <!-- Los niveles se generan dinámicamente -->
+                            </div>
+                            <div style="margin-top: 1rem; display: flex; gap: 1rem;">
+                                <button type="button" class="btn btn-secondary" id="agregarNivel">+ Agregar Nivel</button>
+                                <button type="button" class="btn btn-secondary" id="restablecerNiveles">Restablecer Predeterminados</button>
+                            </div>
+
+                            <!-- Criterios de Evaluación -->
+                            <h4 style="margin: 2rem 0 1rem 0; color: #4a5568;">Criterios de Evaluación</h4>
+                            <button type="button" class="btn btn-primary" id="agregarCriterio">+ Agregar Criterio</button>
+                            
+                            <div class="table-container" style="margin-top: 1rem;">
+                                <table class="criteria-table" id="criteriosTable">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 20%;">Criterio</th>
+                                            <th style="width: 18%;">Excelente</th>
+                                            <th style="width: 18%;">Bueno</th>
+                                            <th style="width: 18%;">Regular</th>
+                                            <th style="width: 18%;">Insuficiente</th>
+                                            <th style="width: 8%;">Evaluación</th>
+                                            <th style="width: 8%;">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Los criterios se agregan dinámicamente -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Sección 3: Feedback Docente -->
+                        <div class="form-section">
+                            <h3>💬 Feedback Docente</h3>
+                            <div class="form-group">
+                                <label>Comentario del Docente</label>
+                                <textarea class="form-control" id="feedbackDocente" rows="4" placeholder="Escriba sus comentarios y retroalimentación para el estudiante..."></textarea>
+                            </div>
+                            
+                            <div class="form-group" style="margin-top: 1.5rem;">
+                                <label style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <input type="checkbox" id="puntosAdicionalesCheck"> 
+                                    Activar Puntos Adicionales
+                                </label>
+                            </div>
+
+                            <div id="puntosAdicionalesSection" style="display: none; margin-top: 1rem;">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Puntos a agregar a la nota final (máx. 2.3) *</label>
+                                        <input type="number" step="0.1" min="0" max="2.3" class="form-control" id="puntosAgregar">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Justificación (obligatoria) *</label>
+                                    <textarea class="form-control" id="justificacionPuntos" rows="2" placeholder="Ej: Por excelente participación en clase y aporte al equipo..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Botones de Acción -->
+                        <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem;">
+                            <button type="button" class="btn btn-primary" id="generarPreview">
+                                🔍 Generar Vista Previa
+                            </button>
+                            <button type="reset" class="btn btn-secondary">🔄 Limpiar Formulario</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Página: Reportes Guardados -->
+            <div id="reportes-guardados" class="page">
+                <div class="main-content">
+                    <h2 style="margin-bottom: 2rem; color: #2d3748;">Reportes Guardados</h2>
+                    
+                    <!-- Filtros -->
+                    <div class="filter-section">
+                        <h3 style="margin-bottom: 1rem;">Filtrar Reportes</h3>
+                        <div class="filter-row">
+                            <div class="form-group">
+                                <label>Seleccionar Lista:</label>
+                                <select class="form-control" id="filtroLista">
+                                    <option value="">Todas las Listas</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Buscar por estudiante o evaluación:</label>
+                                <input type="text" class="form-control" id="busquedaReporte" placeholder="Escriba el nombre del estudiante o título de evaluación...">
+                            </div>
+                            <button type="button" class="btn btn-primary" id="aplicarFiltros">Aplicar Filtros</button>
+                            <button type="button" class="btn btn-success" id="descargarListadoPDF">📄 Descargar Listado PDF</button>
+                        </div>
+                    </div>
+
+                    <!-- Lista de Reportes -->
+                    <div id="listaReportes">
+                        <!-- Los reportes se cargan dinámicamente -->
+                        <div style="text-align: center; padding: 3rem; color: #718096;">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">
+                                <div class="loading"></div>
+                            </div>
+                            <h3>Cargando reportes...</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Página: Carga Masiva -->
+            <div id="carga-masiva" class="page">
+                <div class="main-content">
+                    <h2 style="margin-bottom: 2rem; color: #2d3748;">Carga Masiva de Reportes</h2>
+                    
+                    <div class="form-section">
+                        <h3>📤 Subir Archivo CSV</h3>
+                        <p style="color: #718096; margin-bottom: 1.5rem;">
+                            Suba un archivo CSV con los datos de múltiples estudiantes para generar reportes automáticamente.
+                        </p>
+                        
+                        <div class="upload-area" id="uploadArea">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">📄</div>
+                            <p><strong>Haga clic aquí o arrastre su archivo CSV</strong></p>
+                            <p style="color: #718096; font-size: 0.875rem;">Formatos soportados: .csv</p>
+                            <input type="file" id="csvFile" accept=".csv" style="display: none;">
+                        </div>
+
+                        <div class="form-group" style="margin-top: 1.5rem;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem;">
+                                <input type="checkbox" id="sobrescribirReportes">
+                                Sobrescribir reportes existentes con el mismo Título de Evaluación y Nombre de Estudiante
+                            </label>
+                            <small style="color: #718096; margin-top: 0.5rem; display: block;">
+                                Si está marcado, los reportes existentes serán actualizados. De lo contrario, se añadirán como nuevos.
+                            </small>
+                        </div>
+
+                        <div style="margin-top: 2rem;">
+                            <button type="button" class="btn btn-secondary" id="descargarPlantilla">
+                                📥 Descargar Plantilla CSV
+                            </button>
+                            <button type="button" class="btn btn-primary" id="procesarCSV" disabled>
+                                🚀 Procesar Archivo
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Resultados de la Carga -->
+                    <div id="resultadosCarga" style="display: none;" class="form-section">
+                        <h3>📊 Resultados de la Carga</h3>
+                        <div id="estadisticasCarga"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Agregar/Editar Criterio -->
+    <div id="criterioModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="criterioModalTitle">Agregar Criterio</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <form id="criterioForm">
+                <div class="form-group">
+                    <label>Nombre del Criterio *</label>
+                    <input type="text" class="form-control" id="criterioNombre" required>
+                </div>
+                <div class="form-group">
+                    <label>Descripción Excelente (3 pts) *</label>
+                    <textarea class="form-control" id="criterioExcelente" rows="3" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Descripción Bueno (2 pts) *</label>
+                    <textarea class="form-control" id="criterioBueno" rows="3" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Descripción Regular (1 pts) *</label>
+                    <textarea class="form-control" id="criterioRegular" rows="3" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Descripción Insuficiente (0 pts) *</label>
+                    <textarea class="form-control" id="criterioInsuficiente" rows="3" required></textarea>
+                </div>
+                <div style="display: flex; gap: 1rem; justify-content: end; margin-top: 1.5rem;">
+                    <button type="button" class="btn btn-secondary modal-close">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Criterio</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Vista Previa del Reporte -->
+    <div id="previewModal" class="modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h3>Vista Previa del Reporte</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div id="reportPreviewContent" class="report-preview">
+                <!-- El contenido se genera dinámicamente -->
+            </div>
+            <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;">
+                <button type="button" class="btn btn-secondary" id="editarReporte">✏️ Editar Reporte</button>
+                <button type="button" class="btn btn-success" id="descargarPDF">📄 Descargar PDF</button>
+                <button type="button" class="btn btn-primary" id="guardarReporte">💾 Guardar Reporte</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Guardar Reporte -->
+    <div id="guardarModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Guardar Reporte en Lista</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div>
+                <p style="margin-bottom: 1.5rem;">Seleccione una opción para guardar el reporte:</p>
+                
+                <div class="form-group">
+                    <label>Seleccionar lista existente:</label>
+                    <select class="form-control" id="listaExistente">
+                        <option value="">-- Sin Lista --</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>O crear una nueva lista:</label>
+                    <input type="text" class="form-control" id="nuevaLista" placeholder="Nombre de la nueva lista (opcional)">
+                    <small style="color: #718096; margin-top: 0.5rem; display: block;">
+                        Deje en blanco si no desea crear una nueva lista o seleccionar una existente.
+                    </small>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; justify-content: end; margin-top: 2rem;">
+                    <button type="button" class="btn btn-secondary modal-close">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="confirmarGuardar">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Vista Previa de Reporte Guardado -->
+    <div id="vistaReporteModal" class="modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h3>Vista Previa del Reporte</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div id="vistaReporteContent">
+                <!-- El contenido se genera dinámicamente -->
+            </div>
+            <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;">
+                <button type="button" class="btn btn-secondary" id="usarComoPlantilla">📋 Usar como Plantilla</button>
+                <button type="button" class="btn btn-success" id="descargarPDFReporte">📄 Descargar PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Dialog/Alert -->
+    <div id="custom-dialog" class="modal">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <h3 id="dialog-title" style="margin-bottom: 1rem;"></h3>
+            <p id="dialog-message" style="margin-bottom: 2rem;"></p>
+            <div id="dialog-actions">
+                <button class="btn btn-secondary" id="dialog-cancel-btn" style="margin-right: 1rem;">Cancelar</button>
+                <button class="btn btn-primary" id="dialog-confirm-btn">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // VARIABLES GLOBALES Y CONFIGURACIÓN
+        // ==========================================
+        
+        let currentUser = null;
+        let currentReport = null;
+        let nivelesDesempeno = [
+            { nombre: 'Insuficiente', puntaje: 0 },
+            { nombre: 'Regular', puntaje: 1 },
+            { nombre: 'Bueno', puntaje: 2 },
+            { nombre: 'Excelente', puntaje: 3 }
+        ];
+
+        // ==========================================
+        // UTILITIES
+        // ==========================================
+
+        /**
+         * Muestra notificaciones toast
+         */
+        function showToast(message, type = 'success') {
+            // Eliminar toasts existentes para evitar superposición
+            document.querySelectorAll('.toast').forEach(t => t.remove());
+
+            // Crear elemento toast
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            
+            // Agregar al DOM
+            document.body.appendChild(toast);
+            
+            // Mostrar con animación
+            setTimeout(() => toast.classList.add('show'), 100);
+            
+            // Ocultar y eliminar después de 4 segundos
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        /**
+         * Muestra un diálogo de confirmación personalizado.
+         */
+        function showCustomDialog(title, message) {
+            return new Promise(resolve => {
+                const dialog = document.getElementById('custom-dialog');
+                document.getElementById('dialog-title').textContent = title;
+                document.getElementById('dialog-message').textContent = message;
+                document.getElementById('dialog-cancel-btn').style.display = 'inline-block';
+                document.getElementById('dialog-confirm-btn').textContent = 'Confirmar';
+                
+                const onConfirm = () => {
+                    dialog.classList.remove('active');
+                    resolve(true);
+                    cleanUp();
+                };
+
+                const onCancel = () => {
+                    dialog.classList.remove('active');
+                    resolve(false);
+                    cleanUp();
+                };
+
+                const cleanUp = () => {
+                    document.getElementById('dialog-confirm-btn').removeEventListener('click', onConfirm);
+                    document.getElementById('dialog-cancel-btn').removeEventListener('click', onCancel);
+                    dialog.removeEventListener('click', onOutsideClick);
+                };
+
+                const onOutsideClick = (e) => {
+                    if (e.target === dialog) onCancel();
+                };
+                
+                document.getElementById('dialog-confirm-btn').addEventListener('click', onConfirm);
+                document.getElementById('dialog-cancel-btn').addEventListener('click', onCancel);
+                dialog.addEventListener('click', onOutsideClick);
+                
+                dialog.classList.add('active');
+            });
+        }
+
+        /**
+         * Muestra un mensaje simple en un diálogo.
+         */
+        function showMessageDialog(title, message) {
+            return new Promise(resolve => {
+                const dialog = document.getElementById('custom-dialog');
+                document.getElementById('dialog-title').textContent = title;
+                document.getElementById('dialog-message').textContent = message;
+                document.getElementById('dialog-cancel-btn').style.display = 'none';
+                document.getElementById('dialog-confirm-btn').textContent = 'Aceptar';
+
+                const onConfirm = () => {
+                    dialog.classList.remove('active');
+                    cleanUp();
+                    resolve();
+                };
+
+                const cleanUp = () => {
+                    document.getElementById('dialog-confirm-btn').removeEventListener('click', onConfirm);
+                    dialog.removeEventListener('click', onOutsideClick);
+                };
+
+                const onOutsideClick = (e) => {
+                    if (e.target === dialog) onConfirm();
+                };
+                
+                document.getElementById('dialog-confirm-btn').addEventListener('click', onConfirm);
+                dialog.addEventListener('click', onOutsideClick);
+                
+                dialog.classList.add('active');
+            });
+        }
+
+        /**
+         * Cierra todos los modales abiertos
+         */
+        function cerrarModales() {
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.classList.remove('active');
+            });
+        }
+
+        /**
+         * Helper para llamadas a la API
+         */
+        async function fetchAPI(endpoint, options = {}) {
+            const token = localStorage.getItem('userToken');
+            const headers = {
+                'Content-Type': 'application/json',
+                ...options.headers
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            const response = await fetch(`/api${endpoint}`, {
+                ...options,
+                headers
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message);
+            }
+
+            return response.json();
+        }
+
+        // ==========================================
+        // FUNCIONES DE AUTENTICACIÓN
+        // ==========================================
+        
+        /**
+         * Inicializa el sistema de autenticación y eventos principales
+         */
+        function initAuth() {
+            const token = localStorage.getItem('userToken');
+            if (token) {
+                // Si hay un token, verificar la sesión
+                verifySession(token);
+            }
+
+            // Eventos de login/registro
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            document.getElementById('registerForm').addEventListener('submit', handleRegister);
+            document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+
+            // Tabs de login/registro
+            document.querySelectorAll('.login-tab').forEach(tab => {
+                tab.addEventListener('click', () => switchLoginTab(tab.dataset.tab));
+            });
+        }
+
+        /**
+         * Verifica el token de sesión
+         */
+        async function verifySession(token) {
+            try {
+                const user = await fetchAPI('/auth/me');
+                currentUser = user;
+                showMainApp();
+            } catch (error) {
+                console.error("Error al verificar la sesión:", error);
+                localStorage.removeItem('userToken');
+                showLoginPage();
+            }
+        }
+
+        /**
+         * Cambia entre tabs de login y registro
+         */
+        function switchLoginTab(tab) {
+            document.querySelectorAll('.login-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+            document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
+            document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
+        }
+
+        /**
+         * Maneja el proceso de login
+         */
+        async function handleLogin(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const data = await fetchAPI('/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ email, password })
+                });
+                
+                localStorage.setItem('userToken', data.token);
+                currentUser = data.user;
+                showMainApp();
+                showToast('¡Bienvenido! Has iniciado sesión correctamente.', 'success');
+            } catch (error) {
+                showToast(`Error al iniciar sesión: ${error.message}`, 'error');
+            }
+        }
+
+        /**
+         * Maneja el proceso de registro
+         */
+        async function handleRegister(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('registerName').value;
+            const email = document.getElementById('registerEmail').value;
+            const university = document.getElementById('registerUniversity').value;
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (password !== confirmPassword) {
+                showToast('Las contraseñas no coinciden.', 'error');
+                return;
+            }
+
+            if (password.length < 6) {
+                showToast('La contraseña debe tener al menos 6 caracteres.', 'error');
+                return;
+            }
+
+            try {
+                const data = await fetchAPI('/auth/register', {
+                    method: 'POST',
+                    body: JSON.stringify({ name, email, university, password })
+                });
+                
+                localStorage.setItem('userToken', data.token);
+                currentUser = data.user;
+                showMainApp();
+                showToast('¡Registro exitoso! Has iniciado sesión automáticamente.', 'success');
+            } catch (error) {
+                showToast(`Error al registrarse: ${error.message}`, 'error');
+            }
+        }
+
+        /**
+         * Maneja el logout del usuario
+         */
+        function handleLogout() {
+            currentUser = null;
+            localStorage.removeItem('userToken');
+            showLoginPage();
+            showToast('Has cerrado sesión correctamente.', 'success');
+        }
+
+        /**
+         * Muestra la página de login
+         */
+        function showLoginPage() {
+            document.getElementById('loginPage').classList.add('active');
+            document.getElementById('mainApp').classList.remove('active');
+        }
+
+        /**
+         * Muestra la aplicación principal
+         */
+        function showMainApp() {
+            document.getElementById('loginPage').classList.remove('active');
+            document.getElementById('mainApp').classList.add('active');
+            initMainApp();
+        }
+
+        // ==========================================
+        // NAVEGACIÓN PRINCIPAL
+        // ==========================================
+
+        /**
+         * Inicializa la aplicación principal y sus eventos
+         */
+        function initMainApp() {
+            document.querySelectorAll('.nav-btn[data-page]').forEach(btn => {
+                btn.addEventListener('click', () => navigateToPage(btn.dataset.page));
+            });
+            initReportForm();
+            initReportList();
+            initMassUpload();
+            loadLists();
+            cargarReportesGuardados();
+        }
+
+        /**
+         * Navega entre las páginas principales de la aplicación
+         */
+        function navigateToPage(page) {
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-page="${page}"]`).classList.add('active');
+            document.querySelectorAll('#mainApp .page').forEach(p => p.classList.remove('active'));
+            document.getElementById(page).classList.add('active');
+        }
+
+        // ==========================================
+        // FORMULARIO DE REPORTE - INICIALIZACIÓN
+        // ==========================================
+
+        /**
+         * Inicializa el formulario de nuevo reporte y sus eventos
+         */
+        function initReportForm() {
+            document.getElementById('fecha').valueAsDate = new Date();
+            if (currentUser) {
+                document.getElementById('nombreDocente').value = currentUser.name;
+                document.getElementById('universidad').value = currentUser.university;
+            }
+
+            document.getElementById('agregarNivel').addEventListener('click', agregarNivel);
+            document.getElementById('restablecerNiveles').addEventListener('click', restablecerNiveles);
+            document.getElementById('agregarCriterio').addEventListener('click', () => abrirModalCriterio());
+            document.getElementById('generarPreview').addEventListener('click', generarPreview);
+            document.getElementById('puntosAdicionalesCheck').addEventListener('change', togglePuntosAdicionales);
+
+            initModalEvents();
+            initCalculationEvents();
+            loadNivelesDesempeno();
+        }
+
+        /**
+         * Inicializa eventos de los modales
+         */
+        function initModalEvents() {
+            document.getElementById('criterioForm').addEventListener('submit', guardarCriterio);
+            document.querySelectorAll('.modal-close').forEach(btn => {
+                btn.addEventListener('click', cerrarModales);
+            });
+            document.getElementById('editarReporte').addEventListener('click', cerrarModales);
+            document.getElementById('guardarReporte').addEventListener('click', () => abrirModalGuardar());
+            document.getElementById('descargarPDF').addEventListener('click', descargarReportePDF);
+            document.getElementById('confirmarGuardar').addEventListener('click', confirmarGuardarReporte);
+            document.getElementById('usarComoPlantilla').addEventListener('click', usarComoPlantilla);
+            document.getElementById('descargarPDFReporte').addEventListener('click', descargarReporteGuardadoPDF);
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) cerrarModales();
+                });
+            });
+        }
+
+        /**
+         * Inicializa eventos para cálculos automáticos
+         */
+        function initCalculationEvents() {
+            document.addEventListener('change', (e) => {
+                if (e.target.matches('.criteria-evaluation')) {
+                    calcularNotaFinal();
+                }
+            });
+            ['notaMinima', 'notaMaxima', 'notaAprobacion', 'exigencia'].forEach(id => {
+                document.getElementById(id).addEventListener('input', calcularNotaFinal);
+            });
+        }
+
+        // ==========================================
+        // GESTIÓN DE NIVELES DE DESEMPEÑO
+        // ==========================================
+
+        /**
+         * Carga y renderiza los niveles de desempeño
+         */
+        function loadNivelesDesempeno() {
+            const container = document.getElementById('nivelesDesempeno');
+            container.innerHTML = '';
+
+            nivelesDesempeno.forEach((nivel, index) => {
+                const levelDiv = document.createElement('div');
+                levelDiv.className = 'level-item';
+                levelDiv.innerHTML = `
+                    <input type="text" class="form-control" value="${nivel.nombre}" 
+                           onchange="actualizarNivel(${index}, 'nombre', this.value)">
+                    <input type="number" class="form-control" value="${nivel.puntaje}" min="0" 
+                           onchange="actualizarNivel(${index}, 'puntaje', this.value)">
+                    <div class="level-actions">
+                        <button type="button" class="btn btn-secondary" onclick="moverNivel(${index}, -1)" 
+                                ${index === 0 ? 'disabled' : ''}>↑</button>
+                        <button type="button" class="btn btn-secondary" onclick="moverNivel(${index}, 1)" 
+                                ${index === nivelesDesempeno.length - 1 ? 'disabled' : ''}>↓</button>
+                        <button type="button" class="btn btn-danger" onclick="eliminarNivel(${index})" 
+                                ${nivelesDesempeno.length <= 2 ? 'disabled' : ''}>🗑️</button>
+                    </div>
+                `;
+                container.appendChild(levelDiv);
+            });
+
+            actualizarSelectoresEvaluacion();
+        }
+
+        /**
+         * Actualiza un nivel de desempeño específico
+         */
+        function actualizarNivel(index, campo, valor) {
+            if (campo === 'puntaje') {
+                nivelesDesempeno[index][campo] = parseFloat(valor) || 0;
+            } else {
+                nivelesDesempeno[index][campo] = valor;
+            }
+            actualizarSelectoresEvaluacion();
+            calcularNotaFinal();
+        }
+
+        /**
+         * Mueve un nivel de desempeño hacia arriba o abajo
+         */
+        function moverNivel(index, direction) {
+            const newIndex = index + direction;
+            if (newIndex >= 0 && newIndex < nivelesDesempeno.length) {
+                [nivelesDesempeno[index], nivelesDesempeno[newIndex]] = 
+                [nivelesDesempeno[newIndex], nivelesDesempeno[index]];
+                loadNivelesDesempeno();
+            }
+        }
+
+        /**
+         * Elimina un nivel de desempeño
+         */
+        function eliminarNivel(index) {
+            if (nivelesDesempeno.length > 2) {
+                nivelesDesempeno.splice(index, 1);
+                loadNivelesDesempeno();
+            } else {
+                showMessageDialog('Atención', 'Deben existir al menos dos niveles de desempeño.');
+            }
+        }
+
+        /**
+         * Agrega un nuevo nivel de desempeño
+         */
+        function agregarNivel() {
+            const maxPuntaje = Math.max(...nivelesDesempeno.map(n => n.puntaje));
+            nivelesDesempeno.push({
+                nombre: `Nivel ${nivelesDesempeno.length + 1}`,
+                puntaje: maxPuntaje + 1
+            });
+            loadNivelesDesempeno();
+        }
+
+        /**
+         * Restablece los niveles predeterminados
+         */
+        function restablecerNiveles() {
+            nivelesDesempeno = [
+                { nombre: 'Insuficiente', puntaje: 0 },
+                { nombre: 'Regular', puntaje: 1 },
+                { nombre: 'Bueno', puntaje: 2 },
+                { nombre: 'Excelente', puntaje: 3 }
+            ];
+            loadNivelesDesempeno();
+        }
+
+        /**
+         * Actualiza los selectores de evaluación en la tabla de criterios
+         */
+        function actualizarSelectoresEvaluacion() {
+            document.querySelectorAll('.criteria-evaluation').forEach(select => {
+                const valorActual = select.value;
+                select.innerHTML = '<option value="">Seleccionar...</option>';
+                
+                nivelesDesempeno.forEach(nivel => {
+                    const option = document.createElement('option');
+                    option.value = nivel.puntaje;
+                    option.textContent = `${nivel.nombre} (${nivel.puntaje} pts)`;
+                    if (valorActual == nivel.puntaje) option.selected = true;
+                    select.appendChild(option);
+                });
+            });
+        }
+
+        // ==========================================
+        // GESTIÓN DE CRITERIOS
+        // ==========================================
+
+        /**
+         * Abre el modal para agregar un nuevo criterio
+         */
+        function abrirModalCriterio(criterio = null) {
+            const modal = document.getElementById('criterioModal');
+            const title = document.getElementById('criterioModalTitle');
+            const form = document.getElementById('criterioForm');
+            
+            if (criterio) {
+                title.textContent = 'Editar Criterio';
+                document.getElementById('criterioNombre').value = criterio.nombre;
+                document.getElementById('criterioExcelente').value = criterio.excelente;
+                document.getElementById('criterioBueno').value = criterio.bueno;
+                document.getElementById('criterioRegular').value = criterio.regular;
+                document.getElementById('criterioInsuficiente').value = criterio.insuficiente;
+                form.dataset.editIndex = criterio.index;
+            } else {
+                title.textContent = 'Agregar Criterio';
+                form.reset();
+                delete form.dataset.editIndex;
+            }
+            
+            modal.classList.add('active');
+        }
+
+        /**
+         * Guarda un criterio (nuevo o editado)
+         */
+        function guardarCriterio(e) {
+            e.preventDefault();
+            
+            const form = e.target;
+            const criterio = {
+                nombre: document.getElementById('criterioNombre').value,
+                excelente: document.getElementById('criterioExcelente').value,
+                bueno: document.getElementById('criterioBueno').value,
+                regular: document.getElementById('criterioRegular').value,
+                insuficiente: document.getElementById('criterioInsuficiente').value,
+                evaluacion: ''
+            };
+
+            if (form.dataset.editIndex !== undefined) {
+                const index = parseInt(form.dataset.editIndex);
+                const tbody = document.querySelector('#criteriosTable tbody');
+                const row = tbody.children[index];
+                actualizarFilaCriterio(row, criterio, index);
+            } else {
+                agregarFilaCriterio(criterio);
+            }
+
+            cerrarModales();
+            showToast('Criterio guardado exitosamente.', 'success');
+        }
+
+        /**
+         * Agrega una nueva fila de criterio a la tabla
+         */
+        function agregarFilaCriterio(criterio) {
+            const tbody = document.querySelector('#criteriosTable tbody');
+            const row = document.createElement('tr');
+            const index = tbody.children.length;
+            
+            row.innerHTML = `
+                <td><div style="font-weight: 600;">${criterio.nombre}</div></td>
+                <td><small>${criterio.excelente}</small></td>
+                <td><small>${criterio.bueno}</small></td>
+                <td><small>${criterio.regular}</small></td>
+                <td><small>${criterio.insuficiente}</small></td>
+                <td>
+                    <select class="criteria-evaluation">
+                        <option value="">Seleccionar...</option>
+                    </select>
+                </td>
+                <td>
+                    <button type="button" class="btn btn-secondary" onclick="editarCriterio(${index})" 
+                            style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">✏️</button>
+                    <button type="button" class="btn btn-danger" onclick="eliminarCriterio(${index})" 
+                            style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">🗑️</button>
+                </td>
+            `;
+            
+            tbody.appendChild(row);
+            
+            const select = row.querySelector('.criteria-evaluation');
+            nivelesDesempeno.forEach(nivel => {
+                const option = document.createElement('option');
+                option.value = nivel.puntaje;
+                option.textContent = `${nivel.nombre} (${nivel.puntaje} pts)`;
+                select.appendChild(option);
+            });
+            if (criterio.evaluacion !== undefined && select.querySelector(`option[value="${criterio.evaluacion}"]`)) {
+                select.value = criterio.evaluacion;
+            }
+
+            select.addEventListener('change', calcularNotaFinal);
+        }
+
+        /**
+         * Actualiza una fila de criterio existente
+         */
+        function actualizarFilaCriterio(row, criterio, index) {
+            const currentEvaluation = row.querySelector('.criteria-evaluation').value;
+            
+            row.innerHTML = `
+                <td><div style="font-weight: 600;">${criterio.nombre}</div></td>
+                <td><small>${criterio.excelente}</small></td>
+                <td><small>${criterio.bueno}</small></td>
+                <td><small>${criterio.regular}</small></td>
+                <td><small>${criterio.insuficiente}</small></td>
+                <td>
+                    <select class="criteria-evaluation">
+                        <option value="">Seleccionar...</option>
+                    </select>
+                </td>
+                <td>
+                    <button type="button" class="btn btn-secondary" onclick="editarCriterio(${index})" 
+                            style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">✏️</button>
+                    <button type="button" class="btn btn-danger" onclick="eliminarCriterio(${index})" 
+                            style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">🗑️</button>
+                </td>
+            `;
+            
+            const select = row.querySelector('.criteria-evaluation');
+            nivelesDesempeno.forEach(nivel => {
+                const option = document.createElement('option');
+                option.value = nivel.puntaje;
+                option.textContent = `${nivel.nombre} (${nivel.puntaje} pts)`;
+                if (currentEvaluation == nivel.puntaje) option.selected = true;
+                select.appendChild(option);
+            });
+
+            select.addEventListener('change', calcularNotaFinal);
+        }
+
+        /**
+         * Edita un criterio existente
+         */
+        function editarCriterio(index) {
+            const tbody = document.querySelector('#criteriosTable tbody');
+            const row = tbody.children[index];
+            const cells = row.querySelectorAll('td');
+            
+            const criterio = {
+                index: index,
+                nombre: cells[0].querySelector('div').textContent,
+                excelente: cells[1].querySelector('small').textContent,
+                bueno: cells[2].querySelector('small').textContent,
+                regular: cells[3].querySelector('small').textContent,
+                insuficiente: cells[4].querySelector('small').textContent
+            };
+            
+            abrirModalCriterio(criterio);
+        }
+
+        /**
+         * Elimina un criterio de la tabla
+         */
+        async function eliminarCriterio(index) {
+            const confirmed = await showCustomDialog('Confirmar eliminación', '¿Está seguro de eliminar este criterio?');
+            if (confirmed) {
+                const tbody = document.querySelector('#criteriosTable tbody');
+                tbody.deleteRow(index);
+                
+                Array.from(tbody.children).forEach((row, newIndex) => {
+                    const editBtn = row.querySelector('button[onclick*="editarCriterio"]');
+                    const deleteBtn = row.querySelector('button[onclick*="eliminarCriterio"]');
+                    if (editBtn) editBtn.setAttribute('onclick', `editarCriterio(${newIndex})`);
+                    if (deleteBtn) deleteBtn.setAttribute('onclick', `eliminarCriterio(${newIndex})`);
+                });
+                
+                calcularNotaFinal();
+                showToast('Criterio eliminado.', 'success');
+            }
+        }
+
+        // ==========================================
+        // CÁLCULO DE NOTAS
+        // ==========================================
+
+        /**
+         * Calcula la nota final basada en los criterios evaluados
+         */
+        function calcularNotaFinal() {
+            const evaluaciones = document.querySelectorAll('.criteria-evaluation');
+            let puntajeTotal = 0;
+            let criteriosEvaluados = 0;
+            let puntajeMaximo = 0;
+
+            evaluaciones.forEach(select => {
+                const puntaje = parseFloat(select.value);
+                if (!isNaN(puntaje)) {
+                    puntajeTotal += puntaje;
+                    criteriosEvaluados++;
+                }
+                const maxPuntajeNivel = Math.max(...nivelesDesempeno.map(n => n.puntaje));
+                puntajeMaximo += maxPuntajeNivel;
+            });
+
+            if (criteriosEvaluados === 0) {
+                window.calculoActual = null;
+                return;
+            }
+
+            const notaMinima = parseFloat(document.getElementById('notaMinima').value) || 1.0;
+            const notaMaxima = parseFloat(document.getElementById('notaMaxima').value) || 7.0;
+            const notaAprobacion = parseFloat(document.getElementById('notaAprobacion').value) || 4.0;
+            const exigencia = parseFloat(document.getElementById('exigencia').value) || 60;
+
+            const porcentajeLogro = (puntajeTotal / puntajeMaximo) * 100;
+
+            let notaFinal;
+            if (porcentajeLogro >= exigencia) {
+                const factorExtra = (porcentajeLogro - exigencia) / (100 - exigencia);
+                notaFinal = notaAprobacion + (factorExtra * (notaMaxima - notaAprobacion));
+            } else {
+                const factorBase = porcentajeLogro / exigencia;
+                notaFinal = notaMinima + (factorBase * (notaAprobacion - notaMinima));
+            }
+
+            const puntosAdicionalesCheck = document.getElementById('puntosAdicionalesCheck');
+            const puntosAgregar = parseFloat(document.getElementById('puntosAgregar').value) || 0;
+            
+            if (puntosAdicionalesCheck.checked && puntosAgregar > 0) {
+                notaFinal += puntosAgregar;
+            }
+
+            notaFinal = Math.max(notaMinima, Math.min(notaMaxima, notaFinal));
+
+            window.calculoActual = {
+                puntajeTotal,
+                puntajeMaximo,
+                porcentajeLogro,
+                notaFinal: Math.round(notaFinal * 10) / 10,
+                criteriosEvaluados
+            };
+        }
+
+        /**
+         * Toggle para mostrar/ocultar sección de puntos adicionales
+         */
+        function togglePuntosAdicionales() {
+            const checkbox = document.getElementById('puntosAdicionalesCheck');
+            const section = document.getElementById('puntosAdicionalesSection');
+            
+            if (checkbox.checked) {
+                calcularNotaFinal();
+                const notaMaxima = parseFloat(document.getElementById('notaMaxima').value) || 7.0;
+                
+                if (window.calculoActual && window.calculoActual.notaFinal >= notaMaxima) {
+                    showMessageDialog('Atención', 'El estudiante ya alcanzó la nota máxima. No se pueden agregar puntos adicionales.');
+                    checkbox.checked = false;
+                    return;
+                }
+                
+                section.style.display = 'block';
+            } else {
+                section.style.display = 'none';
+                document.getElementById('puntosAgregar').value = '';
+                document.getElementById('justificacionPuntos').value = '';
+            }
+        }
+
+        // ==========================================
+        // VISTA PREVIA Y GENERACIÓN DE REPORTES
+        // ==========================================
+
+        /**
+         * Genera la vista previa del reporte
+         */
+        function generarPreview() {
+            if (!validarFormulario()) {
+                showToast('Por favor complete todos los campos obligatorios.', 'error');
+                return;
+            }
+
+            calcularNotaFinal();
+            
+            if (!window.calculoActual || window.calculoActual.criteriosEvaluados === 0) {
+                showToast('Debe evaluar al menos un criterio.', 'error');
+                return;
+            }
+
+            const reportData = recopilarDatosFormulario();
+            currentReport = reportData;
+            
+            const reportHTML = generarHTMLReporte(reportData);
+            document.getElementById('reportPreviewContent').innerHTML = reportHTML;
+            
+            document.getElementById('previewModal').classList.add('active');
+        }
+
+        /**
+         * Valida que los campos obligatorios estén completos
+         */
+        function validarFormulario() {
+            const requiredFields = [
+                'nombreEstudiante', 'fecha', 'nombreDocente', 'asignatura',
+                'carrera', 'universidad', 'tituloEvaluacion'
+            ];
+            
+            for (const fieldId of requiredFields) {
+                const field = document.getElementById(fieldId);
+                if (!field.value.trim()) {
+                    field.focus();
+                    return false;
+                }
+            }
+
+            const puntosCheck = document.getElementById('puntosAdicionalesCheck');
+            if (puntosCheck.checked) {
+                const puntos = document.getElementById('puntosAgregar').value;
+                const justificacion = document.getElementById('justificacionPuntos').value;
+                
+                if (!puntos || !justificacion.trim()) {
+                    showToast('Si activa puntos adicionales, debe especificar la cantidad y justificación.', 'error');
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /**
+         * Recopila todos los datos del formulario
+         */
+        function recopilarDatosFormulario() {
+            const infoGeneral = {
+                nombreEstudiante: document.getElementById('nombreEstudiante').value,
+                fecha: document.getElementById('fecha').value,
+                nombreDocente: document.getElementById('nombreDocente').value,
+                asignatura: document.getElementById('asignatura').value,
+                carrera: document.getElementById('carrera').value,
+                universidad: document.getElementById('universidad').value,
+                tituloEvaluacion: document.getElementById('tituloEvaluacion').value,
+                descripcionEvaluacion: document.getElementById('descripcionEvaluacion').value
+            };
+
+            const configuracion = {
+                notaMinima: parseFloat(document.getElementById('notaMinima').value),
+                notaMaxima: parseFloat(document.getElementById('notaMaxima').value),
+                notaAprobacion: parseFloat(document.getElementById('notaAprobacion').value),
+                exigencia: parseFloat(document.getElementById('exigencia').value),
+                incremento: parseFloat(document.getElementById('incremento').value) || 0.1
+            };
+
+            const criterios = [];
+            const tbody = document.querySelector('#criteriosTable tbody');
+            
+            Array.from(tbody.children).forEach((row) => {
+                const cells = row.querySelectorAll('td');
+                const evaluacionSelect = cells[5].querySelector('select');
+                const evaluacionValue = evaluacionSelect.value;
+                
+                if (evaluacionValue !== '') {
+                    const nivelSeleccionado = nivelesDesempeno.find(n => n.puntaje == evaluacionValue);
+                    
+                    criterios.push({
+                        nombre: cells[0].querySelector('div').textContent,
+                        excelente: cells[1].querySelector('small').textContent,
+                        bueno: cells[2].querySelector('small').textContent,
+                        regular: cells[3].querySelector('small').textContent,
+                        insuficiente: cells[4].querySelector('small').textContent,
+                        evaluacion: evaluacionValue,
+                        nivelAlcanzado: nivelSeleccionado ? nivelSeleccionado.nombre : ''
+                    });
+                }
+            });
+
+            const feedback = {
+                comentario: document.getElementById('feedbackDocente').value,
+                puntosAdicionales: document.getElementById('puntosAdicionalesCheck').checked,
+                puntosAgregar: parseFloat(document.getElementById('puntosAgregar').value) || 0,
+                justificacionPuntos: document.getElementById('justificacionPuntos').value
+            };
+
+            const resultados = window.calculoActual || {};
+
+            return {
+                id: document.getElementById('reportForm').dataset.editId || crypto.randomUUID(),
+                infoGeneral,
+                configuracion,
+                nivelesDesempeno: [...nivelesDesempeno],
+                criterios,
+                feedback,
+                resultados,
+                fechaCreacion: new Date().toISOString(),
+                usuarioId: currentUser.id
+            };
+        }
+
+        /**
+         * Genera el HTML del reporte para vista previa
+         */
+        function generarHTMLReporte(data) {
+            const { infoGeneral, criterios, feedback, resultados } = data;
+            
+            return `
+                <div class="report-header">
+                    <h1 class="report-title">Reporte de Evaluación</h1>
+                    <div style="color: #718096;">
+                        <strong>Evaluación / Taller:</strong> ${infoGeneral.tituloEvaluacion || 'No especificada'}
+                    </div>
+                </div>
+
+                <div class="report-info">
+                    <div>
+                        <div class="report-info-item">
+                            <span class="report-info-label">Estudiante:</span>
+                            <span>${infoGeneral.nombreEstudiante}</span>
+                        </div>
+                        <div class="report-info-item">
+                            <span class="report-info-label">Carrera:</span>
+                            <span>${infoGeneral.carrera}</span>
+                        </div>
+                        <div class="report-info-item">
+                            <span class="report-info-label">Asignatura:</span>
+                            <span>${infoGeneral.asignatura}</span>
+                        </div>
+                        <div class="report-info-item">
+                            <span class="report-info-label">Universidad:</span>
+                            <span>${infoGeneral.universidad}</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="report-info-item">
+                            <span class="report-info-label">Docente:</span>
+                            <span>${infoGeneral.nombreDocente}</span>
+                        </div>
+                        <div class="report-info-item">
+                            <span class="report-info-label">Fecha:</span>
+                            <span>${new Date(infoGeneral.fecha).toLocaleDateString()}</span>
+                        </div>
+                        <div class="report-info-item">
+                            <span class="report-info-label">Descripción:</span>
+                            <span>${infoGeneral.descripcionEvaluacion || 'No especificada'}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="report-results">
+                    <h3>Resultados</h3>
+                    <div class="results-grid">
+                        <div class="result-item">
+                            <div class="result-value">${resultados.notaFinal || 0}</div>
+                            <div class="result-label">Nota Final</div>
+                        </div>
+                        <div class="result-item">
+                            <div class="result-value">${resultados.puntajeTotal || 0} de ${resultados.puntajeMaximo || 0}</div>
+                            <div class="result-label">Puntaje Total</div>
+                        </div>
+                        <div class="result-item">
+                            <div class="result-value">${Math.round(resultados.porcentajeLogro || 0)}%</div>
+                            <div class="result-label">% de Logro</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="criteria-details">
+                    <h3>Detalle de Criterios Evaluados</h3>
+                    <table class="criteria-table-report">
+                        <thead>
+                            <tr>
+                                <th>Criterio</th>
+                                <th>Nivel Alcanzado</th>
+                                <th>Excelente (${Math.max(...data.nivelesDesempeno.map(n => n.puntaje))} pts)</th>
+                                <th>Bueno</th>
+                                <th>Regular</th>
+                                <th>Insuficiente (${Math.min(...data.nivelesDesempeno.map(n => n.puntaje))} pts)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${criterios.map(criterio => `
+                                <tr>
+                                    <td><strong>${criterio.nombre}</strong></td>
+                                    <td style="text-align: center;">
+                                        <span style="background: #4299e1; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-weight: bold;">
+                                            ${criterio.nivelAlcanzado} (${criterio.evaluacion} pts)
+                                        </span>
+                                    </td>
+                                    <td><small>${criterio.excelente}</small></td>
+                                    <td><small>${criterio.bueno}</small></td>
+                                    <td><small>${criterio.regular}</small></td>
+                                    <td><small>${criterio.insuficiente}</small></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="feedback-section">
+                    <h3>Feedback del Docente</h3>
+                    <p>${feedback.comentario || 'Sin comentarios adicionales.'}</p>
+                    
+                    ${feedback.puntosAdicionales ? `
+                        <div style="margin-top: 1rem; padding: 1rem; background: #e6fffa; border-left: 4px solid #38b2ac; border-radius: 4px;">
+                            <strong>✨ Puntos Adicionales: +${feedback.puntosAgregar}</strong><br>
+                            <strong>Justificación:</strong> ${feedback.justificacionPuntos}
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        // ==========================================
+        // GESTIÓN DE REPORTES GUARDADOS
+        // ==========================================
+
+        /**
+         * Abre el modal para guardar el reporte
+         */
+        async function abrirModalGuardar() {
+            await loadLists();
+            document.getElementById('guardarModal').classList.add('active');
+        }
+
+        /**
+         * Confirma y guarda el reporte en la lista seleccionada
+         */
+        async function confirmarGuardarReporte() {
+            if (!currentReport) {
+                showToast('Error: No hay reporte para guardar.', 'error');
+                return;
+            }
+
+            const listaSeleccionada = document.getElementById('listaExistente').value;
+            const nuevaLista = document.getElementById('nuevaLista').value.trim();
+            
+            let listaId = listaSeleccionada || null;
+
+            if (nuevaLista) {
+                try {
+                    const response = await fetchAPI('/lists', {
+                        method: 'POST',
+                        body: JSON.stringify({ name: nuevaLista })
+                    });
+                    listaId = response.id;
+                    showToast('Nueva lista creada exitosamente.', 'success');
+                } catch (error) {
+                    showToast(`Error al crear la lista: ${error.message}`, 'error');
+                    return;
+                }
+            }
+
+            try {
+                let response;
+                if (document.getElementById('reportForm').dataset.editId) {
+                    // Actualizar reporte existente
+                    response = await fetchAPI(`/reports/${currentReport.id}`, {
+                        method: 'PUT',
+                        body: JSON.stringify({ ...currentReport, listaId })
+                    });
+                    showToast('Reporte actualizado exitosamente.', 'success');
+                } else {
+                    // Guardar nuevo reporte
+                    response = await fetchAPI('/reports', {
+                        method: 'POST',
+                        body: JSON.stringify({ ...currentReport, listaId })
+                    });
+                    showToast('Reporte guardado exitosamente.', 'success');
+                }
+                
+                cerrarModales();
+                document.getElementById('reportForm').reset();
+                document.querySelector('#criteriosTable tbody').innerHTML = '';
+                delete document.getElementById('reportForm').dataset.editId;
+                currentReport = null;
+
+                cargarReportesGuardados();
+                loadLists();
+
+            } catch (error) {
+                showToast(`Error al guardar el reporte: ${error.message}`, 'error');
+            }
+        }
+
+        /**
+         * Carga las listas disponibles en los selectores
+         */
+        async function loadLists() {
+            try {
+                const listas = await fetchAPI('/lists');
+                const selects = ['listaExistente', 'filtroLista'];
+                
+                selects.forEach(selectId => {
+                    const select = document.getElementById(selectId);
+                    if (!select) return;
+                    
+                    const currentValue = select.value;
+                    select.innerHTML = selectId === 'filtroLista' ? 
+                        '<option value="">Todas las Listas</option>' : 
+                        '<option value="">-- Sin Lista --</option>';
+                    
+                    listas.forEach(lista => {
+                        const option = document.createElement('option');
+                        option.value = lista.id;
+                        option.textContent = lista.name;
+                        if (currentValue == lista.id) option.selected = true;
+                        select.appendChild(option);
+                    });
+                });
+            } catch (error) {
+                showToast(`Error al cargar las listas: ${error.message}`, 'error');
+            }
+        }
+
+        /**
+         * Inicializa la página de reportes guardados
+         */
+        function initReportList() {
+            document.getElementById('aplicarFiltros').addEventListener('click', aplicarFiltros);
+            document.getElementById('busquedaReporte').addEventListener('input', aplicarFiltros);
+            document.getElementById('filtroLista').addEventListener('change', aplicarFiltros);
+            document.getElementById('descargarListadoPDF').addEventListener('click', descargarListadoCompleto);
+        }
+
+        /**
+         * Carga y muestra los reportes guardados
+         */
+        async function cargarReportesGuardados() {
+            const container = document.getElementById('listaReportes');
+            container.innerHTML = `
+                <div style="text-align: center; padding: 3rem; color: #718096;">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">
+                        <div class="loading"></div>
+                    </div>
+                    <h3>Cargando reportes...</h3>
+                </div>
+            `;
+            
+            try {
+                const reportes = await fetchAPI('/reports');
+                const listas = await fetchAPI('/lists');
+                
+                if (reportes.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 3rem; color: #718096;">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">📋</div>
+                            <h3>No hay reportes guardados</h3>
+                            <p>Los reportes que guarde aparecerán aquí.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Generar tarjetas de reportes
+                const reportesConLista = reportes.map(reporte => {
+                    const lista = listas.find(l => l.id === reporte.listaId);
+                    return { ...reporte, listaNombre: lista ? lista.name : 'Sin Lista' };
+                });
+
+                container.innerHTML = reportesConLista
+                    .sort((a, b) => new Date(b.fechaCreacion) - new Date(a.fechaCreacion))
+                    .map(reporte => generarCardReporte(reporte))
+                    .join('');
+
+            } catch (error) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 3rem; color: #f56565;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">❗</div>
+                        <h3>Error al cargar reportes</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        /**
+         * Genera la tarjeta HTML para un reporte
+         */
+        function generarCardReporte(reporte) {
+            const fecha = new Date(reporte.infoGeneral.fecha).toLocaleDateString();
+            const fechaCreacion = new Date(reporte.fechaCreacion).toLocaleDateString();
+            
+            return `
+                <div class="card reporte-card" data-reporte-id="${reporte.id}">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">${reporte.infoGeneral.tituloEvaluacion}</div>
+                            <div style="color: #718096; font-size: 0.875rem;">
+                                Creado el ${fechaCreacion}
+                            </div>
+                        </div>
+                        <div class="grade-badge">${reporte.resultados.notaFinal || 'N/A'}</div>
+                    </div>
+                    
+                    <div class="card-info">
+                        <div class="card-field">
+                            <label>Estudiante</label>
+                            <span>${reporte.infoGeneral.nombreEstudiante}</span>
+                        </div>
+                        <div class="card-field">
+                            <label>Fecha Evaluación</label>
+                            <span>${fecha}</span>
+                        </div>
+                        <div class="card-field">
+                            <label>Asignatura</label>
+                            <span>${reporte.infoGeneral.asignatura}</span>
+                        </div>
+                        <div class="card-field">
+                            <label>Lista</label>
+                            <span style="background: #e2e8f0; padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.75rem;">
+                                ${reporte.listaNombre || 'Sin Lista'}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="card-actions">
+                        <button class="btn btn-secondary" onclick="editarReporteGuardado('${reporte.id}')">
+                            ✏️ Editar
+                        </button>
+                        <button class="btn btn-primary" onclick="verVistaPrevia('${reporte.id}')">
+                            👁️ Vista Previa
+                        </button>
+                        <button class="btn btn-danger" onclick="eliminarReporte('${reporte.id}')">
+                            🗑️ Eliminar
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        /**
+         * Aplica filtros a la lista de reportes
+         */
+        function aplicarFiltros() {
+            const listaFiltro = document.getElementById('filtroLista').value;
+            const busqueda = document.getElementById('busquedaReporte').value.toLowerCase();
+            const tarjetas = document.querySelectorAll('.reporte-card');
+            
+            tarjetas.forEach(tarjeta => {
+                const reporteId = tarjeta.dataset.reporteId;
+                const reporte = window.reportesCache.find(r => r.id === reporteId);
+                if (!reporte) return;
+                
+                let mostrarPorLista = true;
+                if (listaFiltro) {
+                    mostrarPorLista = reporte.listaId == listaFiltro;
+                }
+                
+                let mostrarPorBusqueda = true;
+                if (busqueda) {
+                    const textoReporte = `
+                        ${reporte.infoGeneral.nombreEstudiante} 
+                        ${reporte.infoGeneral.tituloEvaluacion} 
+                        ${reporte.infoGeneral.asignatura}
+                    `.toLowerCase();
+                    mostrarPorBusqueda = textoReporte.includes(busqueda);
+                }
+                
+                tarjeta.style.display = (mostrarPorLista && mostrarPorBusqueda) ? 'block' : 'none';
+            });
+        }
+
+        // ==========================================
+        // ACCIONES DE REPORTES GUARDADOS
+        // ==========================================
+
+        /**
+         * Muestra la vista previa de un reporte guardado
+         */
+        async function verVistaPrevia(reporteId) {
+            try {
+                const reporte = await fetchAPI(`/reports/${reporteId}`);
+                if (!reporte) {
+                    showToast('Reporte no encontrado.', 'error');
+                    return;
+                }
+                const reportHTML = generarHTMLReporte(reporte);
+                document.getElementById('vistaReporteContent').innerHTML = reportHTML;
+                const modal = document.getElementById('vistaReporteModal');
+                modal.dataset.reporteId = reporteId;
+                modal.classList.add('active');
+            } catch (error) {
+                showToast(`Error al cargar la vista previa: ${error.message}`, 'error');
+            }
+        }
+
+        /**
+         * Usa un reporte como plantilla para crear uno nuevo
+         */
+        async function usarComoPlantilla() {
+            const modal = document.getElementById('vistaReporteModal');
+            const reporteId = modal.dataset.reporteId;
+            try {
+                const reporte = await fetchAPI(`/reports/${reporteId}`);
+                if (!reporte) {
+                    showToast('Reporte no encontrado.', 'error');
+                    return;
+                }
+                cerrarModales();
+                navigateToPage('nuevo-reporte');
+                setTimeout(() => {
+                    rellenarFormularioConPlantilla(reporte);
+                    showToast('Plantilla cargada. Modifique los datos necesarios.', 'success');
+                }, 100);
+            } catch (error) {
+                showToast(`Error al cargar la plantilla: ${error.message}`, 'error');
+            }
+        }
+
+        /**
+         * Rellena el formulario con datos de una plantilla
+         */
+        function rellenarFormularioConPlantilla(reporte) {
+            const { infoGeneral, configuracion, nivelesDesempeno: nivelesReporte, criterios } = reporte;
+            document.getElementById('reportForm').reset();
+            document.querySelector('#criteriosTable tbody').innerHTML = '';
+            delete document.getElementById('reportForm').dataset.editId;
+
+            document.getElementById('nombreDocente').value = infoGeneral.nombreDocente;
+            document.getElementById('asignatura').value = infoGeneral.asignatura;
+            document.getElementById('carrera').value = infoGeneral.carrera;
+            document.getElementById('universidad').value = infoGeneral.universidad;
+            document.getElementById('descripcionEvaluacion').value = infoGeneral.descripcionEvaluacion || '';
+            
+            document.getElementById('notaMinima').value = configuracion.notaMinima;
+            document.getElementById('notaMaxima').value = configuracion.notaMaxima;
+            document.getElementById('notaAprobacion').value = configuracion.notaAprobacion;
+            document.getElementById('exigencia').value = configuracion.exigencia;
+            document.getElementById('incremento').value = configuracion.incremento;
+            
+            nivelesDesempeno = [...nivelesReporte];
+            loadNivelesDesempeno();
+            
+            criterios.forEach(criterio => {
+                const criterioLimpio = {
+                    nombre: criterio.nombre,
+                    excelente: criterio.excelente,
+                    bueno: criterio.bueno,
+                    regular: criterio.regular,
+                    insuficiente: criterio.insuficiente
+                };
+                agregarFilaCriterio(criterioLimpio);
+            });
+            setTimeout(calcularNotaFinal, 100);
+        }
+
+        /**
+         * Edita un reporte guardado
+         */
+        async function editarReporteGuardado(reporteId) {
+            try {
+                const reporte = await fetchAPI(`/reports/${reporteId}`);
+                if (!reporte) {
+                    showToast('Reporte no encontrado.', 'error');
+                    return;
+                }
+                navigateToPage('nuevo-reporte');
+                setTimeout(() => {
+                    rellenarFormularioCompleto(reporte);
+                    document.getElementById('reportForm').dataset.editId = reporteId;
+                    showToast('Reporte cargado para edición.', 'success');
+                }, 100);
+            } catch (error) {
+                showToast(`Error al cargar el reporte: ${error.message}`, 'error');
+            }
+        }
+
+        /**
+         * Rellena el formulario completo con todos los datos del reporte
+         */
+        function rellenarFormularioCompleto(reporte) {
+            const { infoGeneral, configuracion, nivelesDesempeno: nivelesReporte, criterios, feedback } = reporte;
+            document.getElementById('reportForm').reset();
+            document.querySelector('#criteriosTable tbody').innerHTML = '';
+            
+            document.getElementById('nombreEstudiante').value = infoGeneral.nombreEstudiante;
+            document.getElementById('fecha').value = infoGeneral.fecha;
+            document.getElementById('nombreDocente').value = infoGeneral.nombreDocente;
+            document.getElementById('asignatura').value = infoGeneral.asignatura;
+            document.getElementById('carrera').value = infoGeneral.carrera;
+            document.getElementById('universidad').value = infoGeneral.universidad;
+            document.getElementById('tituloEvaluacion').value = infoGeneral.tituloEvaluacion;
+            document.getElementById('descripcionEvaluacion').value = infoGeneral.descripcionEvaluacion || '';
+            
+            document.getElementById('notaMinima').value = configuracion.notaMinima;
+            document.getElementById('notaMaxima').value = configuracion.notaMaxima;
+            document.getElementById('notaAprobacion').value = configuracion.notaAprobacion;
+            document.getElementById('exigencia').value = configuracion.exigencia;
+            document.getElementById('incremento').value = configuracion.incremento;
+            
+            nivelesDesempeno = [...nivelesReporte];
+            loadNivelesDesempeno();
+            
+            criterios.forEach(criterio => {
+                agregarFilaCriterio(criterio);
+                const ultimaFila = document.querySelector('#criteriosTable tbody').lastElementChild;
+                const select = ultimaFila.querySelector('.criteria-evaluation');
+                if (select && criterio.evaluacion !== undefined) {
+                    select.value = criterio.evaluacion;
+                }
+            });
+            
+            document.getElementById('feedbackDocente').value = feedback.comentario || '';
+            if (feedback.puntosAdicionales) {
+                document.getElementById('puntosAdicionalesCheck').checked = true;
+                document.getElementById('puntosAgregar').value = feedback.puntosAgregar;
+                document.getElementById('justificacionPuntos').value = feedback.justificacionPuntos;
+                document.getElementById('puntosAdicionalesSection').style.display = 'block';
+            } else {
+                 document.getElementById('puntosAdicionalesCheck').checked = false;
+                 document.getElementById('puntosAdicionalesSection').style.display = 'none';
+            }
+            
+            setTimeout(calcularNotaFinal, 100);
+        }
+
+        /**
+         * Elimina un reporte guardado
+         */
+        async function eliminarReporte(reporteId) {
+            const confirmed = await showCustomDialog('Confirmar eliminación', '¿Está seguro de eliminar este reporte? Esta acción no se puede deshacer.');
+            if (confirmed) {
+                try {
+                    await fetchAPI(`/reports/${reporteId}`, { method: 'DELETE' });
+                    await cargarReportesGuardados();
+                    showToast('Reporte eliminado exitosamente.', 'success');
+                } catch (error) {
+                    showToast(`Error al eliminar el reporte: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        // ==========================================
+        // DESCARGA DE REPORTES PDF
+        // ==========================================
+
+        /**
+         * Descarga el reporte actual como PDF
+         */
+        function descargarReportePDF() {
+            if (!currentReport) {
+                showToast('Error: No hay reporte para descargar.', 'error');
+                return;
+            }
+            showToast('Generando PDF... (Esta funcionalidad requiere una implementación de servidor para generar el PDF)', 'info');
+        }
+
+        /**
+         * Descarga un reporte guardado como PDF
+         */
+        function descargarReporteGuardadoPDF() {
+            showToast('Generando PDF... (Esta funcionalidad requiere una implementación de servidor para generar el PDF)', 'info');
+        }
+
+        /**
+         * Descarga el listado completo de reportes como PDF
+         */
+        function descargarListadoCompleto() {
+            showToast('Generando PDF del listado... (Esta funcionalidad requiere una implementación de servidor para generar el PDF)', 'info');
+        }
+
+        // ==========================================
+        // CARGA MASIVA
+        // ==========================================
+
+        /**
+         * Inicializa la funcionalidad de carga masiva
+         */
+        function initMassUpload() {
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('csvFile');
+            
+            uploadArea.addEventListener('click', () => fileInput.click());
+            uploadArea.addEventListener('dragover', handleDragOver);
+            uploadArea.addEventListener('dragleave', handleDragLeave);
+            uploadArea.addEventListener('drop', handleDrop);
+            fileInput.addEventListener('change', handleFileSelect);
+            
+            document.getElementById('descargarPlantilla').addEventListener('click', descargarPlantillaCSV);
+            document.getElementById('procesarCSV').addEventListener('click', procesarArchivoCSV);
+        }
+
+        /**
+         * Maneja el evento dragover para el área de carga
+         */
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('dragover');
+        }
+
+        /**
+         * Maneja el evento dragleave para el área de carga
+         */
+        function handleDragLeave(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('dragover');
+        }
+
+        /**
+         * Maneja el evento drop para el área de carga
+         */
+        function handleDrop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleSelectedFile(files[0]);
+            }
+        }
+
+        /**
+         * Maneja la selección de archivo
+         */
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                handleSelectedFile(file);
+            }
+        }
+
+        /**
+         * Procesa el archivo seleccionado
+         */
+        function handleSelectedFile(file) {
+            if (!file.name.toLowerCase().endsWith('.csv')) {
+                showToast('Por favor seleccione un archivo CSV válido.', 'error');
+                return;
+            }
+            
+            const uploadArea = document.getElementById('uploadArea');
+            uploadArea.innerHTML = `
+                <div style="font-size: 2rem; margin-bottom: 1rem; color: #48bb78;">✓</div>
+                <p><strong>Archivo seleccionado:</strong> ${file.name}</p>
+                <p style="color: #718096; font-size: 0.875rem;">Tamaño: ${(file.size / 1024).toFixed(2)} KB</p>
+            `;
+            document.getElementById('procesarCSV').disabled = false;
+            window.selectedCSVFile = file;
+        }
+
+        /**
+         * Descarga la plantilla CSV
+         */
+        function descargarPlantillaCSV() {
+            const headers = [
+                'nombreEstudiante', 'fecha', 'nombreDocente', 'asignatura', 'carrera', 
+                'universidad', 'tituloEvaluacion', 'descripcionEvaluacion',
+                'criterio1_nombre', 'criterio1_evaluacion',
+                'criterio2_nombre', 'criterio2_evaluacion',
+                'criterio3_nombre', 'criterio3_evaluacion',
+                'feedbackDocente', 'puntosAdicionales', 'justificacionPuntos'
+            ];
+            
+            const csvContent = headers.join(',') + '\n' + 
+                'Juan Pérez,2024-03-15,María González,Matemáticas,Ingeniería,Universidad ABC,Examen Final,Evaluación de conocimientos básicos,Resolución de Problemas,3,Participación en Clase,2,Trabajo en Equipo,3,Excelente desempeño en todas las áreas,0.5,Participación sobresaliente';
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'plantilla_reportes.csv');
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showToast('Plantilla CSV descargada exitosamente.', 'success');
+        }
+
+        /**
+         * Procesa el archivo CSV subido
+         */
+        async function procesarArchivoCSV() {
+            if (!window.selectedCSVFile) {
+                showToast('Por favor seleccione un archivo CSV primero.', 'error');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const csv = e.target.result;
+                    const reportesGenerados = parsearCSV(csv);
+                    
+                    if (reportesGenerados.length > 0) {
+                        await procesarReportesMasivos(reportesGenerados);
+                    } else {
+                        showToast('No se encontraron datos válidos en el archivo CSV.', 'error');
+                    }
+                } catch (error) {
+                    showToast('Error al procesar el archivo CSV: ' + error.message, 'error');
+                }
+            };
+            
+            reader.readAsText(window.selectedCSVFile);
+        }
+
+        /**
+         * Parsea el contenido CSV y genera reportes
+         */
+        function parsearCSV(csvContent) {
+            const lineas = csvContent.split('\n').filter(linea => linea.trim());
+            if (lineas.length < 2) {
+                throw new Error('El archivo CSV debe tener al menos una fila de encabezados y una fila de datos.');
+            }
+            
+            const headers = lineas[0].split(',').map(h => h.trim());
+            const reportesGenerados = [];
+            
+            for (let i = 1; i < lineas.length; i++) {
+                const valores = lineas[i].split(',').map(v => v.trim());
+                if (valores.length < headers.length) continue;
+                
+                try {
+                    const reporte = generarReporteDesdeCSV(headers, valores);
+                    if (reporte) {
+                        reportesGenerados.push(reporte);
+                    }
+                } catch (error) {
+                    console.warn(`Error en fila ${i + 1}:`, error.message);
+                }
+            }
+            
+            return reportesGenerados;
+        }
+
+        /**
+         * Genera un reporte desde una fila CSV
+         */
+        function generarReporteDesdeCSV(headers, valores) {
+            const datos = {};
+            headers.forEach((header, index) => {
+                datos[header] = valores[index] || '';
+            });
+            
+            const camposObligatorios = ['nombreEstudiante', 'fecha', 'nombreDocente', 'asignatura', 'carrera'];
+            for (const campo of camposObligatorios) {
+                if (!datos[campo]) {
+                    throw new Error(`Campo obligatorio faltante: ${campo}`);
+                }
+            }
+            
+            const infoGeneral = {
+                nombreEstudiante: datos.nombreEstudiante,
+                fecha: datos.fecha,
+                nombreDocente: datos.nombreDocente,
+                asignatura: datos.asignatura,
+                carrera: datos.carrera,
+                universidad: datos.universidad || currentUser.university,
+                tituloEvaluacion: datos.tituloEvaluacion || 'Evaluación Importada',
+                descripcionEvaluacion: datos.descripcionEvaluacion || ''
+            };
+            
+            const criterios = [];
+            for (let i = 1; i <= 10; i++) {
+                const nombreCriterio = datos[`criterio${i}_nombre`];
+                const evaluacionCriterio = datos[`criterio${i}_evaluacion`];
+                
+                if (nombreCriterio && evaluacionCriterio !== '') {
+                    criterios.push({
+                        nombre: nombreCriterio,
+                        excelente: 'Cumple completamente con el criterio',
+                        bueno: 'Cumple adecuadamente con el criterio',
+                        regular: 'Cumple parcialmente con el criterio',
+                        insuficiente: 'No cumple con el criterio',
+                        evaluacion: parseFloat(evaluacionCriterio) || 0,
+                        nivelAlcanzado: obtenerNivelPorPuntaje(parseFloat(evaluacionCriterio) || 0)
+                    });
+                }
+            }
+            
+            if (criterios.length === 0) {
+                throw new Error('No se encontraron criterios válidos');
+            }
+            
+            const puntajeTotal = criterios.reduce((sum, c) => sum + parseFloat(c.evaluacion), 0);
+            const puntajeMaximo = criterios.length * Math.max(...nivelesDesempeno.map(n => n.puntaje));
+            const porcentajeLogro = (puntajeTotal / puntajeMaximo) * 100;
+            
+            const notaMinima = 1.0;
+            const notaMaxima = 7.0;
+            const notaAprobacion = 4.0;
+            const exigencia = 60;
+            
+            let notaFinal;
+            if (porcentajeLogro >= exigencia) {
+                const factorExtra = (porcentajeLogro - exigencia) / (100 - exigencia);
+                notaFinal = notaAprobacion + (factorExtra * (notaMaxima - notaAprobacion));
+            } else {
+                const factorBase = porcentajeLogro / exigencia;
+                notaFinal = notaMinima + (factorBase * (notaAprobacion - notaMinima));
+            }
+            
+            const puntosAdicionales = parseFloat(datos.puntosAdicionales) || 0;
+            if (puntosAdicionales > 0) {
+                notaFinal += puntosAdicionales;
+            }
+            notaFinal = Math.max(notaMinima, Math.min(notaMaxima, notaFinal));
+            
+            return {
+                infoGeneral,
+                configuracion: {
+                    notaMinima,
+                    notaMaxima,
+                    notaAprobacion,
+                    exigencia,
+                    incremento: 0.1
+                },
+                nivelesDesempeno: [...nivelesDesempeno],
+                criterios,
+                feedback: {
+                    comentario: datos.feedbackDocente || '',
+                    puntosAdicionales: puntosAdicionales > 0,
+                    puntosAgregar: puntosAdicionales,
+                    justificacionPuntos: datos.justificacionPuntos || ''
+                },
+                resultados: {
+                    puntajeTotal,
+                    puntajeMaximo,
+                    porcentajeLogro: Math.round(porcentajeLogro),
+                    notaFinal: Math.round(notaFinal * 10) / 10
+                },
+                fechaCreacion: new Date().toISOString()
+            };
+        }
+
+        /**
+         * Obtiene el nivel por puntaje
+         */
+        function obtenerNivelPorPuntaje(puntaje) {
+            const nivel = nivelesDesempeno.find(n => n.puntaje === puntaje);
+            return nivel ? nivel.nombre : 'No definido';
+        }
+
+        /**
+         * Procesa los reportes generados masivamente
+         */
+        async function procesarReportesMasivos(reportesNuevos) {
+            const sobrescribir = document.getElementById('sobrescribirReportes').checked;
+            let reportesActualizados = 0;
+            let reportesNuevosCount = 0;
+            
+            for (const reporteNuevo of reportesNuevos) {
+                const existingReports = await fetchAPI('/reports/search', {
+                    method: 'POST',
+                    body: JSON.stringify({ 
+                        title: reporteNuevo.infoGeneral.tituloEvaluacion,
+                        student: reporteNuevo.infoGeneral.nombreEstudiante
+                    })
+                });
+
+                if (existingReports.length > 0 && sobrescribir) {
+                    const existingReport = existingReports[0];
+                    await fetchAPI(`/reports/${existingReport.id}`, {
+                        method: 'PUT',
+                        body: JSON.stringify(reporteNuevo)
+                    });
+                    reportesActualizados++;
+                } else if (existingReports.length === 0) {
+                    await fetchAPI('/reports', {
+                        method: 'POST',
+                        body: JSON.stringify(reporteNuevo)
+                    });
+                    reportesNuevosCount++;
+                }
+            }
+
+            const container = document.getElementById('resultadosCarga');
+            const estadisticas = document.getElementById('estadisticasCarga');
+            estadisticas.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    <div class="result-item">
+                        <div class="result-value">${reportesNuevos.length}</div>
+                        <div class="result-label">Reportes Procesados</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-value">${reportesNuevosCount}</div>
+                        <div class="result-label">Reportes Nuevos</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-value">${reportesActualizados}</div>
+                        <div class="result-label">Reportes Actualizados</div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 1.5rem;">
+                    <h4>Resumen de Importación:</h4>
+                    <ul>
+                        <li>✅ ${reportesNuevos.length} reportes procesados exitosamente</li>
+                        <li>➕ ${reportesNuevosCount} reportes agregados como nuevos</li>
+                        <li>🔄 ${reportesActualizados} reportes actualizados</li>
+                        <li>📊 Todos los reportes fueron guardados en la lista "Carga Masiva"</li>
+                    </ul>
+                </div>
+            `;
+            container.style.display = 'block';
+            showToast('Carga masiva completada exitosamente!', 'success');
+            await cargarReportesGuardados();
+        }
+
+        // ==========================================
+        // INICIALIZACIÓN
+        // ==========================================
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            initAuth();
+            const today = new Date().toISOString().split('T')[0];
+            if (document.getElementById('fecha')) {
+                document.getElementById('fecha').value = today;
+            }
+        });
+    </script>
+</body>
+</html>

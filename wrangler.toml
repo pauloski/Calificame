@@ -1,11 +1,10 @@
 name = "plataforma-evaluacion"
 compatibility_date = "2024-03-15"
 
+# Configuración para Pages Functions
+pages_build_output_dir = "./"
+
 [[d1_databases]]
 binding = "DB"
 database_name = "evaluacion-docente-db"
 database_id = "3ef202f2-6274-40ee-87e2-8252433e764b"
-
-[site]
-bucket = "./"
-entry-point = "worker.js"

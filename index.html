@@ -1422,32 +1422,49 @@ function loadScript(src) {
         /**
          * Inicializa la aplicación principal y sus eventos
          */
-        function initMainApp() {
-            document.querySelectorAll('.nav-btn[data-page]').forEach(btn => {
-                btn.addEventListener('click', () => navigateToPage(btn.dataset.page));
-            });
-            initReportForm();
-            initReportList();
-            initMassUpload();
-            loadLists();
+   
+function initMainApp() {
+    // Inicializar cache de reportes
+    window.reportesCache = [];
+    
+    document.querySelectorAll('.nav-btn[data-page]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            navigateToPage(btn.dataset.page);
+            // Cargar reportes cuando se navega a la página de reportes guardados
+            if (btn.dataset.page === 'reportes-guardados') {
+                setTimeout(cargarReportesGuardados, 100);
+            }
+        });
+    });
+    
+    initReportForm();
+    initReportList();
+    initMassUpload();
+    loadLists();
+    
+    // Cargar reportes al inicializar
+    setTimeout(cargarReportesGuardados, 500);
+}
+
+
+/**
+ * Navega entre las páginas principales de la aplicación (ACTUALIZADO)
+ */
+function navigateToPage(page) {
+    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelector(`[data-page="${page}"]`).classList.add('active');
+    document.querySelectorAll('#mainApp .page').forEach(p => p.classList.remove('active'));
+    document.getElementById(page).classList.add('active');
+    
+    // Cargar datos específicos de la página
+    if (page === 'reportes-guardados') {
+        // Asegurar que los reportes estén cargados
+        if (!window.reportesCache || window.reportesCache.length === 0) {
             cargarReportesGuardados();
-
-
         }
+    }
+}
 
-
-
-
-
-        /**
-         * Navega entre las páginas principales de la aplicación
-         */
-        function navigateToPage(page) {
-            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelector(`[data-page="${page}"]`).classList.add('active');
-            document.querySelectorAll('#mainApp .page').forEach(p => p.classList.remove('active'));
-            document.getElementById(page).classList.add('active');
-        }
 
         // ==========================================
         // FORMULARIO DE REPORTE - INICIALIZACIÓN
@@ -2245,53 +2262,96 @@ function loadScript(src) {
         /**
          * Carga y muestra los reportes guardados
          */
-        async function cargarReportesGuardados() {
-            const container = document.getElementById('listaReportes');
+    
+/**
+ * Versión mejorada de cargarReportesGuardados con mejor manejo de errores
+ */
+async function cargarReportesGuardados() {
+    const container = document.getElementById('listaReportes');
+    
+    // No mostrar loading si ya estamos cargando
+    if (window.cargandoReportes) {
+        return;
+    }
+    
+    window.cargandoReportes = true;
+    
+    container.innerHTML = `
+        <div style="text-align: center; padding: 3rem; color: #718096;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">
+                <div class="loading"></div>
+            </div>
+            <h3>Cargando reportes...</h3>
+        </div>
+    `;
+    
+    try {
+        const [reportes, listas] = await Promise.all([
+            fetchAPI('/reports'),
+            fetchAPI('/lists')
+        ]);
+        
+        console.log('Reportes cargados:', reportes.length);
+        console.log('Listas cargadas:', listas.length);
+        
+        if (reportes.length === 0) {
             container.innerHTML = `
                 <div style="text-align: center; padding: 3rem; color: #718096;">
-                    <div style="font-size: 3rem; margin-bottom: 1rem;">
-                        <div class="loading"></div>
-                    </div>
-                    <h3>Cargando reportes...</h3>
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">📋</div>
+                    <h3>No hay reportes guardados</h3>
+                    <p>Los reportes que guarde aparecerán aquí.</p>
                 </div>
             `;
-            
-            try {
-                const reportes = await fetchAPI('/reports');
-                const listas = await fetchAPI('/lists');
-                
-                if (reportes.length === 0) {
-                    container.innerHTML = `
-                        <div style="text-align: center; padding: 3rem; color: #718096;">
-                            <div style="font-size: 3rem; margin-bottom: 1rem;">📋</div>
-                            <h3>No hay reportes guardados</h3>
-                            <p>Los reportes que guarde aparecerán aquí.</p>
-                        </div>
-                    `;
-                    return;
-                }
-
-                // Generar tarjetas de reportes
-                const reportesConLista = reportes.map(reporte => {
-                    const lista = listas.find(l => l.id === reporte.listaId);
-                    return { ...reporte, listaNombre: lista ? lista.name : 'Sin Lista' };
-                });
-
-                container.innerHTML = reportesConLista
-                    .sort((a, b) => new Date(b.fechaCreacion) - new Date(a.fechaCreacion))
-                    .map(reporte => generarCardReporte(reporte))
-                    .join('');
-
-            } catch (error) {
-                container.innerHTML = `
-                    <div style="text-align: center; padding: 3rem; color: #f56565;">
-                        <div style="font-size: 3rem; margin-bottom: 1rem;">❗</div>
-                        <h3>Error al cargar reportes</h3>
-                        <p>${error.message}</p>
-                    </div>
-                `;
-            }
+            window.reportesCache = [];
+            return;
         }
+
+        // Generar tarjetas de reportes con mapeo correcto de listas
+        const reportesConLista = reportes.map(reporte => {
+            // Mapear correctamente el campo list_id de la DB a listaId
+            const listaId = reporte.list_id || reporte.listaId;
+            const lista = listas.find(l => l.id === listaId);
+            const resultado = { 
+                ...reporte, 
+                listaId: listaId, // Asegurar que listaId esté disponible
+                listaNombre: lista ? lista.name : 'Sin Lista' 
+            };
+            console.log(`Reporte ${reporte.id}: listaId=${listaId}, listaNombre=${resultado.listaNombre}`);
+            return resultado;
+        });
+
+        // IMPORTANTE: Guardar los reportes en caché para los filtros
+        window.reportesCache = reportesConLista;
+        
+        console.log('Cache establecido con', window.reportesCache.length, 'reportes');
+
+        container.innerHTML = reportesConLista
+            .sort((a, b) => new Date(b.fechaCreacion || b.created_at) - new Date(a.fechaCreacion || a.created_at))
+            .map(reporte => generarCardReporte(reporte))
+            .join('');
+
+        console.log('Reportes renderizados exitosamente');
+
+    } catch (error) {
+        console.error('Error al cargar reportes:', error);
+        window.reportesCache = [];
+        container.innerHTML = `
+            <div style="text-align: center; padding: 3rem; color: #f56565;">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">⚠</div>
+                <h3>Error al cargar reportes</h3>
+                <p>${error.message}</p>
+                <button class="btn btn-primary" onclick="cargarReportesGuardados()" style="margin-top: 1rem;">
+                    Reintentar
+                </button>
+            </div>
+        `;
+    } finally {
+        window.cargandoReportes = false;
+    }
+}
+
+
+
 
         /**
          * Genera la tarjeta HTML para un reporte

@@ -1110,6 +1110,27 @@
             { nombre: 'Excelente', puntaje: 3 }
         ];
 
+
+/**
+ * Carga todas las librerías necesarias para la generación de PDF.
+ */
+async function loadPdfLibraries() {
+  try {
+    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
+    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js");
+    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.0/jspdf.plugin.autotable.min.js");
+    console.log("Librerías PDF cargadas exitosamente.");
+  } catch (error) {
+    console.error("Error al cargar las librerías PDF:", error);
+    showToast("No se pudieron cargar las librerías de PDF. Intente recargar la página.", "error");
+  }
+}
+
+
+
+
+
+
         // ==========================================
         // UTILITIES
         // ==========================================
@@ -1403,22 +1424,6 @@ function loadScript(src) {
     document.head.appendChild(script);
   });
 }
-
-/**
- * Carga todas las librerías necesarias para la generación de PDF.
- */
-async function loadPdfLibraries() {
-  try {
-    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
-    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js");
-    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.0/jspdf.plugin.autotable.min.js");
-    console.log("Librerías PDF cargadas exitosamente.");
-  } catch (error) {
-    console.error("Error al cargar las librerías PDF:", error);
-    showToast("No se pudieron cargar las librerías de PDF. Intente recargar la página.", "error");
-  }
-}
-
 
 
 

@@ -2299,26 +2299,13 @@ async function loadLists() {
          */
     
 /**
- * Versión mejorada de cargarReportesGuardados con mejor manejo de errores
+ * Actualizar cargarReportesGuardados para manejar mejor la asignación de listas
  */
 async function cargarReportesGuardados() {
     const container = document.getElementById('listaReportes');
     
-    // No mostrar loading si ya estamos cargando
-    if (window.cargandoReportes) {
-        return;
-    }
-    
+    if (window.cargandoReportes) return;
     window.cargandoReportes = true;
-    
-    container.innerHTML = `
-        <div style="text-align: center; padding: 3rem; color: #718096;">
-            <div style="font-size: 3rem; margin-bottom: 1rem;">
-                <div class="loading"></div>
-            </div>
-            <h3>Cargando reportes...</h3>
-        </div>
-    `;
     
     try {
         const [reportes, listas] = await Promise.all([
@@ -2329,7 +2316,24 @@ async function cargarReportesGuardados() {
         console.log('Reportes cargados:', reportes.length);
         console.log('Listas cargadas:', listas.length);
         
-        if (reportes.length === 0) {
+        // Mapear reportes con información de lista consistente
+        const reportesNormalizados = reportes.map(reporte => {
+            const listaId = reporte.listaId || reporte.list_id;
+            const lista = listas.find(l => l.id === listaId);
+            
+            return {
+                ...reporte,
+                listaId: listaId || null,
+                list_id: listaId || null,
+                listaNombre: lista ? lista.name : 'Sin Lista'
+            };
+        });
+
+        // Actualizar caché con datos normalizados
+        window.reportesCache = reportesNormalizados;
+        
+        // Renderizar reportes
+        if (reportesNormalizados.length === 0) {
             container.innerHTML = `
                 <div style="text-align: center; padding: 3rem; color: #718096;">
                     <div style="font-size: 3rem; margin-bottom: 1rem;">📋</div>
@@ -2337,39 +2341,21 @@ async function cargarReportesGuardados() {
                     <p>Los reportes que guarde aparecerán aquí.</p>
                 </div>
             `;
-            window.reportesCache = [];
             return;
         }
 
-        // Generar tarjetas de reportes con mapeo correcto de listas
-        const reportesConLista = reportes.map(reporte => {
-            // Mapear correctamente el campo list_id de la DB a listaId
-            const listaId = reporte.list_id || reporte.listaId;
-            const lista = listas.find(l => l.id === listaId);
-            const resultado = { 
-                ...reporte, 
-                listaId: listaId, // Asegurar que listaId esté disponible
-                listaNombre: lista ? lista.name : 'Sin Lista' 
-            };
-            console.log(`Reporte ${reporte.id}: listaId=${listaId}, listaNombre=${resultado.listaNombre}`);
-            return resultado;
-        });
-
-        // IMPORTANTE: Guardar los reportes en caché para los filtros
-        window.reportesCache = reportesConLista;
-        
-        console.log('Cache establecido con', window.reportesCache.length, 'reportes');
-
-        container.innerHTML = reportesConLista
+        // Ordenar y renderizar reportes
+        container.innerHTML = reportesNormalizados
             .sort((a, b) => new Date(b.fechaCreacion || b.created_at) - new Date(a.fechaCreacion || a.created_at))
             .map(reporte => generarCardReporte(reporte))
             .join('');
 
-        console.log('Reportes renderizados exitosamente');
+        reportesNormalizados.forEach(reporte => {
+            console.log(`Reporte ${reporte.id}: listaId=${reporte.listaId}, listaNombre=${reporte.listaNombre}`);
+        });
 
     } catch (error) {
         console.error('Error al cargar reportes:', error);
-        window.reportesCache = [];
         container.innerHTML = `
             <div style="text-align: center; padding: 3rem; color: #f56565;">
                 <div style="font-size: 3rem; margin-bottom: 1rem;">⚠</div>
@@ -2384,9 +2370,6 @@ async function cargarReportesGuardados() {
         window.cargandoReportes = false;
     }
 }
-
-
-
 
         /**
          * Genera la tarjeta HTML para un reporte
@@ -3221,6 +3204,36 @@ async function procesarReportesMasivos(reportesNuevos) {
 
 
 /**
+ * Procesa la lista y retorna el ID correspondiente
+ */
+async function procesarLista(nombreLista) {
+    try {
+        if (!nombreLista || nombreLista.trim().toLowerCase() === 'false') {
+            return null;
+        }
+
+        const nombreListaLimpio = nombreLista.trim();
+        const listas = await fetchAPI('/lists');
+        let listaExistente = listas.find(l => 
+            l.name.toLowerCase() === nombreListaLimpio.toLowerCase()
+        );
+        
+        if (!listaExistente) {
+            const nuevaLista = await fetchAPI('/lists', {
+                method: 'POST',
+                body: JSON.stringify({ name: nombreListaLimpio })
+            });
+            return nuevaLista.id;
+        }
+        
+        return listaExistente.id;
+    } catch (error) {
+        console.error('Error procesando lista:', error);
+        return null;
+    }
+}
+
+/**
  * Genera un reporte desde una fila CSV
  */
 async function generarReporteDesdeCSV(headers, valores) {
@@ -3354,28 +3367,14 @@ async function generarReporteDesdeCSV(headers, valores) {
             usuarioId: currentUser.id
         };
 
-        // Procesar lista
-        if (datos.lista && datos.lista.trim() && datos.lista.toLowerCase() !== 'false') {
-            try {
-                const listas = await fetchAPI('/lists');
-                let listaExistente = listas.find(l => 
-                    l.name.toLowerCase() === datos.lista.trim().toLowerCase()
-                );
-                
-                if (!listaExistente) {
-                    const nuevaLista = await fetchAPI('/lists', {
-                        method: 'POST',
-                        body: JSON.stringify({ name: datos.lista.trim() })
-                    });
-                    reporte.listaId = nuevaLista.id;
-                } else {
-                    reporte.listaId = listaExistente.id;
-                }
-            } catch (error) {
-                console.warn('Error al procesar lista:', error);
+       // Procesar lista de manera más robusta
+        if (datos.lista) {
+            const listaId = await procesarLista(datos.lista);
+            if (listaId) {
+                reporte.listaId = listaId;
+                reporte.list_id = listaId; // Asegurar compatibilidad con ambos formatos
             }
         }
-
         return reporte;
     } catch (error) {
         console.error('Error en generación de reporte:', error);

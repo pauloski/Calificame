@@ -2600,6 +2600,7 @@ async function cargarReportesGuardados() {
                 try {
                     await fetchAPI(`/reports/${reporteId}`, { method: 'DELETE' });
                     await cargarReportesGuardados();
+                     await loadLists(); // Recargar listas en caso de que se haya eliminado la última referencia
                     showToast('Reporte eliminado exitosamente.', 'success');
                 } catch (error) {
                     showToast(`Error al eliminar el reporte: ${error.message}`, 'error');

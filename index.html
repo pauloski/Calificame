@@ -3224,138 +3224,166 @@ async function procesarReportesMasivos(reportesNuevos) {
  * Genera un reporte desde una fila CSV
  */
 async function generarReporteDesdeCSV(headers, valores) {
-    const datos = {};
-    headers.forEach((header, index) => {
-        datos[header] = valores[index] || '';
-    });
-    
-    // Validar campos obligatorios
-    const camposObligatorios = ['nombreEstudiante', 'fecha', 'nombreDocente', 'asignatura', 'carrera'];
-    for (const campo of camposObligatorios) {
-        if (!datos[campo]) {
-            throw new Error(`Campo obligatorio faltante: ${campo}`);
-        }
-    }
-
-    // Procesar criterios y calcular puntajes
-    let criterios = [];
-    let puntajeTotal = 0;
-    let puntajeMaximo = 0;
-    let criterioIndex = 1;
-    
-    // Definir niveles de evaluación por defecto si no existen
-    const nivelesBase = [
-        { nombre: 'Insuficiente', puntaje: 0 },
-        { nombre: 'Regular', puntaje: 1 },
-        { nombre: 'Bueno', puntaje: 2 },
-        { nombre: 'Excelente', puntaje: 3 }
-    ];
-
-    while (datos[`criterio${criterioIndex}_nombre`]) {
-        const evaluacion = parseInt(datos[`criterio${criterioIndex}_evaluacion`]) || 0;
-        const nivel = nivelesBase.find(n => n.puntaje === evaluacion);
-        
-        criterios.push({
-            nombre: datos[`criterio${criterioIndex}_nombre`],
-            evaluacion: evaluacion,
-            nivelAlcanzado: nivel ? nivel.nombre : 'No definido',
-            excelente: "Nivel excelente (3 pts)",
-            bueno: "Nivel bueno (2 pts)",
-            regular: "Nivel regular (1 pt)",
-            insuficiente: "Nivel insuficiente (0 pts)"
+    try {
+        const datos = {};
+        headers.forEach((header, index) => {
+            datos[header] = valores[index] ? valores[index].trim() : '';
         });
-        
-        puntajeTotal += evaluacion;
-        puntajeMaximo += 3; // Máximo puntaje posible por criterio
-        criterioIndex++;
-    }
 
-    // Calcular nota final
-    const notaMinima = 1.0;
-    const notaMaxima = 7.0;
-    const notaAprobacion = 4.0;
-    const exigencia = 60;
-    
-    const porcentajeLogro = (puntajeTotal / puntajeMaximo) * 100;
-    
-    let notaFinal;
-    if (porcentajeLogro >= exigencia) {
-        const factorExtra = (porcentajeLogro - exigencia) / (100 - exigencia);
-        notaFinal = notaAprobacion + (factorExtra * (notaMaxima - notaAprobacion));
-    } else {
-        const factorBase = porcentajeLogro / exigencia;
-        notaFinal = notaMinima + (factorBase * (notaAprobacion - notaMinima));
-    }
+        // Validación estricta de campos obligatorios
+        const camposObligatorios = [
+            'nombreEstudiante',
+            'fecha',
+            'nombreDocente',
+            'asignatura',
+            'carrera',
+            'tituloEvaluacion'
+        ];
 
-    // Ajustar nota por puntos adicionales
-    if (datos.puntosAdicionales === 'true' && datos.puntosAgregar) {
-        const puntosExtra = parseFloat(datos.puntosAgregar) || 0;
-        notaFinal += puntosExtra;
-    }
-
-    // Asegurar que la nota esté dentro del rango permitido
-    notaFinal = Math.max(notaMinima, Math.min(notaMaxima, notaFinal));
-    notaFinal = Math.round(notaFinal * 10) / 10; // Redondear a 1 decimal
-
-    const reporte = {
-        id: crypto.randomUUID(),
-        infoGeneral: {
-            nombreEstudiante: datos.nombreEstudiante,
-            fecha: datos.fecha,
-            nombreDocente: datos.nombreDocente,
-            asignatura: datos.asignatura,
-            carrera: datos.carrera,
-            universidad: datos.universidad || currentUser.university,
-            tituloEvaluacion: datos.tituloEvaluacion || 'Sin título',
-            descripcionEvaluacion: datos.descripcionEvaluacion || ''
-        },
-        configuracion: {
-            notaMinima: notaMinima,
-            notaMaxima: notaMaxima,
-            notaAprobacion: notaAprobacion,
-            exigencia: exigencia,
-            incremento: 0.1
-        },
-        nivelesDesempeno: [...nivelesBase],
-        criterios: criterios,
-        feedback: {
-            comentario: datos.feedbackDocente || '',
-            puntosAdicionales: datos.puntosAdicionales === 'true',
-            puntosAgregar: parseFloat(datos.puntosAgregar) || 0,
-            justificacionPuntos: datos.justificacionPuntos || ''
-        },
-        resultados: {
-            notaFinal: notaFinal,
-            puntajeTotal: puntajeTotal,
-            puntajeMaximo: puntajeMaximo,
-            porcentajeLogro: porcentajeLogro
-        },
-        fechaCreacion: new Date().toISOString(),
-        usuarioId: currentUser.id
-    };
-
-    // Manejar asignación a lista
-    if (datos.lista) {
-        try {
-            const listas = await fetchAPI('/lists');
-            let listaExistente = listas.find(l => l.name.toLowerCase() === datos.lista.toLowerCase());
-            
-            if (!listaExistente) {
-                const nuevaLista = await fetchAPI('/lists', {
-                    method: 'POST',
-                    body: JSON.stringify({ name: datos.lista })
-                });
-                reporte.listaId = nuevaLista.id;
-            } else {
-                reporte.listaId = listaExistente.id;
+        // Verificar que todos los campos obligatorios tengan valores válidos
+        for (const campo of camposObligatorios) {
+            if (!datos[campo] || datos[campo] === 'FALSE' || datos[campo] === 'TRUE') {
+                throw new Error(`Campo ${campo} inválido o vacío en la fila`);
             }
-        } catch (error) {
-            console.warn('Error al procesar lista:', error);
         }
-    }
 
-    return reporte;
-}
+        // Validar fecha
+        const fecha = new Date(datos.fecha);
+        if (isNaN(fecha.getTime())) {
+            throw new Error('Formato de fecha inválido');
+        }
+
+        // Procesar criterios
+        let criterios = [];
+        let puntajeTotal = 0;
+        let puntajeMaximo = 0;
+        let criterioIndex = 1;
+        let criteriosValidos = false;
+
+        while (datos[`criterio${criterioIndex}_nombre`]) {
+            const nombreCriterio = datos[`criterio${criterioIndex}_nombre`].trim();
+            const evaluacion = parseInt(datos[`criterio${criterioIndex}_evaluacion`]);
+
+            if (nombreCriterio && !isNaN(evaluacion) && evaluacion >= 0 && evaluacion <= 3) {
+                criterios.push({
+                    nombre: nombreCriterio,
+                    evaluacion: evaluacion,
+                    nivelAlcanzado: obtenerNivelPorPuntaje(evaluacion),
+                    excelente: "Nivel excelente (3 pts)",
+                    bueno: "Nivel bueno (2 pts)",
+                    regular: "Nivel regular (1 pt)",
+                    insuficiente: "Nivel insuficiente (0 pts)"
+                });
+                puntajeTotal += evaluacion;
+                puntajeMaximo += 3;
+                criteriosValidos = true;
+            }
+            criterioIndex++;
+        }
+
+        if (!criteriosValidos) {
+            throw new Error('No se encontraron criterios válidos');
+        }
+
+        // Calcular nota
+        const notaMinima = 1.0;
+        const notaMaxima = 7.0;
+        const notaAprobacion = 4.0;
+        const exigencia = 60;
+        
+        const porcentajeLogro = (puntajeTotal / puntajeMaximo) * 100;
+        
+        let notaFinal;
+        if (porcentajeLogro >= exigencia) {
+            const factorExtra = (porcentajeLogro - exigencia) / (100 - exigencia);
+            notaFinal = notaAprobacion + (factorExtra * (notaMaxima - notaAprobacion));
+        } else {
+            const factorBase = porcentajeLogro / exigencia;
+            notaFinal = notaMinima + (factorBase * (notaAprobacion - notaMinima));
+        }
+
+        // Validar puntos adicionales
+        let puntosAdicionales = false;
+        let puntosAgregar = 0;
+        if (datos.puntosAdicionales && datos.puntosAdicionales.toLowerCase() === 'true') {
+            puntosAdicionales = true;
+            puntosAgregar = parseFloat(datos.puntosAgregar) || 0;
+            if (puntosAgregar > 0) {
+                notaFinal += puntosAgregar;
+            }
+        }
+
+        notaFinal = Math.max(notaMinima, Math.min(notaMaxima, notaFinal));
+        notaFinal = Math.round(notaFinal * 10) / 10;
+
+        // Crear reporte con datos validados
+        const reporte = {
+            id: crypto.randomUUID(),
+            infoGeneral: {
+                nombreEstudiante: datos.nombreEstudiante.trim(),
+                fecha: fecha.toISOString().split('T')[0],
+                nombreDocente: datos.nombreDocente.trim(),
+                asignatura: datos.asignatura.trim(),
+                carrera: datos.carrera.trim(),
+                universidad: (datos.universidad || currentUser.university).trim(),
+                tituloEvaluacion: datos.tituloEvaluacion.trim(),
+                descripcionEvaluacion: (datos.descripcionEvaluacion || '').trim()
+            },
+            configuracion: {
+                notaMinima,
+                notaMaxima,
+                notaAprobacion,
+                exigencia,
+                incremento: 0.1
+            },
+            nivelesDesempeno: [...nivelesDesempeno],
+            criterios,
+            feedback: {
+                comentario: (datos.feedbackDocente || '').trim(),
+                puntosAdicionales,
+                puntosAgregar,
+                justificacionPuntos: (datos.justificacionPuntos || '').trim()
+            },
+            resultados: {
+                notaFinal,
+                puntajeTotal,
+                puntajeMaximo,
+                porcentajeLogro
+            },
+            fechaCreacion: new Date().toISOString(),
+            usuarioId: currentUser.id
+        };
+
+        // Procesar lista
+        if (datos.lista && datos.lista.trim() && datos.lista.toLowerCase() !== 'false') {
+            try {
+                const listas = await fetchAPI('/lists');
+                let listaExistente = listas.find(l => 
+                    l.name.toLowerCase() === datos.lista.trim().toLowerCase()
+                );
+                
+                if (!listaExistente) {
+                    const nuevaLista = await fetchAPI('/lists', {
+                        method: 'POST',
+                        body: JSON.stringify({ name: datos.lista.trim() })
+                    });
+                    reporte.listaId = nuevaLista.id;
+                } else {
+                    reporte.listaId = listaExistente.id;
+                }
+            } catch (error) {
+                console.warn('Error al procesar lista:', error);
+            }
+        }
+
+        return reporte;
+    } catch (error) {
+        console.error('Error en generación de reporte:', error);
+        return null;
+    }
+} 
+
+
         /**
          * Obtiene el nivel por puntaje
          */
@@ -3376,7 +3404,21 @@ async function procesarReportesMasivos(reportesNuevos) {
     let reportesActualizados = 0;
     let reportesNuevosCount = 0;
     const listasProcesadas = new Set();
+
+    let reportesInvalidos = 0;
+for (const reporteNuevo of reportesNuevos) {
+    if (!reporteNuevo) {
+        reportesInvalidos++;
+        continue;
+    }
+    // ... resto del código
+}
     
+
+// Actualizar el mensaje si hay reportes inválidos
+if (reportesInvalidos > 0) {
+    showToast(`Advertencia: ${reportesInvalidos} reportes fueron omitidos por datos inválidos`, 'warning');
+
     try {
         // Obtener todos los reportes existentes una sola vez
         const reportesExistentes = await fetchAPI('/reports');

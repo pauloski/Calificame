@@ -3107,6 +3107,12 @@ ${errores.join('\n')}
             throw new Error('No se pudo procesar ningún reporte del archivo.');
         }
 
+        // Agregar esto al final de la función procesarArchivoCSV
+if (reportesGenerados.length < lineas.length - 1) {
+    showToast(`Advertencia: Solo se procesaron ${reportesGenerados.length} de ${lineas.length - 1} registros. Revise la consola para más detalles.`, 'warning');
+}
+
+
         return reportesGenerados;
 
     } catch (error) {
@@ -3115,10 +3121,6 @@ ${errores.join('\n')}
     }
 }
 
-// Agregar esto al final de la función procesarArchivoCSV
-if (reportesGenerados.length < lineas.length - 1) {
-    showToast(`Advertencia: Solo se procesaron ${reportesGenerados.length} de ${lineas.length - 1} registros. Revise la consola para más detalles.`, 'warning');
-}
 
 /**
  * Procesa los reportes generados masivamente

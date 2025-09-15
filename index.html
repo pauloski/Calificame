@@ -2936,7 +2936,7 @@ async function descargarListadoCompleto() {
         /**
          * Descarga la plantilla CSV
          */
-  function descargarPlantillaCSV() {
+function descargarPlantillaCSV() {
     const headers = [
         'nombreEstudiante',
         'fecha',
@@ -2959,14 +2959,11 @@ async function descargarListadoCompleto() {
         'justificacionPuntos'
     ];
     
-    const ejemplos = [
-        // Ejemplo 1: Agregar a lista existente
-        'Juan Pérez,2024-03-15,María González,Matemáticas,Ingeniería,Universidad ABC,Examen Final,Evaluación básica,Grupo A,Resolución de Problemas,3,Participación en Clase,2,Trabajo en Equipo,3,Excelente desempeño,true,0.5,Participación sobresaliente',
-        // Ejemplo 2: Crear nueva lista
-        'Ana García,2024-03-15,María González,Matemáticas,Ingeniería,Universidad ABC,Examen Final,Evaluación básica,Nueva Lista,Resolución de Problemas,3,Participación en Clase,2,Trabajo en Equipo,3,Buen desempeño,false,0,',
-    ].join('\n');
-    
-    const csvContent = headers.join(',') + '\n' + ejemplos;
+    // Usar tabulación como separador
+    const csvContent = headers.join('\t') + '\n' + 
+        'Juan Pérez\t2024-03-15\tMaría González\tMatemáticas\tIngeniería\tUniversidad ABC\t' +
+        'Examen Final\tEvaluación básica\tGrupo A\tResolución de Problemas\t3\t' +
+        'Participación en Clase\t2\tTrabajo en Equipo\t3\tExcelente desempeño\tfalse\t0\t';
     
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -2980,8 +2977,6 @@ async function descargarListadoCompleto() {
     
     showToast('Plantilla CSV descargada exitosamente.', 'success');
 }
-
-
 
    /**
  * Procesa el archivo CSV subido
@@ -3017,31 +3012,66 @@ async function procesarArchivoCSV() {
 /**
  * Parsea el contenido CSV y genera reportes
  */
+
 async function parsearCSV(csvContent) {
-    const lineas = csvContent.split('\n').filter(linea => linea.trim());
-    if (lineas.length < 2) {
-        throw new Error('El archivo CSV debe tener al menos una fila de encabezados y una fila de datos.');
-    }
-    
-    const headers = lineas[0].split(',').map(h => h.trim());
-    const reportesGenerados = [];
-    
-    for (let i = 1; i < lineas.length; i++) {
-        const valores = lineas[i].split(',').map(v => v.trim());
-        if (valores.length < headers.length) continue;
+    try {
+        // Detectar el separador (coma o tabulación)
+        const primeraLinea = csvContent.split('\n')[0];
+        const separador = primeraLinea.includes('\t') ? '\t' : ',';
         
-        try {
-            const reporte = await generarReporteDesdeCSV(headers, valores);
-            if (reporte) {
-                reportesGenerados.push(reporte);
-            }
-        } catch (error) {
-            console.warn(`Error en fila ${i + 1}:`, error.message);
+        // Dividir por líneas y filtrar líneas vacías
+        const lineas = csvContent.split('\n')
+            .map(linea => linea.trim())
+            .filter(linea => linea.length > 0);
+
+        if (lineas.length < 2) {
+            throw new Error('El archivo debe tener al menos una fila de encabezados y una fila de datos.');
         }
+
+        // Procesar encabezados
+        const headers = lineas[0].split(separador).map(h => h.trim());
+        console.log('Headers detectados:', headers);
+        
+        const reportesGenerados = [];
+        let reportesProcesados = 0;
+        let reportesConError = 0;
+
+        // Procesar cada línea de datos
+        for (let i = 1; i < lineas.length; i++) {
+            try {
+                const valores = lineas[i].split(separador).map(v => v.trim());
+                
+                // Verificar que la línea tenga todos los campos necesarios
+                if (valores.length >= headers.length) {
+                    const reporte = await generarReporteDesdeCSV(headers, valores);
+                    if (reporte) {
+                        reportesGenerados.push(reporte);
+                        reportesProcesados++;
+                    }
+                } else {
+                    console.warn(`Fila ${i + 1}: número incorrecto de campos`);
+                    reportesConError++;
+                }
+            } catch (error) {
+                console.warn(`Error en fila ${i + 1}:`, error.message);
+                reportesConError++;
+            }
+        }
+
+        console.log(`Resumen de procesamiento:
+            - Total de filas: ${lineas.length - 1}
+            - Reportes procesados: ${reportesProcesados}
+            - Reportes con error: ${reportesConError}
+        `);
+
+        return reportesGenerados;
+
+    } catch (error) {
+        console.error('Error al parsear CSV:', error);
+        throw new Error(`Error al procesar el archivo: ${error.message}`);
     }
-    
-    return reportesGenerados;
 }
+
 
 /**
  * Procesa los reportes generados masivamente

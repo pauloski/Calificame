@@ -3019,8 +3019,14 @@ async function parsearCSV(csvContent) {
         const primeraLinea = csvContent.split('\n')[0];
         const separador = primeraLinea.includes('\t') ? '\t' : ',';
         
-        // Dividir por líneas y filtrar líneas vacías
-        const lineas = csvContent.split('\n')
+        // Preprocesar el contenido para manejar saltos de línea en campos
+        let contenidoProcesado = csvContent
+            .replace(/"\s*\n\s*"/g, ' ') // Reemplazar saltos de línea dentro de comillas por espacios
+            .replace(/\r\n/g, '\n') // Normalizar saltos de línea
+            .replace(/\r/g, '\n');
+
+        // Dividir por líneas y limpiar
+        const lineas = contenidoProcesado.split('\n')
             .map(linea => linea.trim())
             .filter(linea => linea.length > 0);
 
@@ -3031,38 +3037,75 @@ async function parsearCSV(csvContent) {
         // Procesar encabezados
         const headers = lineas[0].split(separador).map(h => h.trim());
         console.log('Headers detectados:', headers);
+        console.log('Número esperado de campos:', headers.length);
         
         const reportesGenerados = [];
         let reportesProcesados = 0;
         let reportesConError = 0;
+        let errores = [];
 
         // Procesar cada línea de datos
         for (let i = 1; i < lineas.length; i++) {
             try {
-                const valores = lineas[i].split(separador).map(v => v.trim());
+                let valores = lineas[i].split(separador);
                 
-                // Verificar que la línea tenga todos los campos necesarios
-                if (valores.length >= headers.length) {
+                // Verificar y ajustar el número de campos
+                if (valores.length !== headers.length) {
+                    console.warn(`Línea ${i + 1}: se encontraron ${valores.length} campos, se esperaban ${headers.length}`);
+                    
+                    // Si hay menos campos, rellenar con valores vacíos
+                    while (valores.length < headers.length) {
+                        valores.push('');
+                    }
+                    // Si hay más campos, truncar
+                    if (valores.length > headers.length) {
+                        valores = valores.slice(0, headers.length);
+                    }
+                }
+
+                // Limpiar valores
+                valores = valores.map(v => v.trim().replace(/^["']|["']$/g, ''));
+
+                // Validar campos críticos
+                const camposCriticos = ['nombreEstudiante', 'fecha', 'nombreDocente', 'asignatura', 'carrera'];
+                const indicesCriticos = camposCriticos.map(campo => headers.indexOf(campo));
+                const tieneValoresCriticos = indicesCriticos.every(index => index >= 0 && valores[index]);
+
+                if (tieneValoresCriticos) {
                     const reporte = await generarReporteDesdeCSV(headers, valores);
                     if (reporte) {
                         reportesGenerados.push(reporte);
                         reportesProcesados++;
+                        console.log(`Procesado correctamente: ${valores[0]}`);
                     }
                 } else {
-                    console.warn(`Fila ${i + 1}: número incorrecto de campos`);
+                    const error = `Fila ${i + 1}: faltan campos obligatorios`;
+                    errores.push(error);
                     reportesConError++;
                 }
             } catch (error) {
-                console.warn(`Error en fila ${i + 1}:`, error.message);
+                const mensajeError = `Error en fila ${i + 1}: ${error.message}`;
+                errores.push(mensajeError);
+                console.warn(mensajeError);
                 reportesConError++;
             }
         }
 
-        console.log(`Resumen de procesamiento:
-            - Total de filas: ${lineas.length - 1}
-            - Reportes procesados: ${reportesProcesados}
-            - Reportes con error: ${reportesConError}
+        // Mostrar resumen detallado
+        console.log(`
+Resumen de procesamiento:
+------------------------
+Total de filas: ${lineas.length - 1}
+Reportes procesados exitosamente: ${reportesProcesados}
+Reportes con error: ${reportesConError}
+------------------------
+Errores encontrados:
+${errores.join('\n')}
         `);
+
+        if (reportesGenerados.length === 0) {
+            throw new Error('No se pudo procesar ningún reporte del archivo.');
+        }
 
         return reportesGenerados;
 
@@ -3072,6 +3115,10 @@ async function parsearCSV(csvContent) {
     }
 }
 
+// Agregar esto al final de la función procesarArchivoCSV
+if (reportesGenerados.length < lineas.length - 1) {
+    showToast(`Advertencia: Solo se procesaron ${reportesGenerados.length} de ${lineas.length - 1} registros. Revise la consola para más detalles.`, 'warning');
+}
 
 /**
  * Procesa los reportes generados masivamente

@@ -3117,7 +3117,11 @@ ${errores.join('\n')}
                 if (reportesGenerados.length < lineas.length - 1) {
                     showToast(`Advertencia: Solo se procesaron ${reportesGenerados.length} de ${lineas.length - 1} registros. Revise la consola para más detalles.`, 'warning');
                 }
-
+ console.log('\n=== Resumen de Procesamiento ===');
+        console.log(`Total líneas procesadas: ${lineas.length - 1}`);
+        console.log(`Reportes generados exitosamente: ${reportesProcesados}`);
+        console.log(`Reportes con error: ${reportesConError}`);
+        console.log('Errores encontrados:', errores);
 
                 return reportesGenerados;
 
@@ -3132,6 +3136,7 @@ ${errores.join('\n')}
 // if (reportesInvalidos > 0) {
 //     showToast(`Advertencia: ${reportesInvalidos} reportes fueron omitidos por datos inválidos`, 'warning');
 // }
+
 
 /**
  * Procesa los reportes generados masivamente
@@ -3162,15 +3167,84 @@ async function procesarReportesMasivos(reportesNuevos) {
                 continue;
             }
 
-            // ... resto del código existente ...
+            if (reporteNuevo.listaId) {
+                listasProcesadas.add(reporteNuevo.listaId);
+            }
+
+            // Buscar coincidencia
+            const reporteExistente = reportesExistentes.find(r => 
+                r.infoGeneral.tituloEvaluacion === reporteNuevo.infoGeneral.tituloEvaluacion &&
+                r.infoGeneral.nombreEstudiante === reporteNuevo.infoGeneral.nombreEstudiante
+            );
+
+            try {
+                if (reporteExistente && sobrescribir) {
+                    await fetchAPI(`/reports/${reporteExistente.id}`, {
+                        method: 'PUT',
+                        body: JSON.stringify(reporteNuevo)
+                    });
+                    reportesActualizados++;
+                } else if (!reporteExistente) {
+                    await fetchAPI('/reports', {
+                        method: 'POST',
+                        body: JSON.stringify(reporteNuevo)
+                    });
+                    reportesNuevosCount++;
+                }
+                   console.log('\n=== Resumen Final ===');
+        console.log('Reportes procesados:', reportesNuevos.length);
+        console.log('Reportes nuevos:', reportesNuevosCount);
+        console.log('Reportes actualizados:', reportesActualizados);
+        console.log('Reportes inválidos:', reportesInvalidos);
+            } catch (error) {
+                console.error('Error procesando reporte individual:', error);
+            }
         }
 
-        // Mostrar mensaje si hay reportes inválidos
+        // Mostrar resultados
+        const container = document.getElementById('resultadosCarga');
+        const estadisticas = document.getElementById('estadisticasCarga');
+        estadisticas.innerHTML = `
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                <div class="result-item">
+                    <div class="result-value">${reportesNuevos.length}</div>
+                    <div class="result-label">Reportes Procesados</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-value">${reportesNuevosCount}</div>
+                    <div class="result-label">Reportes Nuevos</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-value">${reportesActualizados}</div>
+                    <div class="result-label">Reportes Actualizados</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-value">${listasProcesadas.size}</div>
+                    <div class="result-label">Listas Procesadas</div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 1.5rem;">
+                <h4>Resumen de Importación:</h4>
+                <ul>
+                    <li>✅ ${reportesNuevos.length} reportes procesados exitosamente</li>
+                    <li>➕ ${reportesNuevosCount} reportes agregados como nuevos</li>
+                    <li>🔄 ${reportesActualizados} reportes actualizados</li>
+                    <li>📁 ${listasProcesadas.size} listas procesadas</li>
+                </ul>
+            </div>
+        `;
+        container.style.display = 'block';
+
         if (reportesInvalidos > 0) {
             showToast(`Advertencia: ${reportesInvalidos} reportes fueron omitidos por datos inválidos`, 'warning');
+        } else {
+            showToast('Carga masiva completada exitosamente!', 'success');
         }
 
-        // ... resto del código existente ...
+        // Recargar datos
+        await cargarReportesGuardados();
+        await loadLists();
 
     } catch (error) {
         console.error('Error en procesamiento masivo:', error);
@@ -3178,6 +3252,8 @@ async function procesarReportesMasivos(reportesNuevos) {
         throw error;
     }
 }
+
+
 
         /**
          * Procesa la lista y retorna el ID correspondiente
@@ -3390,97 +3466,6 @@ async function procesarReportesMasivos(reportesNuevos) {
             }
         }
 
-        // Actualizar el mensaje si hay reportes inválidos
-        if (reportesInvalidos > 0) {
-            showToast(`Advertencia: ${reportesInvalidos} reportes fueron omitidos por datos inválidos`, 'warning');
-
-            try {
-                // Obtener todos los reportes existentes una sola vez
-                const reportesExistentes = await fetchAPI('/reports');
-
-                for (const reporteNuevo of reportesNuevos) {
-                    if (!reporteNuevo || !reporteNuevo.infoGeneral) {
-                        console.warn('Reporte inválido encontrado:', reporteNuevo);
-                        continue;
-                    }
-
-                    if (reporteNuevo.listaId) {
-                        listasProcesadas.add(reporteNuevo.listaId);
-                    }
-
-                    // Buscar si existe un reporte con el mismo título y estudiante
-                    const reporteExistente = reportesExistentes.find(r =>
-                        r.infoGeneral.tituloEvaluacion === reporteNuevo.infoGeneral.tituloEvaluacion &&
-                        r.infoGeneral.nombreEstudiante === reporteNuevo.infoGeneral.nombreEstudiante
-                    );
-
-                    try {
-                        if (reporteExistente && sobrescribir) {
-                            // Actualizar reporte existente
-                            await fetchAPI(`/reports/${reporteExistente.id}`, {
-                                method: 'PUT',
-                                body: JSON.stringify(reporteNuevo)
-                            });
-                            reportesActualizados++;
-                        } else if (!reporteExistente) {
-                            // Crear nuevo reporte
-                            await fetchAPI('/reports', {
-                                method: 'POST',
-                                body: JSON.stringify(reporteNuevo)
-                            });
-                            reportesNuevosCount++;
-                        }
-                    } catch (error) {
-                        console.error('Error procesando reporte individual:', error);
-                    }
-                }
-
-                // Actualizar UI con resultados
-                const container = document.getElementById('resultadosCarga');
-                const estadisticas = document.getElementById('estadisticasCarga');
-                estadisticas.innerHTML = `
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                <div class="result-item">
-                    <div class="result-value">${reportesNuevos.length}</div>
-                    <div class="result-label">Reportes Procesados</div>
-                </div>
-                <div class="result-item">
-                    <div class="result-value">${reportesNuevosCount}</div>
-                    <div class="result-label">Reportes Nuevos</div>
-                </div>
-                <div class="result-item">
-                    <div class="result-value">${reportesActualizados}</div>
-                    <div class="result-label">Reportes Actualizados</div>
-                </div>
-                <div class="result-item">
-                    <div class="result-value">${listasProcesadas.size}</div>
-                    <div class="result-label">Listas Procesadas</div>
-                </div>
-            </div>
-            
-            <div style="margin-top: 1.5rem;">
-                <h4>Resumen de Importación:</h4>
-                <ul>
-                    <li>✅ ${reportesNuevos.length} reportes procesados exitosamente</li>
-                    <li>➕ ${reportesNuevosCount} reportes agregados como nuevos</li>
-                    <li>🔄 ${reportesActualizados} reportes actualizados</li>
-                    <li>📁 ${listasProcesadas.size} listas procesadas</li>
-                </ul>
-            </div>
-        `;
-                container.style.display = 'block';
-                showToast('Carga masiva completada exitosamente!', 'success');
-
-                // Recargar datos
-                await cargarReportesGuardados();
-                await loadLists();
-
-            } catch (error) {
-                console.error('Error en procesamiento masivo:', error);
-                showToast('Error durante el procesamiento masivo: ' + error.message, 'error');
-                throw error;
-            }
-        }
 
         // ==========================================
         // INICIALIZACIÓN

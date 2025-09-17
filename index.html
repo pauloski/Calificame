@@ -1133,17 +1133,16 @@
             <button class="modal-close">&times;</button>
         </div>
         <div>
-            <p style="margin-bottom: 1.5rem; color: #718096;">
-                Seleccione la lista que desea eliminar. Esta acción eliminará la lista y todos sus reportes asociados.
-            </p>
+            <!-- La información de las listas se insertará aquí -->
+            <div class="listas-info"></div>
 
             <div class="form-group">
-                <label>Seleccionar lista:</label>
+                <label>Seleccionar lista para eliminar:</label>
                 <select class="form-control" id="listaAEliminar">
                     <option value="">-- Seleccione una lista --</option>
                 </select>
                 <small style="color: #e53e3e; margin-top: 0.5rem; display: block;">
-                    ⚠️ Esta acción no se puede deshacer
+                    ⚠️ Esta acción eliminará la lista y todos sus reportes asociados. No se puede deshacer.
                 </small>
             </div>
 
@@ -3594,6 +3593,8 @@ async function eliminarListaCompleta(listaId, listaNombre) {
 /**
  *load list
  */
+
+
 async function loadLists() {
     try {
         const [reportes, listas] = await Promise.all([
@@ -3601,10 +3602,14 @@ async function loadLists() {
             fetchAPI('/lists')
         ]);
 
+        console.log('=== Debug loadLists ===');
+        console.log('Total reportes:', reportes.length);
+        console.log('Total listas en DB:', listas.length);
+
+        // Crear mapa de listas activas y contar reportes por lista
         const listasActivas = new Map();
         const reportesPorLista = new Map();
 
-        // Contar reportes por lista
         reportes.forEach(reporte => {
             const listaId = reporte.listaId || reporte.list_id;
             if (listaId) {
@@ -3618,68 +3623,99 @@ async function loadLists() {
 
         const listasActivasArray = Array.from(listasActivas.values());
 
-        // Actualizar selectores con nueva interfaz
-        const filtroLista = document.getElementById('filtroLista');
-        if (filtroLista) {
-            const currentValue = filtroLista.value;
+        // Actualizar selectores
+        const selects = ['listaExistente', 'filtroLista', 'listaAEliminar'];
+        selects.forEach(selectId => {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+
+            const currentValue = select.value;
             
-            filtroLista.innerHTML = '<option value="">Todas las Listas</option>';
-            
-            // Contenedor para las opciones de lista con botones de eliminación
-            const listasContainer = document.createElement('div');
-            listasContainer.className = 'listas-container';
-            listasContainer.style.marginTop = '1rem';
-            
+            // Limpiar select
+            select.innerHTML = selectId === 'filtroLista' ? 
+                '<option value="">Todas las Listas</option>' : 
+                '<option value="">-- Seleccione una lista --</option>';
+
+            // Agregar opciones
             listasActivasArray.forEach(lista => {
-                // Agregar opción al select
                 const option = document.createElement('option');
                 option.value = lista.id;
-                option.textContent = `${lista.name} (${reportesPorLista.get(lista.id)} reportes)`;
+                const reportesCount = reportesPorLista.get(lista.id) || 0;
+                option.textContent = `${lista.name} (${reportesCount} reportes)`;
                 if (currentValue === lista.id.toString()) {
                     option.selected = true;
                 }
-                filtroLista.appendChild(option);
-
-                // Agregar elemento con botón de eliminación
-                const listaElement = document.createElement('div');
-                listaElement.className = 'lista-item';
-                listaElement.style.cssText = `
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 0.5rem;
-                    margin-bottom: 0.5rem;
-                    background: #f8fafc;
-                    border-radius: 0.5rem;
-                `;
-                
-                listaElement.innerHTML = `
-                    <div>
-                        <strong>${lista.name}</strong>
-                        <span class="text-gray-600">(${reportesPorLista.get(lista.id)} reportes)</span>
-                    </div>
-                    <button class="btn btn-danger btn-sm" onclick="eliminarListaCompleta('${lista.id}', '${lista.name}')">
-                        🗑️ Eliminar Lista
-                    </button>
-                `;
-                
-                listasContainer.appendChild(listaElement);
+                select.appendChild(option);
             });
+        });
 
-            // Insertar el contenedor después del select
-            filtroLista.parentNode.appendChild(listasContainer);
+        // Agregar único botón de eliminar listas
+        const filterSection = document.querySelector('.filter-row');
+        if (filterSection) {
+            let eliminarBtn = filterSection.querySelector('#eliminarListasBtn');
+            
+            // Solo crear el botón si hay listas activas y no existe
+            if (!eliminarBtn && listasActivasArray.length > 0) {
+                eliminarBtn = document.createElement('button');
+                eliminarBtn.id = 'eliminarListasBtn';
+                eliminarBtn.className = 'btn btn-danger';
+                eliminarBtn.innerHTML = '🗑️ Eliminar Lista';
+                eliminarBtn.onclick = () => {
+                    const modal = document.getElementById('eliminarListaModal');
+                    if (modal) {
+                        // Actualizar la información en el modal
+                        const infoContainer = modal.querySelector('.listas-info');
+                        if (!infoContainer) {
+                            const infoDiv = document.createElement('div');
+                            infoDiv.className = 'listas-info';
+                            modal.querySelector('.modal-content > div').insertBefore(
+                                infoDiv,
+                                modal.querySelector('.form-group')
+                            );
+                        }
+                        
+                        // Mostrar información de las listas
+                        const infoHTML = `
+                            <div style="margin-bottom: 1rem; padding: 1rem; background: #f8fafc; border-radius: 0.5rem;">
+                                <h4 style="margin-bottom: 0.5rem;">Resumen de Listas:</h4>
+                                <ul style="list-style: none; padding: 0;">
+                                    ${Array.from(listasActivas.values()).map(lista => `
+                                        <li style="margin-bottom: 0.5rem;">
+                                            <strong>${lista.name}</strong>: 
+                                            <span class="text-gray-600">
+                                                ${reportesPorLista.get(lista.id)} reportes
+                                            </span>
+                                        </li>
+                                    `).join('')}
+                                </ul>
+                            </div>
+                        `;
+                        
+                        const infoContainer = modal.querySelector('.listas-info');
+                        infoContainer.innerHTML = infoHTML;
+                    }
+                    modal.classList.add('active');
+                };
+                
+                // Agregar el botón después del botón "Aplicar Filtros"
+                const aplicarFiltrosBtn = filterSection.querySelector('#aplicarFiltros');
+                if (aplicarFiltrosBtn) {
+                    aplicarFiltrosBtn.parentNode.insertBefore(eliminarBtn, aplicarFiltrosBtn.nextSibling);
+                } else {
+                    filterSection.appendChild(eliminarBtn);
+                }
+            } else if (eliminarBtn && listasActivasArray.length === 0) {
+                eliminarBtn.remove();
+            }
         }
 
         return listasActivasArray;
-
     } catch (error) {
         console.error('Error al cargar las listas:', error);
         showToast('Error al cargar las listas', 'error');
         return [];
     }
 }
-
-
 
 /**
  * Abre el modal para eliminar lista

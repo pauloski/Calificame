@@ -2243,70 +2243,81 @@
         }
 
         /**
-   /**
-    * Carga las listas disponibles
-    */
-        async function loadLists() {
-            try {
-                // Obtener reportes y listas
-                const [reportes, listas] = await Promise.all([
-                    fetchAPI('/reports'),
-                    fetchAPI('/lists')
-                ]);
+/**
+ * Carga las listas disponibles
+ */
+async function loadLists() {
+    try {
+        // Obtener reportes y listas
+        const [reportes, listas] = await Promise.all([
+            fetchAPI('/reports'),
+            fetchAPI('/lists')
+        ]);
 
-                // Crear un mapa de listas activas basado en los reportes
-                const listasActivas = new Map();
-                reportes.forEach(reporte => {
-                    const listaId = reporte.listaId || reporte.list_id;
-                    if (listaId) {
-                        const lista = listas.find(l => l.id === listaId);
-                        if (lista) {
-                            listasActivas.set(lista.id, lista);
-                        }
-                    }
-                });
+        console.log('=== Debug loadLists ===');
+        console.log('Total reportes:', reportes.length);
+        console.log('Total listas en DB:', listas.length);
 
-                // Convertir el mapa a array
-                const listasActivasArray = Array.from(listasActivas.values());
-
-                // Actualizar selectores sin intentar eliminar listas
-                const selects = ['listaExistente', 'filtroLista'];
-                selects.forEach(selectId => {
-                    const select = document.getElementById(selectId);
-                    if (!select) return;
-
-                    const currentValue = select.value;
-
-                    // Limpiar select
-                    select.innerHTML = selectId === 'filtroLista' ?
-                        '<option value="">Todas las Listas</option>' :
-                        '<option value="">-- Sin Lista --</option>';
-
-                    // Agregar opciones de listas activas
-                    listasActivasArray.forEach(lista => {
-                        const option = document.createElement('option');
-                        option.value = lista.id;
-                        option.textContent = lista.name;
-                        if (currentValue === lista.id.toString()) {
-                            option.selected = true;
-                        }
-                        select.appendChild(option);
-                    });
-
-                    // Si el valor actual ya no existe, resetear la selección
-                    if (currentValue && !listasActivasArray.some(l => l.id.toString() === currentValue)) {
-                        select.value = '';
-                    }
-                });
-
-                return listasActivasArray;
-
-            } catch (error) {
-                console.error('Error al cargar las listas:', error);
-                showToast('Error al cargar las listas', 'error');
-                return [];
+        // Crear un mapa de listas activas basado en los reportes
+        const listasActivas = new Map();
+        reportes.forEach(reporte => {
+            const listaId = reporte.listaId || reporte.list_id;
+            if (listaId) {
+                const lista = listas.find(l => l.id === listaId);
+                if (lista) {
+                    listasActivas.set(lista.id, lista);
+                }
             }
-        }
+        });
+
+        console.log('Listas activas (con reportes):', listasActivas.size);
+        console.log('Detalle de listas activas:', 
+            Array.from(listasActivas.values()).map(l => `${l.name} (ID: ${l.id})`)
+        );
+
+        // Convertir el mapa a array
+        const listasActivasArray = Array.from(listasActivas.values());
+
+        // Actualizar selectores
+        const selects = ['listaExistente', 'filtroLista'];
+        selects.forEach(selectId => {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+
+            const currentValue = select.value;
+
+            // Limpiar select
+            select.innerHTML = selectId === 'filtroLista' ?
+                '<option value="">Todas las Listas</option>' :
+                '<option value="">-- Sin Lista --</option>';
+
+            // Agregar solo las listas que tienen reportes asociados
+            listasActivasArray.forEach(lista => {
+                const option = document.createElement('option');
+                option.value = lista.id;
+                option.textContent = lista.name;
+                if (currentValue === lista.id.toString()) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            });
+
+            // Si el valor actual ya no existe, resetear la selección
+            if (currentValue && !listasActivasArray.some(l => l.id.toString() === currentValue)) {
+                select.value = '';
+            }
+        });
+
+        return listasActivasArray;
+
+    } catch (error) {
+        console.error('Error al cargar las listas:', error);
+        showToast('Error al cargar las listas', 'error');
+        return [];
+    }
+}
+      
+      
         /**
          * Inicializa la página de reportes guardados
          */

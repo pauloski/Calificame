@@ -3594,7 +3594,9 @@ async function eliminarListaCompleta(listaId, listaNombre) {
  *load list
  */
 
-
+/**
+ * Carga las listas disponibles
+ */
 async function loadLists() {
     try {
         const [reportes, listas] = await Promise.all([
@@ -3663,13 +3665,14 @@ async function loadLists() {
                 eliminarBtn.onclick = () => {
                     const modal = document.getElementById('eliminarListaModal');
                     if (modal) {
-                        // Actualizar la información en el modal
-                        const infoContainer = modal.querySelector('.listas-info');
+                        let infoContainer = modal.querySelector('.listas-info');
+                        
+                        // Crear el contenedor de información si no existe
                         if (!infoContainer) {
-                            const infoDiv = document.createElement('div');
-                            infoDiv.className = 'listas-info';
+                            infoContainer = document.createElement('div');
+                            infoContainer.className = 'listas-info';
                             modal.querySelector('.modal-content > div').insertBefore(
-                                infoDiv,
+                                infoContainer,
                                 modal.querySelector('.form-group')
                             );
                         }
@@ -3691,7 +3694,6 @@ async function loadLists() {
                             </div>
                         `;
                         
-                        const infoContainer = modal.querySelector('.listas-info');
                         infoContainer.innerHTML = infoHTML;
                     }
                     modal.classList.add('active');
@@ -3716,7 +3718,6 @@ async function loadLists() {
         return [];
     }
 }
-
 /**
  * Abre el modal para eliminar lista
  */

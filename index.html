@@ -1125,7 +1125,37 @@
         </div>
     </div>
 
+<!-- Modal: Eliminar Lista -->
+<div id="eliminarListaModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Eliminar Lista de Reportes</h3>
+            <button class="modal-close">&times;</button>
+        </div>
+        <div>
+            <p style="margin-bottom: 1.5rem; color: #718096;">
+                Seleccione la lista que desea eliminar. Esta acción eliminará la lista y todos sus reportes asociados.
+            </p>
 
+            <div class="form-group">
+                <label>Seleccionar lista:</label>
+                <select class="form-control" id="listaAEliminar">
+                    <option value="">-- Seleccione una lista --</option>
+                </select>
+                <small style="color: #e53e3e; margin-top: 0.5rem; display: block;">
+                    ⚠️ Esta acción no se puede deshacer
+                </small>
+            </div>
+
+            <div style="display: flex; gap: 1rem; justify-content: end; margin-top: 2rem;">
+                <button type="button" class="btn btn-secondary modal-close">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmarEliminarLista">
+                    Eliminar Lista
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -1472,6 +1502,10 @@
                     }
                 });
             });
+
+              // Agregar listener para eliminar lista
+    document.getElementById('confirmarEliminarLista').addEventListener('click', eliminarListaCompleta);
+
 
             initReportForm();
             initReportList();
@@ -2259,9 +2293,10 @@
 /**
  * Carga las listas disponibles
  */
+
+ 
 async function loadLists() {
     try {
-        // Obtener reportes y listas
         const [reportes, listas] = await Promise.all([
             fetchAPI('/reports'),
             fetchAPI('/lists')
@@ -2271,66 +2306,73 @@ async function loadLists() {
         console.log('Total reportes:', reportes.length);
         console.log('Total listas en DB:', listas.length);
 
-        // Crear un mapa de listas activas basado en los reportes
+        // Crear mapa de listas activas y contar reportes por lista
         const listasActivas = new Map();
+        const reportesPorLista = new Map();
+
         reportes.forEach(reporte => {
             const listaId = reporte.listaId || reporte.list_id;
             if (listaId) {
                 const lista = listas.find(l => l.id === listaId);
                 if (lista) {
                     listasActivas.set(lista.id, lista);
+                    reportesPorLista.set(lista.id, (reportesPorLista.get(lista.id) || 0) + 1);
                 }
             }
         });
 
-        console.log('Listas activas (con reportes):', listasActivas.size);
-        console.log('Detalle de listas activas:', 
-            Array.from(listasActivas.values()).map(l => `${l.name} (ID: ${l.id})`)
-        );
-
-        // Convertir el mapa a array
         const listasActivasArray = Array.from(listasActivas.values());
 
         // Actualizar selectores
-        const selects = ['listaExistente', 'filtroLista'];
+        const selects = ['listaExistente', 'filtroLista', 'listaAEliminar'];
         selects.forEach(selectId => {
             const select = document.getElementById(selectId);
             if (!select) return;
 
             const currentValue = select.value;
-
+            
             // Limpiar select
-            select.innerHTML = selectId === 'filtroLista' ?
-                '<option value="">Todas las Listas</option>' :
-                '<option value="">-- Sin Lista --</option>';
+            select.innerHTML = selectId === 'filtroLista' ? 
+                '<option value="">Todas las Listas</option>' : 
+                '<option value="">-- Seleccione una lista --</option>';
 
-            // Agregar solo las listas que tienen reportes asociados
+            // Agregar opciones
             listasActivasArray.forEach(lista => {
                 const option = document.createElement('option');
                 option.value = lista.id;
-                option.textContent = lista.name;
+                option.textContent = `${lista.name} (${reportesPorLista.get(lista.id)} reportes)`;
                 if (currentValue === lista.id.toString()) {
                     option.selected = true;
                 }
                 select.appendChild(option);
             });
-
-            // Si el valor actual ya no existe, resetear la selección
-            if (currentValue && !listasActivasArray.some(l => l.id.toString() === currentValue)) {
-                select.value = '';
-            }
         });
 
-        return listasActivasArray;
+        // Agregar botón de eliminar listas si hay listas activas
+        const filterSection = document.querySelector('.filter-row');
+        if (filterSection) {
+            let eliminarBtn = filterSection.querySelector('#eliminarListasBtn');
+            if (!eliminarBtn && listasActivasArray.length > 0) {
+                eliminarBtn = document.createElement('button');
+                eliminarBtn.id = 'eliminarListasBtn';
+                eliminarBtn.className = 'btn btn-danger';
+                eliminarBtn.innerHTML = '🗑️ Eliminar Listas';
+                eliminarBtn.onclick = abrirModalEliminarLista;
+                filterSection.appendChild(eliminarBtn);
+            } else if (eliminarBtn && listasActivasArray.length === 0) {
+                eliminarBtn.remove();
+            }
+        }
 
+        return listasActivasArray;
     } catch (error) {
         console.error('Error al cargar las listas:', error);
         showToast('Error al cargar las listas', 'error');
         return [];
     }
 }
-      
-      
+
+
         /**
          * Inicializa la página de reportes guardados
          */
@@ -3550,7 +3592,7 @@ async function eliminarListaCompleta(listaId, listaNombre) {
 }
 
 /**
- * Actualizar la función loadLists para incluir botón de eliminación
+ *load list
  */
 async function loadLists() {
     try {
@@ -3638,6 +3680,65 @@ async function loadLists() {
 }
 
 
+
+/**
+ * Abre el modal para eliminar lista
+ */
+function abrirModalEliminarLista() {
+    document.getElementById('eliminarListaModal').classList.add('active');
+}
+
+/**
+ * Elimina una lista y sus reportes asociados
+ */
+async function eliminarListaCompleta() {
+    const select = document.getElementById('listaAEliminar');
+    const listaId = select.value;
+    const listaNombre = select.options[select.selectedIndex].text;
+
+    if (!listaId) {
+        showToast('Por favor seleccione una lista para eliminar.', 'error');
+        return;
+    }
+
+    try {
+        const confirmed = await showCustomDialog(
+            'Confirmar eliminación',
+            `¿Está seguro de eliminar la lista "${listaNombre}"? Se eliminarán todos los reportes asociados.`
+        );
+
+        if (!confirmed) return;
+
+        // Obtener reportes asociados
+        const reportes = await fetchAPI('/reports');
+        const reportesLista = reportes.filter(r => 
+            r.listaId === listaId || r.list_id === listaId
+        );
+
+        console.log(`Eliminando lista ${listaNombre} (${listaId}) con ${reportesLista.length} reportes`);
+
+        // Eliminar reportes
+        await Promise.all(
+            reportesLista.map(reporte => 
+                fetchAPI(`/reports/${reporte.id}`, { method: 'DELETE' })
+            )
+        );
+
+        // Eliminar lista
+        await fetchAPI(`/lists/${listaId}`, { method: 'DELETE' });
+
+        showToast(`Lista "${listaNombre}" y sus reportes eliminados exitosamente.`, 'success');
+        cerrarModales();
+
+        // Recargar datos
+        await cargarReportesGuardados();
+        await loadLists();
+
+    } catch (error) {
+        console.error('Error al eliminar lista:', error);
+        showToast(`Error al eliminar la lista: ${error.message}`, 'error');
+    }
+}
     </script>
 </body>
 </html>

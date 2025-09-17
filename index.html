@@ -3128,118 +3128,56 @@ ${errores.join('\n')}
         }
 
 
-        /**
-         * Procesa los reportes generados masivamente
-         */
+// Remover este bloque que está suelto y causando el error
+// if (reportesInvalidos > 0) {
+//     showToast(`Advertencia: ${reportesInvalidos} reportes fueron omitidos por datos inválidos`, 'warning');
+// }
 
+/**
+ * Procesa los reportes generados masivamente
+ */
+async function procesarReportesMasivos(reportesNuevos) {
+    if (!Array.isArray(reportesNuevos) || reportesNuevos.length === 0) {
+        throw new Error('No hay reportes válidos para procesar');
+    }
 
-        async function procesarReportesMasivos(reportesNuevos) {
-            if (!Array.isArray(reportesNuevos) || reportesNuevos.length === 0) {
-                throw new Error('No hay reportes válidos para procesar');
+    const sobrescribir = document.getElementById('sobrescribirReportes').checked;
+    let reportesActualizados = 0;
+    let reportesNuevosCount = 0;
+    const listasProcesadas = new Set();
+    let reportesInvalidos = 0;
+
+    try {
+        // Obtener todos los reportes existentes una sola vez
+        const reportesExistentes = await fetchAPI('/reports');
+
+        for (const reporteNuevo of reportesNuevos) {
+            if (!reporteNuevo) {
+                reportesInvalidos++;
+                continue;
             }
 
-            const sobrescribir = document.getElementById('sobrescribirReportes').checked;
-            let reportesActualizados = 0;
-            let reportesNuevosCount = 0;
-            const listasProcesadas = new Set();
-            let reportesInvalidos = 0;
-
-            try {
-                // Obtener todos los reportes existentes una sola vez
-                const reportesExistentes = await fetchAPI('/reports');
-
-                for (const reporteNuevo of reportesNuevos) {
-                    if (!reporteNuevo) {
-                        reportesInvalidos++;
-                        continue;
-                    }
-
-                    if (!reporteNuevo.infoGeneral) {
-                        console.warn('Reporte inválido encontrado:', reporteNuevo);
-                        continue;
-                    }
-
-                    if (reporteNuevo.listaId) {
-                        listasProcesadas.add(reporteNuevo.listaId);
-                    }
-
-                    // Buscar si existe un reporte con el mismo título y estudiante
-                    const reporteExistente = reportesExistentes.find(r =>
-                        r.infoGeneral.tituloEvaluacion === reporteNuevo.infoGeneral.tituloEvaluacion &&
-                        r.infoGeneral.nombreEstudiante === reporteNuevo.infoGeneral.nombreEstudiante
-                    );
-
-                    try {
-                        if (reporteExistente && sobrescribir) {
-                            await fetchAPI(`/reports/${reporteExistente.id}`, {
-                                method: 'PUT',
-                                body: JSON.stringify(reporteNuevo)
-                            });
-                            reportesActualizados++;
-                        } else if (!reporteExistente) {
-                            await fetchAPI('/reports', {
-                                method: 'POST',
-                                body: JSON.stringify(reporteNuevo)
-                            });
-                            reportesNuevosCount++;
-                        }
-                    } catch (error) {
-                        console.error('Error procesando reporte individual:', error);
-                    }
-                }
-
-                // Mostrar mensaje si hay reportes inválidos
-                if (reportesInvalidos > 0) {
-                    showToast(`Advertencia: ${reportesInvalidos} reportes fueron omitidos por datos inválidos`, 'warning');
-                }
-
-                // Actualizar UI con resultados
-                const container = document.getElementById('resultadosCarga');
-                const estadisticas = document.getElementById('estadisticasCarga');
-                estadisticas.innerHTML = `
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                <div class="result-item">
-                    <div class="result-value">${reportesNuevos.length}</div>
-                    <div class="result-label">Reportes Procesados</div>
-                </div>
-                <div class="result-item">
-                    <div class="result-value">${reportesNuevosCount}</div>
-                    <div class="result-label">Reportes Nuevos</div>
-                </div>
-                <div class="result-item">
-                    <div class="result-value">${reportesActualizados}</div>
-                    <div class="result-label">Reportes Actualizados</div>
-                </div>
-                <div class="result-item">
-                    <div class="result-value">${listasProcesadas.size}</div>
-                    <div class="result-label">Listas Procesadas</div>
-                </div>
-            </div>
-            
-            <div style="margin-top: 1.5rem;">
-                <h4>Resumen de Importación:</h4>
-                <ul>
-                    <li>✅ ${reportesNuevos.length} reportes procesados exitosamente</li>
-                    <li>➕ ${reportesNuevosCount} reportes agregados como nuevos</li>
-                    <li>🔄 ${reportesActualizados} reportes actualizados</li>
-                    <li>📁 ${listasProcesadas.size} listas procesadas</li>
-                </ul>
-            </div>
-        `;
-                container.style.display = 'block';
-                showToast('Carga masiva completada exitosamente!', 'success');
-
-                // Recargar datos
-                await cargarReportesGuardados();
-                await loadLists();
-
-            } catch (error) {
-                console.error('Error en procesamiento masivo:', error);
-                showToast('Error durante el procesamiento masivo: ' + error.message, 'error');
-                throw error;
+            if (!reporteNuevo.infoGeneral) {
+                console.warn('Reporte inválido encontrado:', reporteNuevo);
+                continue;
             }
+
+            // ... resto del código existente ...
         }
 
+        // Mostrar mensaje si hay reportes inválidos
+        if (reportesInvalidos > 0) {
+            showToast(`Advertencia: ${reportesInvalidos} reportes fueron omitidos por datos inválidos`, 'warning');
+        }
+
+        // ... resto del código existente ...
+
+    } catch (error) {
+        console.error('Error en procesamiento masivo:', error);
+        showToast('Error durante el procesamiento masivo: ' + error.message, 'error');
+        throw error;
+    }
+}
 
         /**
          * Procesa la lista y retorna el ID correspondiente

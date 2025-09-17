@@ -660,6 +660,19 @@
                 transform: rotate(360deg);
             }
         }
+
+        .btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.text-gray-600 {
+    color: #718096;
+}
+
+.lista-item:hover {
+    background: #edf2f7;
+}
     </style>
 </head>
 
@@ -3489,6 +3502,142 @@ async function procesarReportesMasivos(reportesNuevos) {
                 document.getElementById('fecha').value = today;
             }
         });
+
+
+
+/**
+ * Elimina una lista y todos sus reportes asociados
+ * @param {string} listaId - ID de la lista a eliminar
+ * @param {string} listaNombre - Nombre de la lista (para mensajes)
+ */
+async function eliminarListaCompleta(listaId, listaNombre) {
+    try {
+        const confirmed = await showCustomDialog(
+            'Confirmar eliminación',
+            `¿Está seguro de eliminar la lista "${listaNombre}" y todos sus reportes asociados? Esta acción no se puede deshacer.`
+        );
+
+        if (!confirmed) return;
+
+        // Obtener todos los reportes asociados a la lista
+        const reportes = await fetchAPI('/reports');
+        const reportesLista = reportes.filter(r => 
+            r.listaId === listaId || r.list_id === listaId
+        );
+
+        console.log(`Eliminando lista ${listaNombre} (${listaId}) con ${reportesLista.length} reportes`);
+
+        // Eliminar todos los reportes asociados
+        await Promise.all(
+            reportesLista.map(reporte => 
+                fetchAPI(`/reports/${reporte.id}`, { method: 'DELETE' })
+            )
+        );
+
+        // Eliminar la lista
+        await fetchAPI(`/lists/${listaId}`, { method: 'DELETE' });
+
+        showToast(`Lista "${listaNombre}" y ${reportesLista.length} reportes eliminados exitosamente.`, 'success');
+
+        // Recargar datos
+        await cargarReportesGuardados();
+        await loadLists();
+
+    } catch (error) {
+        console.error('Error al eliminar lista:', error);
+        showToast(`Error al eliminar la lista: ${error.message}`, 'error');
+    }
+}
+
+/**
+ * Actualizar la función loadLists para incluir botón de eliminación
+ */
+async function loadLists() {
+    try {
+        const [reportes, listas] = await Promise.all([
+            fetchAPI('/reports'),
+            fetchAPI('/lists')
+        ]);
+
+        const listasActivas = new Map();
+        const reportesPorLista = new Map();
+
+        // Contar reportes por lista
+        reportes.forEach(reporte => {
+            const listaId = reporte.listaId || reporte.list_id;
+            if (listaId) {
+                const lista = listas.find(l => l.id === listaId);
+                if (lista) {
+                    listasActivas.set(lista.id, lista);
+                    reportesPorLista.set(lista.id, (reportesPorLista.get(lista.id) || 0) + 1);
+                }
+            }
+        });
+
+        const listasActivasArray = Array.from(listasActivas.values());
+
+        // Actualizar selectores con nueva interfaz
+        const filtroLista = document.getElementById('filtroLista');
+        if (filtroLista) {
+            const currentValue = filtroLista.value;
+            
+            filtroLista.innerHTML = '<option value="">Todas las Listas</option>';
+            
+            // Contenedor para las opciones de lista con botones de eliminación
+            const listasContainer = document.createElement('div');
+            listasContainer.className = 'listas-container';
+            listasContainer.style.marginTop = '1rem';
+            
+            listasActivasArray.forEach(lista => {
+                // Agregar opción al select
+                const option = document.createElement('option');
+                option.value = lista.id;
+                option.textContent = `${lista.name} (${reportesPorLista.get(lista.id)} reportes)`;
+                if (currentValue === lista.id.toString()) {
+                    option.selected = true;
+                }
+                filtroLista.appendChild(option);
+
+                // Agregar elemento con botón de eliminación
+                const listaElement = document.createElement('div');
+                listaElement.className = 'lista-item';
+                listaElement.style.cssText = `
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 0.5rem;
+                    margin-bottom: 0.5rem;
+                    background: #f8fafc;
+                    border-radius: 0.5rem;
+                `;
+                
+                listaElement.innerHTML = `
+                    <div>
+                        <strong>${lista.name}</strong>
+                        <span class="text-gray-600">(${reportesPorLista.get(lista.id)} reportes)</span>
+                    </div>
+                    <button class="btn btn-danger btn-sm" onclick="eliminarListaCompleta('${lista.id}', '${lista.name}')">
+                        🗑️ Eliminar Lista
+                    </button>
+                `;
+                
+                listasContainer.appendChild(listaElement);
+            });
+
+            // Insertar el contenedor después del select
+            filtroLista.parentNode.appendChild(listasContainer);
+        }
+
+        return listasActivasArray;
+
+    } catch (error) {
+        console.error('Error al cargar las listas:', error);
+        showToast('Error al cargar las listas', 'error');
+        return [];
+    }
+}
+
+
     </script>
 </body>
 </html>

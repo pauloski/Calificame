@@ -1506,6 +1506,67 @@
     document.getElementById('confirmarEliminarLista').addEventListener('click', eliminarListaCompleta);
 
 
+      // Inicializar eventos del modal de eliminar lista
+    const confirmarEliminarListaBtn = document.getElementById('confirmarEliminarLista');
+    if (confirmarEliminarListaBtn) {
+        confirmarEliminarListaBtn.addEventListener('click', async () => {
+            const select = document.getElementById('listaAEliminar');
+            const listaId = select.value;
+            const listaNombre = select.options[select.selectedIndex].text.split(' (')[0]; // Obtener solo el nombre sin el conteo
+
+            if (!listaId) {
+                showToast('Por favor seleccione una lista para eliminar.', 'error');
+                return;
+            }
+
+            try {
+                const confirmed = await showCustomDialog(
+                    'Confirmar eliminación',
+                    `¿Está seguro de eliminar la lista "${listaNombre}"? Se eliminarán todos los reportes asociados.`
+                );
+
+                if (!confirmed) return;
+
+                // Mostrar indicador de carga
+                confirmarEliminarListaBtn.innerHTML = '<div class="loading"></div> Eliminando...';
+                confirmarEliminarListaBtn.disabled = true;
+
+                // Obtener reportes asociados
+                const reportes = await fetchAPI('/reports');
+                const reportesLista = reportes.filter(r => 
+                    r.listaId === listaId || r.list_id === listaId
+                );
+
+                console.log(`Eliminando lista ${listaNombre} (${listaId}) con ${reportesLista.length} reportes`);
+
+                // Eliminar reportes
+                for (const reporte of reportesLista) {
+                    await fetchAPI(`/reports/${reporte.id}`, { method: 'DELETE' });
+                    console.log(`Reporte ${reporte.id} eliminado`);
+                }
+
+                // Eliminar lista
+                await fetchAPI(`/lists/${listaId}`, { method: 'DELETE' });
+                console.log(`Lista ${listaId} eliminada`);
+
+                showToast(`Lista "${listaNombre}" y ${reportesLista.length} reportes eliminados exitosamente.`, 'success');
+                cerrarModales();
+
+                // Recargar datos
+                await cargarReportesGuardados();
+                await loadLists();
+
+            } catch (error) {
+                console.error('Error al eliminar lista:', error);
+                showToast(`Error al eliminar la lista: ${error.message}`, 'error');
+            } finally {
+                // Restaurar el botón
+                confirmarEliminarListaBtn.innerHTML = 'Eliminar Lista';
+                confirmarEliminarListaBtn.disabled = false;
+            }
+        });
+    }
+
             initReportForm();
             initReportList();
             initMassUpload();

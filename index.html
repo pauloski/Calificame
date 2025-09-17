@@ -1,6 +1,7 @@
 <!--Ajuste 2.0-->
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -655,10 +656,13 @@
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
     </style>
 </head>
+
 <body>
     <!-- Página de Login -->
     <div id="loginPage" class="page active">
@@ -667,7 +671,7 @@
                 <h2>Plataforma de Evaluación Docente</h2>
                 <p>Accede o registra tu cuenta</p>
             </div>
-            
+
             <div class="login-tabs">
                 <button class="login-tab active" data-tab="login">Iniciar Sesión</button>
                 <button class="login-tab" data-tab="register">Registrarse</button>
@@ -736,7 +740,7 @@
             <div id="nuevo-reporte" class="page active">
                 <div class="main-content">
                     <h2 style="margin-bottom: 2rem; color: #2d3748;">Crear Nuevo Reporte de Evaluación</h2>
-                    
+
                     <form id="reportForm">
                         <!-- Sección 1: Información General -->
                         <div class="form-section">
@@ -779,34 +783,39 @@
                             </div>
                             <div class="form-group">
                                 <label>Descripción de la Evaluación</label>
-                                <textarea class="form-control" id="descripcionEvaluacion" rows="3" placeholder="Describa brevemente la evaluación o taller..."></textarea>
+                                <textarea class="form-control" id="descripcionEvaluacion" rows="3"
+                                    placeholder="Describa brevemente la evaluación o taller..."></textarea>
                             </div>
                         </div>
 
                         <!-- Sección 2: Configuración del Instrumento -->
                         <div class="form-section">
                             <h3>⚙️ Configuración del Instrumento de Evaluación</h3>
-                            
+
                             <!-- Escala de Calificación -->
                             <h4 style="margin-bottom: 1rem; color: #4a5568;">Escala de Calificación</h4>
                             <div class="form-row">
                                 <div class="form-group">
                                     <label>Nota Mínima *</label>
-                                    <input type="number" step="0.1" class="form-control" id="notaMinima" value="1.0" required>
+                                    <input type="number" step="0.1" class="form-control" id="notaMinima" value="1.0"
+                                        required>
                                 </div>
                                 <div class="form-group">
                                     <label>Nota Máxima *</label>
-                                    <input type="number" step="0.1" class="form-control" id="notaMaxima" value="7.0" required>
+                                    <input type="number" step="0.1" class="form-control" id="notaMaxima" value="7.0"
+                                        required>
                                 </div>
                                 <div class="form-group">
                                     <label>Nota de Aprobación *</label>
-                                    <input type="number" step="0.1" class="form-control" id="notaAprobacion" value="4.0" required>
+                                    <input type="number" step="0.1" class="form-control" id="notaAprobacion" value="4.0"
+                                        required>
                                 </div>
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
                                     <label>Exigencia (%) *</label>
-                                    <input type="number" min="1" max="100" class="form-control" id="exigencia" value="60" required>
+                                    <input type="number" min="1" max="100" class="form-control" id="exigencia"
+                                        value="60" required>
                                 </div>
                                 <div class="form-group">
                                     <label>Incremento (opcional)</label>
@@ -820,14 +829,17 @@
                                 <!-- Los niveles se generan dinámicamente -->
                             </div>
                             <div style="margin-top: 1rem; display: flex; gap: 1rem;">
-                                <button type="button" class="btn btn-secondary" id="agregarNivel">+ Agregar Nivel</button>
-                                <button type="button" class="btn btn-secondary" id="restablecerNiveles">Restablecer Predeterminados</button>
+                                <button type="button" class="btn btn-secondary" id="agregarNivel">+ Agregar
+                                    Nivel</button>
+                                <button type="button" class="btn btn-secondary" id="restablecerNiveles">Restablecer
+                                    Predeterminados</button>
                             </div>
 
                             <!-- Criterios de Evaluación -->
                             <h4 style="margin: 2rem 0 1rem 0; color: #4a5568;">Criterios de Evaluación</h4>
-                            <button type="button" class="btn btn-primary" id="agregarCriterio">+ Agregar Criterio</button>
-                            
+                            <button type="button" class="btn btn-primary" id="agregarCriterio">+ Agregar
+                                Criterio</button>
+
                             <div class="table-container" style="margin-top: 1rem;">
                                 <table class="criteria-table" id="criteriosTable">
                                     <thead>
@@ -853,12 +865,13 @@
                             <h3>💬 Feedback Docente</h3>
                             <div class="form-group">
                                 <label>Comentario del Docente</label>
-                                <textarea class="form-control" id="feedbackDocente" rows="4" placeholder="Escriba sus comentarios y retroalimentación para el estudiante..."></textarea>
+                                <textarea class="form-control" id="feedbackDocente" rows="4"
+                                    placeholder="Escriba sus comentarios y retroalimentación para el estudiante..."></textarea>
                             </div>
-                            
+
                             <div class="form-group" style="margin-top: 1.5rem;">
                                 <label style="display: flex; align-items: center; gap: 0.5rem;">
-                                    <input type="checkbox" id="puntosAdicionalesCheck"> 
+                                    <input type="checkbox" id="puntosAdicionalesCheck">
                                     Activar Puntos Adicionales
                                 </label>
                             </div>
@@ -867,12 +880,14 @@
                                 <div class="form-row">
                                     <div class="form-group">
                                         <label>Puntos a agregar a la nota final (máx. 2.3) *</label>
-                                        <input type="number" step="0.1" min="0" max="2.3" class="form-control" id="puntosAgregar">
+                                        <input type="number" step="0.1" min="0" max="2.3" class="form-control"
+                                            id="puntosAgregar">
                                     </div>
                                 </div>
                                 <div class="form-group">
                                     <label>Justificación (obligatoria) *</label>
-                                    <textarea class="form-control" id="justificacionPuntos" rows="2" placeholder="Ej: Por excelente participación en clase y aporte al equipo..."></textarea>
+                                    <textarea class="form-control" id="justificacionPuntos" rows="2"
+                                        placeholder="Ej: Por excelente participación en clase y aporte al equipo..."></textarea>
                                 </div>
                             </div>
                         </div>
@@ -892,7 +907,7 @@
             <div id="reportes-guardados" class="page">
                 <div class="main-content">
                     <h2 style="margin-bottom: 2rem; color: #2d3748;">Reportes Guardados</h2>
-                    
+
                     <!-- Filtros -->
                     <div class="filter-section">
                         <h3 style="margin-bottom: 1rem;">Filtrar Reportes</h3>
@@ -905,10 +920,12 @@
                             </div>
                             <div class="form-group">
                                 <label>Buscar por estudiante o evaluación:</label>
-                                <input type="text" class="form-control" id="busquedaReporte" placeholder="Escriba el nombre del estudiante o título de evaluación...">
+                                <input type="text" class="form-control" id="busquedaReporte"
+                                    placeholder="Escriba el nombre del estudiante o título de evaluación...">
                             </div>
                             <button type="button" class="btn btn-primary" id="aplicarFiltros">Aplicar Filtros</button>
-                            <button type="button" class="btn btn-success" id="descargarListadoPDF">📄 Descargar Listado PDF</button>
+                            <button type="button" class="btn btn-success" id="descargarListadoPDF">📄 Descargar Listado
+                                PDF</button>
                         </div>
                     </div>
 
@@ -929,13 +946,14 @@
             <div id="carga-masiva" class="page">
                 <div class="main-content">
                     <h2 style="margin-bottom: 2rem; color: #2d3748;">Carga Masiva de Reportes</h2>
-                    
+
                     <div class="form-section">
                         <h3>📤 Subir Archivo CSV</h3>
                         <p style="color: #718096; margin-bottom: 1.5rem;">
-                            Suba un archivo CSV con los datos de múltiples estudiantes para generar reportes automáticamente.
+                            Suba un archivo CSV con los datos de múltiples estudiantes para generar reportes
+                            automáticamente.
                         </p>
-                        
+
                         <div class="upload-area" id="uploadArea">
                             <div style="font-size: 3rem; margin-bottom: 1rem;">📄</div>
                             <p><strong>Haga clic aquí o arrastre su archivo CSV</strong></p>
@@ -946,10 +964,12 @@
                         <div class="form-group" style="margin-top: 1.5rem;">
                             <label style="display: flex; align-items: center; gap: 0.5rem;">
                                 <input type="checkbox" id="sobrescribirReportes">
-                                Sobrescribir reportes existentes con el mismo Título de Evaluación y Nombre de Estudiante
+                                Sobrescribir reportes existentes con el mismo Título de Evaluación y Nombre de
+                                Estudiante
                             </label>
                             <small style="color: #718096; margin-top: 0.5rem; display: block;">
-                                Si está marcado, los reportes existentes serán actualizados. De lo contrario, se añadirán como nuevos.
+                                Si está marcado, los reportes existentes serán actualizados. De lo contrario, se
+                                añadirán como nuevos.
                             </small>
                         </div>
 
@@ -1019,7 +1039,8 @@
             <div id="reportPreviewContent" class="report-preview">
                 <!-- El contenido se genera dinámicamente -->
             </div>
-            <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;">
+            <div
+                style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;">
                 <button type="button" class="btn btn-secondary" id="editarReporte">✏️ Editar Reporte</button>
                 <button type="button" class="btn btn-success" id="descargarPDF">📄 Descargar PDF</button>
                 <button type="button" class="btn btn-primary" id="guardarReporte">💾 Guardar Reporte</button>
@@ -1036,22 +1057,23 @@
             </div>
             <div>
                 <p style="margin-bottom: 1.5rem;">Seleccione una opción para guardar el reporte:</p>
-                
+
                 <div class="form-group">
                     <label>Seleccionar lista existente:</label>
                     <select class="form-control" id="listaExistente">
                         <option value="">-- Sin Lista --</option>
                     </select>
                 </div>
-                
+
                 <div class="form-group">
                     <label>O crear una nueva lista:</label>
-                    <input type="text" class="form-control" id="nuevaLista" placeholder="Nombre de la nueva lista (opcional)">
+                    <input type="text" class="form-control" id="nuevaLista"
+                        placeholder="Nombre de la nueva lista (opcional)">
                     <small style="color: #718096; margin-top: 0.5rem; display: block;">
                         Deje en blanco si no desea crear una nueva lista o seleccionar una existente.
                     </small>
                 </div>
-                
+
                 <div style="display: flex; gap: 1rem; justify-content: end; margin-top: 2rem;">
                     <button type="button" class="btn btn-secondary modal-close">Cancelar</button>
                     <button type="button" class="btn btn-primary" id="confirmarGuardar">Guardar</button>
@@ -1070,7 +1092,8 @@
             <div id="vistaReporteContent">
                 <!-- El contenido se genera dinámicamente -->
             </div>
-            <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;">
+            <div
+                style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;">
                 <button type="button" class="btn btn-secondary" id="usarComoPlantilla">📋 Usar como Plantilla</button>
                 <button type="button" class="btn btn-success" id="descargarPDFReporte">📄 Descargar PDF</button>
             </div>
@@ -1090,17 +1113,17 @@
     </div>
 
 
-  
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.0/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.0/jspdf.plugin.autotable.min.js"></script>
 
 
     <script>
         // ==========================================
         // VARIABLES GLOBALES Y CONFIGURACIÓN
         // ==========================================
-        
+
         let currentUser = null;
         let currentReport = null;
         let nivelesDesempeno = [
@@ -1130,13 +1153,13 @@
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
             toast.textContent = message;
-            
+
             // Agregar al DOM
             document.body.appendChild(toast);
-            
+
             // Mostrar con animación
             setTimeout(() => toast.classList.add('show'), 100);
-            
+
             // Ocultar y eliminar después de 4 segundos
             setTimeout(() => {
                 toast.classList.remove('show');
@@ -1154,7 +1177,7 @@
                 document.getElementById('dialog-message').textContent = message;
                 document.getElementById('dialog-cancel-btn').style.display = 'inline-block';
                 document.getElementById('dialog-confirm-btn').textContent = 'Confirmar';
-                
+
                 const onConfirm = () => {
                     dialog.classList.remove('active');
                     resolve(true);
@@ -1176,11 +1199,11 @@
                 const onOutsideClick = (e) => {
                     if (e.target === dialog) onCancel();
                 };
-                
+
                 document.getElementById('dialog-confirm-btn').addEventListener('click', onConfirm);
                 document.getElementById('dialog-cancel-btn').addEventListener('click', onCancel);
                 dialog.addEventListener('click', onOutsideClick);
-                
+
                 dialog.classList.add('active');
             });
         }
@@ -1210,10 +1233,10 @@
                 const onOutsideClick = (e) => {
                     if (e.target === dialog) onConfirm();
                 };
-                
+
                 document.getElementById('dialog-confirm-btn').addEventListener('click', onConfirm);
                 dialog.addEventListener('click', onOutsideClick);
-                
+
                 dialog.classList.add('active');
             });
         }
@@ -1256,7 +1279,7 @@
         // ==========================================
         // FUNCIONES DE AUTENTICACIÓN
         // ==========================================
-        
+
         /**
          * Inicializa el sistema de autenticación y eventos principales
          */
@@ -1308,7 +1331,7 @@
          */
         async function handleLogin(e) {
             e.preventDefault();
-            
+
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
 
@@ -1317,7 +1340,7 @@
                     method: 'POST',
                     body: JSON.stringify({ email, password })
                 });
-                
+
                 localStorage.setItem('userToken', data.token);
                 currentUser = data.user;
                 showMainApp();
@@ -1332,7 +1355,7 @@
          */
         async function handleRegister(e) {
             e.preventDefault();
-            
+
             const name = document.getElementById('registerName').value;
             const email = document.getElementById('registerEmail').value;
             const university = document.getElementById('registerUniversity').value;
@@ -1354,7 +1377,7 @@
                     method: 'POST',
                     body: JSON.stringify({ name, email, university, password })
                 });
-                
+
                 localStorage.setItem('userToken', data.token);
                 currentUser = data.user;
                 showMainApp();
@@ -1395,19 +1418,19 @@
 
 
 
-/**
- * Carga un script de forma asincrónica.
- * @param {string} src La URL del script.
- */
-function loadScript(src) {
-  return new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = src;
-    script.onload = resolve;
-    script.onerror = reject;
-    document.head.appendChild(script);
-  });
-}
+        /**
+         * Carga un script de forma asincrónica.
+         * @param {string} src La URL del script.
+         */
+        function loadScript(src) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        }
 
 
 
@@ -1422,48 +1445,48 @@ function loadScript(src) {
         /**
          * Inicializa la aplicación principal y sus eventos
          */
-   
-function initMainApp() {
-    // Inicializar cache de reportes
-    window.reportesCache = [];
-    
-    document.querySelectorAll('.nav-btn[data-page]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            navigateToPage(btn.dataset.page);
-            // Cargar reportes cuando se navega a la página de reportes guardados
-            if (btn.dataset.page === 'reportes-guardados') {
-                setTimeout(cargarReportesGuardados, 100);
-            }
-        });
-    });
-    
-    initReportForm();
-    initReportList();
-    initMassUpload();
-    loadLists();
-    
-    // Cargar reportes al inicializar
-    setTimeout(cargarReportesGuardados, 500);
-}
 
+        function initMainApp() {
+            // Inicializar cache de reportes
+            window.reportesCache = [];
 
-/**
- * Navega entre las páginas principales de la aplicación (ACTUALIZADO)
- */
-function navigateToPage(page) {
-    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelector(`[data-page="${page}"]`).classList.add('active');
-    document.querySelectorAll('#mainApp .page').forEach(p => p.classList.remove('active'));
-    document.getElementById(page).classList.add('active');
-    
-    // Cargar datos específicos de la página
-    if (page === 'reportes-guardados') {
-        // Asegurar que los reportes estén cargados
-        if (!window.reportesCache || window.reportesCache.length === 0) {
-            cargarReportesGuardados();
+            document.querySelectorAll('.nav-btn[data-page]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    navigateToPage(btn.dataset.page);
+                    // Cargar reportes cuando se navega a la página de reportes guardados
+                    if (btn.dataset.page === 'reportes-guardados') {
+                        setTimeout(cargarReportesGuardados, 100);
+                    }
+                });
+            });
+
+            initReportForm();
+            initReportList();
+            initMassUpload();
+            loadLists();
+
+            // Cargar reportes al inicializar
+            setTimeout(cargarReportesGuardados, 500);
         }
-    }
-}
+
+
+        /**
+         * Navega entre las páginas principales de la aplicación (ACTUALIZADO)
+         */
+        function navigateToPage(page) {
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-page="${page}"]`).classList.add('active');
+            document.querySelectorAll('#mainApp .page').forEach(p => p.classList.remove('active'));
+            document.getElementById(page).classList.add('active');
+
+            // Cargar datos específicos de la página
+            if (page === 'reportes-guardados') {
+                // Asegurar que los reportes estén cargados
+                if (!window.reportesCache || window.reportesCache.length === 0) {
+                    cargarReportesGuardados();
+                }
+            }
+        }
 
 
         // ==========================================
@@ -1579,8 +1602,8 @@ function navigateToPage(page) {
         function moverNivel(index, direction) {
             const newIndex = index + direction;
             if (newIndex >= 0 && newIndex < nivelesDesempeno.length) {
-                [nivelesDesempeno[index], nivelesDesempeno[newIndex]] = 
-                [nivelesDesempeno[newIndex], nivelesDesempeno[index]];
+                [nivelesDesempeno[index], nivelesDesempeno[newIndex]] =
+                    [nivelesDesempeno[newIndex], nivelesDesempeno[index]];
                 loadNivelesDesempeno();
             }
         }
@@ -1629,7 +1652,7 @@ function navigateToPage(page) {
             document.querySelectorAll('.criteria-evaluation').forEach(select => {
                 const valorActual = select.value;
                 select.innerHTML = '<option value="">Seleccionar...</option>';
-                
+
                 nivelesDesempeno.forEach(nivel => {
                     const option = document.createElement('option');
                     option.value = nivel.puntaje;
@@ -1651,7 +1674,7 @@ function navigateToPage(page) {
             const modal = document.getElementById('criterioModal');
             const title = document.getElementById('criterioModalTitle');
             const form = document.getElementById('criterioForm');
-            
+
             if (criterio) {
                 title.textContent = 'Editar Criterio';
                 document.getElementById('criterioNombre').value = criterio.nombre;
@@ -1665,7 +1688,7 @@ function navigateToPage(page) {
                 form.reset();
                 delete form.dataset.editIndex;
             }
-            
+
             modal.classList.add('active');
         }
 
@@ -1674,7 +1697,7 @@ function navigateToPage(page) {
          */
         function guardarCriterio(e) {
             e.preventDefault();
-            
+
             const form = e.target;
             const criterio = {
                 nombre: document.getElementById('criterioNombre').value,
@@ -1705,7 +1728,7 @@ function navigateToPage(page) {
             const tbody = document.querySelector('#criteriosTable tbody');
             const row = document.createElement('tr');
             const index = tbody.children.length;
-            
+
             row.innerHTML = `
                 <td><div style="font-weight: 600;">${criterio.nombre}</div></td>
                 <td><small>${criterio.excelente}</small></td>
@@ -1724,9 +1747,9 @@ function navigateToPage(page) {
                             style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">🗑️</button>
                 </td>
             `;
-            
+
             tbody.appendChild(row);
-            
+
             const select = row.querySelector('.criteria-evaluation');
             nivelesDesempeno.forEach(nivel => {
                 const option = document.createElement('option');
@@ -1746,7 +1769,7 @@ function navigateToPage(page) {
          */
         function actualizarFilaCriterio(row, criterio, index) {
             const currentEvaluation = row.querySelector('.criteria-evaluation').value;
-            
+
             row.innerHTML = `
                 <td><div style="font-weight: 600;">${criterio.nombre}</div></td>
                 <td><small>${criterio.excelente}</small></td>
@@ -1765,7 +1788,7 @@ function navigateToPage(page) {
                             style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">🗑️</button>
                 </td>
             `;
-            
+
             const select = row.querySelector('.criteria-evaluation');
             nivelesDesempeno.forEach(nivel => {
                 const option = document.createElement('option');
@@ -1785,7 +1808,7 @@ function navigateToPage(page) {
             const tbody = document.querySelector('#criteriosTable tbody');
             const row = tbody.children[index];
             const cells = row.querySelectorAll('td');
-            
+
             const criterio = {
                 index: index,
                 nombre: cells[0].querySelector('div').textContent,
@@ -1794,7 +1817,7 @@ function navigateToPage(page) {
                 regular: cells[3].querySelector('small').textContent,
                 insuficiente: cells[4].querySelector('small').textContent
             };
-            
+
             abrirModalCriterio(criterio);
         }
 
@@ -1806,14 +1829,14 @@ function navigateToPage(page) {
             if (confirmed) {
                 const tbody = document.querySelector('#criteriosTable tbody');
                 tbody.deleteRow(index);
-                
+
                 Array.from(tbody.children).forEach((row, newIndex) => {
                     const editBtn = row.querySelector('button[onclick*="editarCriterio"]');
                     const deleteBtn = row.querySelector('button[onclick*="eliminarCriterio"]');
                     if (editBtn) editBtn.setAttribute('onclick', `editarCriterio(${newIndex})`);
                     if (deleteBtn) deleteBtn.setAttribute('onclick', `eliminarCriterio(${newIndex})`);
                 });
-                
+
                 calcularNotaFinal();
                 showToast('Criterio eliminado.', 'success');
             }
@@ -1865,7 +1888,7 @@ function navigateToPage(page) {
 
             const puntosAdicionalesCheck = document.getElementById('puntosAdicionalesCheck');
             const puntosAgregar = parseFloat(document.getElementById('puntosAgregar').value) || 0;
-            
+
             if (puntosAdicionalesCheck.checked && puntosAgregar > 0) {
                 notaFinal += puntosAgregar;
             }
@@ -1887,17 +1910,17 @@ function navigateToPage(page) {
         function togglePuntosAdicionales() {
             const checkbox = document.getElementById('puntosAdicionalesCheck');
             const section = document.getElementById('puntosAdicionalesSection');
-            
+
             if (checkbox.checked) {
                 calcularNotaFinal();
                 const notaMaxima = parseFloat(document.getElementById('notaMaxima').value) || 7.0;
-                
+
                 if (window.calculoActual && window.calculoActual.notaFinal >= notaMaxima) {
                     showMessageDialog('Atención', 'El estudiante ya alcanzó la nota máxima. No se pueden agregar puntos adicionales.');
                     checkbox.checked = false;
                     return;
                 }
-                
+
                 section.style.display = 'block';
             } else {
                 section.style.display = 'none';
@@ -1920,7 +1943,7 @@ function navigateToPage(page) {
             }
 
             calcularNotaFinal();
-            
+
             if (!window.calculoActual || window.calculoActual.criteriosEvaluados === 0) {
                 showToast('Debe evaluar al menos un criterio.', 'error');
                 return;
@@ -1928,10 +1951,10 @@ function navigateToPage(page) {
 
             const reportData = recopilarDatosFormulario();
             currentReport = reportData;
-            
+
             const reportHTML = generarHTMLReporte(reportData);
             document.getElementById('reportPreviewContent').innerHTML = reportHTML;
-            
+
             document.getElementById('previewModal').classList.add('active');
         }
 
@@ -1943,7 +1966,7 @@ function navigateToPage(page) {
                 'nombreEstudiante', 'fecha', 'nombreDocente', 'asignatura',
                 'carrera', 'universidad', 'tituloEvaluacion'
             ];
-            
+
             for (const fieldId of requiredFields) {
                 const field = document.getElementById(fieldId);
                 if (!field.value.trim()) {
@@ -1956,7 +1979,7 @@ function navigateToPage(page) {
             if (puntosCheck.checked) {
                 const puntos = document.getElementById('puntosAgregar').value;
                 const justificacion = document.getElementById('justificacionPuntos').value;
-                
+
                 if (!puntos || !justificacion.trim()) {
                     showToast('Si activa puntos adicionales, debe especificar la cantidad y justificación.', 'error');
                     return false;
@@ -1991,15 +2014,15 @@ function navigateToPage(page) {
 
             const criterios = [];
             const tbody = document.querySelector('#criteriosTable tbody');
-            
+
             Array.from(tbody.children).forEach((row) => {
                 const cells = row.querySelectorAll('td');
                 const evaluacionSelect = cells[5].querySelector('select');
                 const evaluacionValue = evaluacionSelect.value;
-                
+
                 if (evaluacionValue !== '') {
                     const nivelSeleccionado = nivelesDesempeno.find(n => n.puntaje == evaluacionValue);
-                    
+
                     criterios.push({
                         nombre: cells[0].querySelector('div').textContent,
                         excelente: cells[1].querySelector('small').textContent,
@@ -2039,7 +2062,7 @@ function navigateToPage(page) {
          */
         function generarHTMLReporte(data) {
             const { infoGeneral, criterios, feedback, resultados } = data;
-            
+
             return `
                 <div class="report-header">
                     <h1 class="report-title">Reporte de Evaluación</h1>
@@ -2170,7 +2193,7 @@ function navigateToPage(page) {
 
             const listaSeleccionada = document.getElementById('listaExistente').value;
             const nuevaLista = document.getElementById('nuevaLista').value.trim();
-            
+
             let listaId = listaSeleccionada || null;
 
             if (nuevaLista) {
@@ -2204,7 +2227,7 @@ function navigateToPage(page) {
                     });
                     showToast('Reporte guardado exitosamente.', 'success');
                 }
-                
+
                 cerrarModales();
                 document.getElementById('reportForm').reset();
                 document.querySelector('#criteriosTable tbody').innerHTML = '';
@@ -2219,71 +2242,71 @@ function navigateToPage(page) {
             }
         }
 
-     /**
-/**
- * Carga las listas disponibles
- */
-async function loadLists() {
-    try {
-        // Obtener reportes y listas
-        const [reportes, listas] = await Promise.all([
-            fetchAPI('/reports'),
-            fetchAPI('/lists')
-        ]);
+        /**
+   /**
+    * Carga las listas disponibles
+    */
+        async function loadLists() {
+            try {
+                // Obtener reportes y listas
+                const [reportes, listas] = await Promise.all([
+                    fetchAPI('/reports'),
+                    fetchAPI('/lists')
+                ]);
 
-        // Crear un mapa de listas activas basado en los reportes
-        const listasActivas = new Map();
-        reportes.forEach(reporte => {
-            const listaId = reporte.listaId || reporte.list_id;
-            if (listaId) {
-                const lista = listas.find(l => l.id === listaId);
-                if (lista) {
-                    listasActivas.set(lista.id, lista);
-                }
+                // Crear un mapa de listas activas basado en los reportes
+                const listasActivas = new Map();
+                reportes.forEach(reporte => {
+                    const listaId = reporte.listaId || reporte.list_id;
+                    if (listaId) {
+                        const lista = listas.find(l => l.id === listaId);
+                        if (lista) {
+                            listasActivas.set(lista.id, lista);
+                        }
+                    }
+                });
+
+                // Convertir el mapa a array
+                const listasActivasArray = Array.from(listasActivas.values());
+
+                // Actualizar selectores sin intentar eliminar listas
+                const selects = ['listaExistente', 'filtroLista'];
+                selects.forEach(selectId => {
+                    const select = document.getElementById(selectId);
+                    if (!select) return;
+
+                    const currentValue = select.value;
+
+                    // Limpiar select
+                    select.innerHTML = selectId === 'filtroLista' ?
+                        '<option value="">Todas las Listas</option>' :
+                        '<option value="">-- Sin Lista --</option>';
+
+                    // Agregar opciones de listas activas
+                    listasActivasArray.forEach(lista => {
+                        const option = document.createElement('option');
+                        option.value = lista.id;
+                        option.textContent = lista.name;
+                        if (currentValue === lista.id.toString()) {
+                            option.selected = true;
+                        }
+                        select.appendChild(option);
+                    });
+
+                    // Si el valor actual ya no existe, resetear la selección
+                    if (currentValue && !listasActivasArray.some(l => l.id.toString() === currentValue)) {
+                        select.value = '';
+                    }
+                });
+
+                return listasActivasArray;
+
+            } catch (error) {
+                console.error('Error al cargar las listas:', error);
+                showToast('Error al cargar las listas', 'error');
+                return [];
             }
-        });
-
-        // Convertir el mapa a array
-        const listasActivasArray = Array.from(listasActivas.values());
-
-        // Actualizar selectores sin intentar eliminar listas
-        const selects = ['listaExistente', 'filtroLista'];
-        selects.forEach(selectId => {
-            const select = document.getElementById(selectId);
-            if (!select) return;
-            
-            const currentValue = select.value;
-            
-            // Limpiar select
-            select.innerHTML = selectId === 'filtroLista' ? 
-                '<option value="">Todas las Listas</option>' : 
-                '<option value="">-- Sin Lista --</option>';
-            
-            // Agregar opciones de listas activas
-            listasActivasArray.forEach(lista => {
-                const option = document.createElement('option');
-                option.value = lista.id;
-                option.textContent = lista.name;
-                if (currentValue === lista.id.toString()) {
-                    option.selected = true;
-                }
-                select.appendChild(option);
-            });
-
-            // Si el valor actual ya no existe, resetear la selección
-            if (currentValue && !listasActivasArray.some(l => l.id.toString() === currentValue)) {
-                select.value = '';
-            }
-        });
-
-        return listasActivasArray;
-
-    } catch (error) {
-        console.error('Error al cargar las listas:', error);
-        showToast('Error al cargar las listas', 'error');
-        return [];
-    }
-}   
+        }
         /**
          * Inicializa la página de reportes guardados
          */
@@ -2297,66 +2320,66 @@ async function loadLists() {
         /**
          * Carga y muestra los reportes guardados
          */
-    
-/**
- * Actualizar cargarReportesGuardados para manejar mejor la asignación de listas
- */
-async function cargarReportesGuardados() {
-    const container = document.getElementById('listaReportes');
-    
-    if (window.cargandoReportes) return;
-    window.cargandoReportes = true;
-    
-    try {
-        const [reportes, listas] = await Promise.all([
-            fetchAPI('/reports'),
-            fetchAPI('/lists')
-        ]);
-        
-        console.log('Reportes cargados:', reportes.length);
-        console.log('Listas cargadas:', listas.length);
-        
-        // Mapear reportes con información de lista consistente
-        const reportesNormalizados = reportes.map(reporte => {
-            const listaId = reporte.listaId || reporte.list_id;
-            const lista = listas.find(l => l.id === listaId);
-            
-            return {
-                ...reporte,
-                listaId: listaId || null,
-                list_id: listaId || null,
-                listaNombre: lista ? lista.name : 'Sin Lista'
-            };
-        });
 
-        // Actualizar caché con datos normalizados
-        window.reportesCache = reportesNormalizados;
-        
-        // Renderizar reportes
-        if (reportesNormalizados.length === 0) {
-            container.innerHTML = `
+        /**
+         * Actualizar cargarReportesGuardados para manejar mejor la asignación de listas
+         */
+        async function cargarReportesGuardados() {
+            const container = document.getElementById('listaReportes');
+
+            if (window.cargandoReportes) return;
+            window.cargandoReportes = true;
+
+            try {
+                const [reportes, listas] = await Promise.all([
+                    fetchAPI('/reports'),
+                    fetchAPI('/lists')
+                ]);
+
+                console.log('Reportes cargados:', reportes.length);
+                console.log('Listas cargadas:', listas.length);
+
+                // Mapear reportes con información de lista consistente
+                const reportesNormalizados = reportes.map(reporte => {
+                    const listaId = reporte.listaId || reporte.list_id;
+                    const lista = listas.find(l => l.id === listaId);
+
+                    return {
+                        ...reporte,
+                        listaId: listaId || null,
+                        list_id: listaId || null,
+                        listaNombre: lista ? lista.name : 'Sin Lista'
+                    };
+                });
+
+                // Actualizar caché con datos normalizados
+                window.reportesCache = reportesNormalizados;
+
+                // Renderizar reportes
+                if (reportesNormalizados.length === 0) {
+                    container.innerHTML = `
                 <div style="text-align: center; padding: 3rem; color: #718096;">
                     <div style="font-size: 3rem; margin-bottom: 1rem;">📋</div>
                     <h3>No hay reportes guardados</h3>
                     <p>Los reportes que guarde aparecerán aquí.</p>
                 </div>
             `;
-            return;
-        }
+                    return;
+                }
 
-        // Ordenar y renderizar reportes
-        container.innerHTML = reportesNormalizados
-            .sort((a, b) => new Date(b.fechaCreacion || b.created_at) - new Date(a.fechaCreacion || a.created_at))
-            .map(reporte => generarCardReporte(reporte))
-            .join('');
+                // Ordenar y renderizar reportes
+                container.innerHTML = reportesNormalizados
+                    .sort((a, b) => new Date(b.fechaCreacion || b.created_at) - new Date(a.fechaCreacion || a.created_at))
+                    .map(reporte => generarCardReporte(reporte))
+                    .join('');
 
-        reportesNormalizados.forEach(reporte => {
-            console.log(`Reporte ${reporte.id}: listaId=${reporte.listaId}, listaNombre=${reporte.listaNombre}`);
-        });
+                reportesNormalizados.forEach(reporte => {
+                    console.log(`Reporte ${reporte.id}: listaId=${reporte.listaId}, listaNombre=${reporte.listaNombre}`);
+                });
 
-    } catch (error) {
-        console.error('Error al cargar reportes:', error);
-        container.innerHTML = `
+            } catch (error) {
+                console.error('Error al cargar reportes:', error);
+                container.innerHTML = `
             <div style="text-align: center; padding: 3rem; color: #f56565;">
                 <div style="font-size: 3rem; margin-bottom: 1rem;">⚠</div>
                 <h3>Error al cargar reportes</h3>
@@ -2366,10 +2389,10 @@ async function cargarReportesGuardados() {
                 </button>
             </div>
         `;
-    } finally {
-        window.cargandoReportes = false;
-    }
-}
+            } finally {
+                window.cargandoReportes = false;
+            }
+        }
 
         /**
          * Genera la tarjeta HTML para un reporte
@@ -2377,7 +2400,7 @@ async function cargarReportesGuardados() {
         function generarCardReporte(reporte) {
             const fecha = new Date(reporte.infoGeneral.fecha).toLocaleDateString();
             const fechaCreacion = new Date(reporte.fechaCreacion).toLocaleDateString();
-            
+
             return `
                 <div class="card reporte-card" data-reporte-id="${reporte.id}">
                     <div class="card-header">
@@ -2430,17 +2453,17 @@ async function cargarReportesGuardados() {
             const listaFiltro = document.getElementById('filtroLista').value;
             const busqueda = document.getElementById('busquedaReporte').value.toLowerCase();
             const tarjetas = document.querySelectorAll('.reporte-card');
-            
+
             tarjetas.forEach(tarjeta => {
                 const reporteId = tarjeta.dataset.reporteId;
                 const reporte = window.reportesCache.find(r => r.id === reporteId);
                 if (!reporte) return;
-                
+
                 let mostrarPorLista = true;
                 if (listaFiltro) {
                     mostrarPorLista = reporte.listaId == listaFiltro;
                 }
-                
+
                 let mostrarPorBusqueda = true;
                 if (busqueda) {
                     const textoReporte = `
@@ -2450,7 +2473,7 @@ async function cargarReportesGuardados() {
                     `.toLowerCase();
                     mostrarPorBusqueda = textoReporte.includes(busqueda);
                 }
-                
+
                 tarjeta.style.display = (mostrarPorLista && mostrarPorBusqueda) ? 'block' : 'none';
             });
         }
@@ -2516,16 +2539,16 @@ async function cargarReportesGuardados() {
             document.getElementById('carrera').value = infoGeneral.carrera;
             document.getElementById('universidad').value = infoGeneral.universidad;
             document.getElementById('descripcionEvaluacion').value = infoGeneral.descripcionEvaluacion || '';
-            
+
             document.getElementById('notaMinima').value = configuracion.notaMinima;
             document.getElementById('notaMaxima').value = configuracion.notaMaxima;
             document.getElementById('notaAprobacion').value = configuracion.notaAprobacion;
             document.getElementById('exigencia').value = configuracion.exigencia;
             document.getElementById('incremento').value = configuracion.incremento;
-            
+
             nivelesDesempeno = [...nivelesReporte];
             loadNivelesDesempeno();
-            
+
             criterios.forEach(criterio => {
                 const criterioLimpio = {
                     nombre: criterio.nombre,
@@ -2567,7 +2590,7 @@ async function cargarReportesGuardados() {
             const { infoGeneral, configuracion, nivelesDesempeno: nivelesReporte, criterios, feedback } = reporte;
             document.getElementById('reportForm').reset();
             document.querySelector('#criteriosTable tbody').innerHTML = '';
-            
+
             document.getElementById('nombreEstudiante').value = infoGeneral.nombreEstudiante;
             document.getElementById('fecha').value = infoGeneral.fecha;
             document.getElementById('nombreDocente').value = infoGeneral.nombreDocente;
@@ -2576,16 +2599,16 @@ async function cargarReportesGuardados() {
             document.getElementById('universidad').value = infoGeneral.universidad;
             document.getElementById('tituloEvaluacion').value = infoGeneral.tituloEvaluacion;
             document.getElementById('descripcionEvaluacion').value = infoGeneral.descripcionEvaluacion || '';
-            
+
             document.getElementById('notaMinima').value = configuracion.notaMinima;
             document.getElementById('notaMaxima').value = configuracion.notaMaxima;
             document.getElementById('notaAprobacion').value = configuracion.notaAprobacion;
             document.getElementById('exigencia').value = configuracion.exigencia;
             document.getElementById('incremento').value = configuracion.incremento;
-            
+
             nivelesDesempeno = [...nivelesReporte];
             loadNivelesDesempeno();
-            
+
             criterios.forEach(criterio => {
                 agregarFilaCriterio(criterio);
                 const ultimaFila = document.querySelector('#criteriosTable tbody').lastElementChild;
@@ -2594,7 +2617,7 @@ async function cargarReportesGuardados() {
                     select.value = criterio.evaluacion;
                 }
             });
-            
+
             document.getElementById('feedbackDocente').value = feedback.comentario || '';
             if (feedback.puntosAdicionales) {
                 document.getElementById('puntosAdicionalesCheck').checked = true;
@@ -2602,10 +2625,10 @@ async function cargarReportesGuardados() {
                 document.getElementById('justificacionPuntos').value = feedback.justificacionPuntos;
                 document.getElementById('puntosAdicionalesSection').style.display = 'block';
             } else {
-                 document.getElementById('puntosAdicionalesCheck').checked = false;
-                 document.getElementById('puntosAdicionalesSection').style.display = 'none';
+                document.getElementById('puntosAdicionalesCheck').checked = false;
+                document.getElementById('puntosAdicionalesSection').style.display = 'none';
             }
-            
+
             setTimeout(calcularNotaFinal, 100);
         }
 
@@ -2618,7 +2641,7 @@ async function cargarReportesGuardados() {
                 try {
                     await fetchAPI(`/reports/${reporteId}`, { method: 'DELETE' });
                     await cargarReportesGuardados();
-                     await loadLists(); // Recargar listas en caso de que se haya eliminado la última referencia
+                    await loadLists(); // Recargar listas en caso de que se haya eliminado la última referencia
                     showToast('Reporte eliminado exitosamente.', 'success');
                 } catch (error) {
                     showToast(`Error al eliminar el reporte: ${error.message}`, 'error');
@@ -2632,211 +2655,211 @@ async function cargarReportesGuardados() {
         // GENERAR REPORTES PDF
         // ==========================================
 
-/**
- * Genera y descarga un PDF del elemento especificado
- */
-async function generarPDF(element, fileName) {
-    if (!element) {
-        showToast('Error: El elemento a generar PDF no existe.', 'error');
-        return;
-    }
-
-    try {
-        // Crear un contenedor temporal con padding
-        const container = document.createElement('div');
-        container.style.padding = '40px'; // Agregar padding general
-        container.style.maxWidth = '800px'; // Limitar el ancho máximo
-        container.style.margin = '0 auto'; // Centrar el contenido
-        
-        // Clonar el contenido original
-        const contentClone = element.cloneNode(true);
-        container.appendChild(contentClone);
-        document.body.appendChild(container);
-
-        // Ocultar elementos que no queremos en el PDF
-        const actionsContainer = container.querySelector('.card-actions, .modal-actions');
-        if (actionsContainer) {
-            actionsContainer.style.display = 'none';
-        }
-
-        // Asegurarse de que la información general tenga el espaciado correcto
-        const reportInfo = container.querySelector('.report-info');
-        if (reportInfo) {
-            reportInfo.style.padding = '20px';
-            reportInfo.style.marginBottom = '30px';
-        }
-
-        // Generar el canvas con el nuevo contenedor
-        const canvas = await html2canvas(container, {
-            scale: 2,
-            useCORS: true,
-            logging: false,
-            windowWidth: 800, // Ancho fijo para mejor control
-            width: 800
-        });
-
-        // Crear PDF
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF('p', 'mm', 'a4');
-
-        // Calcular dimensiones manteniendo proporciones
-        const imgData = canvas.toDataURL('image/jpeg', 1.0);
-        const pageWidth = pdf.internal.pageSize.getWidth();
-        const pageHeight = pdf.internal.pageSize.getHeight();
-        const imgWidth = canvas.width;
-        const imgHeight = canvas.height;
-        const ratio = Math.min(pageWidth / imgWidth, pageHeight / imgHeight);
-        
-        // Centrar la imagen en la página
-        const imgX = (pageWidth - (imgWidth * ratio)) / 2;
-        const imgY = 20; // Margen superior fijo
-
-        // Agregar imagen al PDF
-        pdf.addImage(imgData, 'JPEG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
-
-        // Guardar PDF
-        pdf.save(fileName);
-        showToast('PDF generado exitosamente', 'success');
-
-        // Limpiar: remover el contenedor temporal
-        document.body.removeChild(container);
-
-    } catch (error) {
-        console.error('Error al generar PDF:', error);
-        showToast('Error al generar el PDF', 'error');
-    }
-}
-
-
-/**
- * Descarga el reporte actual como PDF
- */
-async function descargarReportePDF() {
-    if (!currentReport) {
-        showToast('Error: No hay reporte para descargar.', 'error');
-        return;
-    }
-    const previewContent = document.getElementById('reportPreviewContent');
-    const fileName = `reporte_${currentReport.infoGeneral.nombreEstudiante.replace(/ /g, '_')}.pdf`;
-    await generarPDF(previewContent, fileName);
-}
-
-/**
- * Descarga un reporte guardado como PDF
- */
-async function descargarReporteGuardadoPDF() {
-    const modal = document.getElementById('vistaReporteModal');
-    const reporteContent = document.getElementById('vistaReporteContent');
-    const fileName = `reporte_guardado_${Date.now()}.pdf`;
-    await generarPDF(reporteContent, fileName);
-}
-
-/**
- * Genera y descarga el listado de reportes filtrados en PDF
- */
-async function descargarListadoCompleto() {
-    try {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-
-        // Obtener los filtros actuales
-        const listaFiltro = document.getElementById('filtroLista').value;
-        const busqueda = document.getElementById('busquedaReporte').value.toLowerCase();
-
-        // Filtrar los reportes del cache según los criterios actuales
-        const reportesFiltrados = window.reportesCache.filter(reporte => {
-            let cumpleFiltroLista = true;
-            let cumpleBusqueda = true;
-
-            // Aplicar filtro de lista
-            if (listaFiltro) {
-                cumpleFiltroLista = reporte.listaId == listaFiltro;
+        /**
+         * Genera y descarga un PDF del elemento especificado
+         */
+        async function generarPDF(element, fileName) {
+            if (!element) {
+                showToast('Error: El elemento a generar PDF no existe.', 'error');
+                return;
             }
 
-            // Aplicar filtro de búsqueda
-            if (busqueda) {
-                const textoReporte = `
+            try {
+                // Crear un contenedor temporal con padding
+                const container = document.createElement('div');
+                container.style.padding = '40px'; // Agregar padding general
+                container.style.maxWidth = '800px'; // Limitar el ancho máximo
+                container.style.margin = '0 auto'; // Centrar el contenido
+
+                // Clonar el contenido original
+                const contentClone = element.cloneNode(true);
+                container.appendChild(contentClone);
+                document.body.appendChild(container);
+
+                // Ocultar elementos que no queremos en el PDF
+                const actionsContainer = container.querySelector('.card-actions, .modal-actions');
+                if (actionsContainer) {
+                    actionsContainer.style.display = 'none';
+                }
+
+                // Asegurarse de que la información general tenga el espaciado correcto
+                const reportInfo = container.querySelector('.report-info');
+                if (reportInfo) {
+                    reportInfo.style.padding = '20px';
+                    reportInfo.style.marginBottom = '30px';
+                }
+
+                // Generar el canvas con el nuevo contenedor
+                const canvas = await html2canvas(container, {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    windowWidth: 800, // Ancho fijo para mejor control
+                    width: 800
+                });
+
+                // Crear PDF
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4');
+
+                // Calcular dimensiones manteniendo proporciones
+                const imgData = canvas.toDataURL('image/jpeg', 1.0);
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const pageHeight = pdf.internal.pageSize.getHeight();
+                const imgWidth = canvas.width;
+                const imgHeight = canvas.height;
+                const ratio = Math.min(pageWidth / imgWidth, pageHeight / imgHeight);
+
+                // Centrar la imagen en la página
+                const imgX = (pageWidth - (imgWidth * ratio)) / 2;
+                const imgY = 20; // Margen superior fijo
+
+                // Agregar imagen al PDF
+                pdf.addImage(imgData, 'JPEG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+
+                // Guardar PDF
+                pdf.save(fileName);
+                showToast('PDF generado exitosamente', 'success');
+
+                // Limpiar: remover el contenedor temporal
+                document.body.removeChild(container);
+
+            } catch (error) {
+                console.error('Error al generar PDF:', error);
+                showToast('Error al generar el PDF', 'error');
+            }
+        }
+
+
+        /**
+         * Descarga el reporte actual como PDF
+         */
+        async function descargarReportePDF() {
+            if (!currentReport) {
+                showToast('Error: No hay reporte para descargar.', 'error');
+                return;
+            }
+            const previewContent = document.getElementById('reportPreviewContent');
+            const fileName = `reporte_${currentReport.infoGeneral.nombreEstudiante.replace(/ /g, '_')}.pdf`;
+            await generarPDF(previewContent, fileName);
+        }
+
+        /**
+         * Descarga un reporte guardado como PDF
+         */
+        async function descargarReporteGuardadoPDF() {
+            const modal = document.getElementById('vistaReporteModal');
+            const reporteContent = document.getElementById('vistaReporteContent');
+            const fileName = `reporte_guardado_${Date.now()}.pdf`;
+            await generarPDF(reporteContent, fileName);
+        }
+
+        /**
+         * Genera y descarga el listado de reportes filtrados en PDF
+         */
+        async function descargarListadoCompleto() {
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+
+                // Obtener los filtros actuales
+                const listaFiltro = document.getElementById('filtroLista').value;
+                const busqueda = document.getElementById('busquedaReporte').value.toLowerCase();
+
+                // Filtrar los reportes del cache según los criterios actuales
+                const reportesFiltrados = window.reportesCache.filter(reporte => {
+                    let cumpleFiltroLista = true;
+                    let cumpleBusqueda = true;
+
+                    // Aplicar filtro de lista
+                    if (listaFiltro) {
+                        cumpleFiltroLista = reporte.listaId == listaFiltro;
+                    }
+
+                    // Aplicar filtro de búsqueda
+                    if (busqueda) {
+                        const textoReporte = `
                     ${reporte.infoGeneral.nombreEstudiante} 
                     ${reporte.infoGeneral.tituloEvaluacion} 
                     ${reporte.infoGeneral.asignatura}
                 `.toLowerCase();
-                cumpleBusqueda = textoReporte.includes(busqueda);
+                        cumpleBusqueda = textoReporte.includes(busqueda);
+                    }
+
+                    return cumpleFiltroLista && cumpleBusqueda;
+                });
+
+                if (reportesFiltrados.length === 0) {
+                    showToast('No hay reportes que cumplan con los filtros actuales.', 'info');
+                    return;
+                }
+
+                // Configurar el título
+                doc.setFontSize(16);
+                doc.text("Listado de Reportes de Evaluación", 15, 15);
+
+                // Agregar información de los filtros aplicados
+                if (listaFiltro) {
+                    const listaSeleccionada = document.querySelector('#filtroLista option:checked').textContent;
+                    doc.setFontSize(10);
+                    doc.text(`Lista: ${listaSeleccionada}`, 15, 25);
+                }
+                if (busqueda) {
+                    doc.setFontSize(10);
+                    doc.text(`Búsqueda: "${busqueda}"`, 15, listaFiltro ? 32 : 25);
+                }
+
+                // Preparar los datos para la tabla
+                const headers = [['Estudiante', 'Evaluación', 'Fecha', 'Nota', 'Asignatura']];
+                const data = reportesFiltrados.map(r => [
+                    r.infoGeneral.nombreEstudiante,
+                    r.infoGeneral.tituloEvaluacion,
+                    new Date(r.infoGeneral.fecha).toLocaleDateString(),
+                    r.resultados.notaFinal,
+                    r.infoGeneral.asignatura
+                ]);
+
+                // Generar la tabla
+                doc.autoTable({
+                    head: headers,
+                    body: data,
+                    startY: (listaFiltro || busqueda) ? 40 : 25,
+                    theme: 'grid',
+                    styles: {
+                        fontSize: 8,
+                        cellPadding: 3
+                    },
+                    headStyles: {
+                        fillColor: [66, 139, 202]
+                    },
+                    footStyles: {
+                        fillColor: [60, 60, 60]
+                    },
+                    // Agregar totales al pie de la tabla
+                    foot: [[
+                        'Total Reportes:',
+                        `${reportesFiltrados.length} reportes`,
+                        '',
+                        `Promedio: ${(reportesFiltrados.reduce((sum, r) => sum + r.resultados.notaFinal, 0) / reportesFiltrados.length).toFixed(1)}`,
+                        ''
+                    ]]
+                });
+
+                // Generar nombre del archivo según los filtros
+                let fileName = 'listado_reportes';
+                if (listaFiltro) {
+                    const listaSeleccionada = document.querySelector('#filtroLista option:checked').textContent;
+                    fileName += `_${listaSeleccionada.replace(/ /g, '_')}`;
+                }
+                fileName += '.pdf';
+
+                doc.save(fileName);
+                showToast('Listado PDF generado exitosamente', 'success');
+            } catch (error) {
+                console.error('Error al generar listado PDF:', error);
+                showToast('Error al generar el listado PDF', 'error');
             }
-
-            return cumpleFiltroLista && cumpleBusqueda;
-        });
-
-        if (reportesFiltrados.length === 0) {
-            showToast('No hay reportes que cumplan con los filtros actuales.', 'info');
-            return;
         }
-
-        // Configurar el título
-        doc.setFontSize(16);
-        doc.text("Listado de Reportes de Evaluación", 15, 15);
-
-        // Agregar información de los filtros aplicados
-        if (listaFiltro) {
-            const listaSeleccionada = document.querySelector('#filtroLista option:checked').textContent;
-            doc.setFontSize(10);
-            doc.text(`Lista: ${listaSeleccionada}`, 15, 25);
-        }
-        if (busqueda) {
-            doc.setFontSize(10);
-            doc.text(`Búsqueda: "${busqueda}"`, 15, listaFiltro ? 32 : 25);
-        }
-
-        // Preparar los datos para la tabla
-        const headers = [['Estudiante', 'Evaluación', 'Fecha', 'Nota', 'Asignatura']];
-        const data = reportesFiltrados.map(r => [
-            r.infoGeneral.nombreEstudiante,
-            r.infoGeneral.tituloEvaluacion,
-            new Date(r.infoGeneral.fecha).toLocaleDateString(),
-            r.resultados.notaFinal,
-            r.infoGeneral.asignatura
-        ]);
-
-        // Generar la tabla
-        doc.autoTable({
-            head: headers,
-            body: data,
-            startY: (listaFiltro || busqueda) ? 40 : 25,
-            theme: 'grid',
-            styles: {
-                fontSize: 8,
-                cellPadding: 3
-            },
-            headStyles: {
-                fillColor: [66, 139, 202]
-            },
-            footStyles: {
-                fillColor: [60, 60, 60]
-            },
-            // Agregar totales al pie de la tabla
-            foot: [[
-                'Total Reportes:',
-                `${reportesFiltrados.length} reportes`,
-                '',
-                `Promedio: ${(reportesFiltrados.reduce((sum, r) => sum + r.resultados.notaFinal, 0) / reportesFiltrados.length).toFixed(1)}`,
-                ''
-            ]]
-        });
-
-        // Generar nombre del archivo según los filtros
-        let fileName = 'listado_reportes';
-        if (listaFiltro) {
-            const listaSeleccionada = document.querySelector('#filtroLista option:checked').textContent;
-            fileName += `_${listaSeleccionada.replace(/ /g, '_')}`;
-        }
-        fileName += '.pdf';
-
-        doc.save(fileName);
-        showToast('Listado PDF generado exitosamente', 'success');
-    } catch (error) {
-        console.error('Error al generar listado PDF:', error);
-        showToast('Error al generar el listado PDF', 'error');
-    }
-}
 
         // ==========================================
         // CARGA MASIVA
@@ -2848,13 +2871,13 @@ async function descargarListadoCompleto() {
         function initMassUpload() {
             const uploadArea = document.getElementById('uploadArea');
             const fileInput = document.getElementById('csvFile');
-            
+
             uploadArea.addEventListener('click', () => fileInput.click());
             uploadArea.addEventListener('dragover', handleDragOver);
             uploadArea.addEventListener('dragleave', handleDragLeave);
             uploadArea.addEventListener('drop', handleDrop);
             fileInput.addEventListener('change', handleFileSelect);
-            
+
             document.getElementById('descargarPlantilla').addEventListener('click', descargarPlantillaCSV);
             document.getElementById('procesarCSV').addEventListener('click', procesarArchivoCSV);
         }
@@ -2905,7 +2928,7 @@ async function descargarListadoCompleto() {
                 showToast('Por favor seleccione un archivo CSV válido.', 'error');
                 return;
             }
-            
+
             const uploadArea = document.getElementById('uploadArea');
             uploadArea.innerHTML = `
                 <div style="font-size: 2rem; margin-bottom: 1rem; color: #48bb78;">✓</div>
@@ -2919,163 +2942,163 @@ async function descargarListadoCompleto() {
         /**
          * Descarga la plantilla CSV
          */
-function descargarPlantillaCSV() {
-    const headers = [
-        'nombreEstudiante',
-        'fecha',
-        'nombreDocente',
-        'asignatura',
-        'carrera',
-        'universidad',
-        'tituloEvaluacion',
-        'descripcionEvaluacion',
-        'lista',
-        'criterio1_nombre',
-        'criterio1_evaluacion',
-        'criterio2_nombre',
-        'criterio2_evaluacion',
-        'criterio3_nombre',
-        'criterio3_evaluacion',
-        'feedbackDocente',
-        'puntosAdicionales',
-        'puntosAgregar',
-        'justificacionPuntos'
-    ];
-    
-    // Usar tabulación como separador
-    const csvContent = headers.join('\t') + '\n' + 
-        'Juan Pérez\t2024-03-15\tMaría González\tMatemáticas\tIngeniería\tUniversidad ABC\t' +
-        'Examen Final\tEvaluación básica\tGrupo A\tResolución de Problemas\t3\t' +
-        'Participación en Clase\t2\tTrabajo en Equipo\t3\tExcelente desempeño\tfalse\t0\t';
-    
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', 'plantilla_reportes.csv');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    
-    showToast('Plantilla CSV descargada exitosamente.', 'success');
-}
+        function descargarPlantillaCSV() {
+            const headers = [
+                'nombreEstudiante',
+                'fecha',
+                'nombreDocente',
+                'asignatura',
+                'carrera',
+                'universidad',
+                'tituloEvaluacion',
+                'descripcionEvaluacion',
+                'lista',
+                'criterio1_nombre',
+                'criterio1_evaluacion',
+                'criterio2_nombre',
+                'criterio2_evaluacion',
+                'criterio3_nombre',
+                'criterio3_evaluacion',
+                'feedbackDocente',
+                'puntosAdicionales',
+                'puntosAgregar',
+                'justificacionPuntos'
+            ];
 
-   /**
- * Procesa el archivo CSV subido
- */
-async function procesarArchivoCSV() {
-    if (!window.selectedCSVFile) {
-        showToast('Por favor seleccione un archivo CSV primero.', 'error');
-        return;
-    }
+            // Usar tabulación como separador
+            const csvContent = headers.join('\t') + '\n' +
+                'Juan Pérez\t2024-03-15\tMaría González\tMatemáticas\tIngeniería\tUniversidad ABC\t' +
+                'Examen Final\tEvaluación básica\tGrupo A\tResolución de Problemas\t3\t' +
+                'Participación en Clase\t2\tTrabajo en Equipo\t3\tExcelente desempeño\tfalse\t0\t';
 
-    try {
-        const fileContent = await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = (e) => resolve(e.target.result);
-            reader.onerror = (e) => reject(e);
-            reader.readAsText(window.selectedCSVFile);
-        });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'plantilla_reportes.csv');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
 
-        // Parsear CSV y generar reportes
-        const reportesGenerados = await parsearCSV(fileContent);
-        
-        if (reportesGenerados && reportesGenerados.length > 0) {
-            await procesarReportesMasivos(reportesGenerados);
-        } else {
-            showToast('No se encontraron datos válidos en el archivo CSV.', 'error');
-        }
-    } catch (error) {
-        console.error('Error procesando CSV:', error);
-        showToast('Error al procesar el archivo: ' + error.message, 'error');
-    }
-}
-
-/**
- * Parsea el contenido CSV y genera reportes
- */
-
-async function parsearCSV(csvContent) {
-    try {
-        // Detectar el separador (coma o tabulación)
-        const primeraLinea = csvContent.split('\n')[0];
-        const separador = primeraLinea.includes('\t') ? '\t' : ',';
-        
-        // Preprocesar el contenido para manejar saltos de línea en campos
-        let contenidoProcesado = csvContent
-            .replace(/"\s*\n\s*"/g, ' ') // Reemplazar saltos de línea dentro de comillas por espacios
-            .replace(/\r\n/g, '\n') // Normalizar saltos de línea
-            .replace(/\r/g, '\n');
-
-        // Dividir por líneas y limpiar
-        const lineas = contenidoProcesado.split('\n')
-            .map(linea => linea.trim())
-            .filter(linea => linea.length > 0);
-
-        if (lineas.length < 2) {
-            throw new Error('El archivo debe tener al menos una fila de encabezados y una fila de datos.');
+            showToast('Plantilla CSV descargada exitosamente.', 'success');
         }
 
-        // Procesar encabezados
-        const headers = lineas[0].split(separador).map(h => h.trim());
-        console.log('Headers detectados:', headers);
-        console.log('Número esperado de campos:', headers.length);
-        
-        const reportesGenerados = [];
-        let reportesProcesados = 0;
-        let reportesConError = 0;
-        let errores = [];
+        /**
+      * Procesa el archivo CSV subido
+      */
+        async function procesarArchivoCSV() {
+            if (!window.selectedCSVFile) {
+                showToast('Por favor seleccione un archivo CSV primero.', 'error');
+                return;
+            }
 
-        // Procesar cada línea de datos
-        for (let i = 1; i < lineas.length; i++) {
             try {
-                let valores = lineas[i].split(separador);
-                
-                // Verificar y ajustar el número de campos
-                if (valores.length !== headers.length) {
-                    console.warn(`Línea ${i + 1}: se encontraron ${valores.length} campos, se esperaban ${headers.length}`);
-                    
-                    // Si hay menos campos, rellenar con valores vacíos
-                    while (valores.length < headers.length) {
-                        valores.push('');
-                    }
-                    // Si hay más campos, truncar
-                    if (valores.length > headers.length) {
-                        valores = valores.slice(0, headers.length);
-                    }
-                }
+                const fileContent = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve(e.target.result);
+                    reader.onerror = (e) => reject(e);
+                    reader.readAsText(window.selectedCSVFile);
+                });
 
-                // Limpiar valores
-                valores = valores.map(v => v.trim().replace(/^["']|["']$/g, ''));
+                // Parsear CSV y generar reportes
+                const reportesGenerados = await parsearCSV(fileContent);
 
-                // Validar campos críticos
-                const camposCriticos = ['nombreEstudiante', 'fecha', 'nombreDocente', 'asignatura', 'carrera'];
-                const indicesCriticos = camposCriticos.map(campo => headers.indexOf(campo));
-                const tieneValoresCriticos = indicesCriticos.every(index => index >= 0 && valores[index]);
-
-                if (tieneValoresCriticos) {
-                    const reporte = await generarReporteDesdeCSV(headers, valores);
-                    if (reporte) {
-                        reportesGenerados.push(reporte);
-                        reportesProcesados++;
-                        console.log(`Procesado correctamente: ${valores[0]}`);
-                    }
+                if (reportesGenerados && reportesGenerados.length > 0) {
+                    await procesarReportesMasivos(reportesGenerados);
                 } else {
-                    const error = `Fila ${i + 1}: faltan campos obligatorios`;
-                    errores.push(error);
-                    reportesConError++;
+                    showToast('No se encontraron datos válidos en el archivo CSV.', 'error');
                 }
             } catch (error) {
-                const mensajeError = `Error en fila ${i + 1}: ${error.message}`;
-                errores.push(mensajeError);
-                console.warn(mensajeError);
-                reportesConError++;
+                console.error('Error procesando CSV:', error);
+                showToast('Error al procesar el archivo: ' + error.message, 'error');
             }
         }
 
-        // Mostrar resumen detallado
-        console.log(`
+        /**
+         * Parsea el contenido CSV y genera reportes
+         */
+
+        async function parsearCSV(csvContent) {
+            try {
+                // Detectar el separador (coma o tabulación)
+                const primeraLinea = csvContent.split('\n')[0];
+                const separador = primeraLinea.includes('\t') ? '\t' : ',';
+
+                // Preprocesar el contenido para manejar saltos de línea en campos
+                let contenidoProcesado = csvContent
+                    .replace(/"\s*\n\s*"/g, ' ') // Reemplazar saltos de línea dentro de comillas por espacios
+                    .replace(/\r\n/g, '\n') // Normalizar saltos de línea
+                    .replace(/\r/g, '\n');
+
+                // Dividir por líneas y limpiar
+                const lineas = contenidoProcesado.split('\n')
+                    .map(linea => linea.trim())
+                    .filter(linea => linea.length > 0);
+
+                if (lineas.length < 2) {
+                    throw new Error('El archivo debe tener al menos una fila de encabezados y una fila de datos.');
+                }
+
+                // Procesar encabezados
+                const headers = lineas[0].split(separador).map(h => h.trim());
+                console.log('Headers detectados:', headers);
+                console.log('Número esperado de campos:', headers.length);
+
+                const reportesGenerados = [];
+                let reportesProcesados = 0;
+                let reportesConError = 0;
+                let errores = [];
+
+                // Procesar cada línea de datos
+                for (let i = 1; i < lineas.length; i++) {
+                    try {
+                        let valores = lineas[i].split(separador);
+
+                        // Verificar y ajustar el número de campos
+                        if (valores.length !== headers.length) {
+                            console.warn(`Línea ${i + 1}: se encontraron ${valores.length} campos, se esperaban ${headers.length}`);
+
+                            // Si hay menos campos, rellenar con valores vacíos
+                            while (valores.length < headers.length) {
+                                valores.push('');
+                            }
+                            // Si hay más campos, truncar
+                            if (valores.length > headers.length) {
+                                valores = valores.slice(0, headers.length);
+                            }
+                        }
+
+                        // Limpiar valores
+                        valores = valores.map(v => v.trim().replace(/^["']|["']$/g, ''));
+
+                        // Validar campos críticos
+                        const camposCriticos = ['nombreEstudiante', 'fecha', 'nombreDocente', 'asignatura', 'carrera'];
+                        const indicesCriticos = camposCriticos.map(campo => headers.indexOf(campo));
+                        const tieneValoresCriticos = indicesCriticos.every(index => index >= 0 && valores[index]);
+
+                        if (tieneValoresCriticos) {
+                            const reporte = await generarReporteDesdeCSV(headers, valores);
+                            if (reporte) {
+                                reportesGenerados.push(reporte);
+                                reportesProcesados++;
+                                console.log(`Procesado correctamente: ${valores[0]}`);
+                            }
+                        } else {
+                            const error = `Fila ${i + 1}: faltan campos obligatorios`;
+                            errores.push(error);
+                            reportesConError++;
+                        }
+                    } catch (error) {
+                        const mensajeError = `Error en fila ${i + 1}: ${error.message}`;
+                        errores.push(mensajeError);
+                        console.warn(mensajeError);
+                        reportesConError++;
+                    }
+                }
+
+                // Mostrar resumen detallado
+                console.log(`
 Resumen de procesamiento:
 ------------------------
 Total de filas: ${lineas.length - 1}
@@ -3086,81 +3109,94 @@ Errores encontrados:
 ${errores.join('\n')}
         `);
 
-        if (reportesGenerados.length === 0) {
-            throw new Error('No se pudo procesar ningún reporte del archivo.');
+                if (reportesGenerados.length === 0) {
+                    throw new Error('No se pudo procesar ningún reporte del archivo.');
+                }
+
+                // Agregar esto al final de la función procesarArchivoCSV
+                if (reportesGenerados.length < lineas.length - 1) {
+                    showToast(`Advertencia: Solo se procesaron ${reportesGenerados.length} de ${lineas.length - 1} registros. Revise la consola para más detalles.`, 'warning');
+                }
+
+
+                return reportesGenerados;
+
+            } catch (error) {
+                console.error('Error al parsear CSV:', error);
+                throw new Error(`Error al procesar el archivo: ${error.message}`);
+            }
         }
 
-        // Agregar esto al final de la función procesarArchivoCSV
-if (reportesGenerados.length < lineas.length - 1) {
-    showToast(`Advertencia: Solo se procesaron ${reportesGenerados.length} de ${lineas.length - 1} registros. Revise la consola para más detalles.`, 'warning');
-}
+
+        /**
+         * Procesa los reportes generados masivamente
+         */
 
 
-        return reportesGenerados;
-
-    } catch (error) {
-        console.error('Error al parsear CSV:', error);
-        throw new Error(`Error al procesar el archivo: ${error.message}`);
-    }
-}
-
-
-/**
- * Procesa los reportes generados masivamente
- */
-async function procesarReportesMasivos(reportesNuevos) {
-    if (!Array.isArray(reportesNuevos) || reportesNuevos.length === 0) {
-        throw new Error('No hay reportes válidos para procesar');
-    }
-
-    const sobrescribir = document.getElementById('sobrescribirReportes').checked;
-    let reportesActualizados = 0;
-    let reportesNuevosCount = 0;
-    const listasProcesadas = new Set();
-    
-    try {
-        for (const reporteNuevo of reportesNuevos) {
-            if (!reporteNuevo || !reporteNuevo.infoGeneral || !reporteNuevo.infoGeneral.tituloEvaluacion) {
-                console.warn('Reporte inválido encontrado:', reporteNuevo);
-                continue;
+        async function procesarReportesMasivos(reportesNuevos) {
+            if (!Array.isArray(reportesNuevos) || reportesNuevos.length === 0) {
+                throw new Error('No hay reportes válidos para procesar');
             }
 
-            if (reporteNuevo.listaId) {
-                listasProcesadas.add(reporteNuevo.listaId);
-            }
-
-            // Resto del código de procesamiento...
-            const existingReports = await fetchAPI('/reports/search', {
-                method: 'POST',
-                body: JSON.stringify({ 
-                    title: reporteNuevo.infoGeneral.tituloEvaluacion,
-                    student: reporteNuevo.infoGeneral.nombreEstudiante
-                })
-            });
+            const sobrescribir = document.getElementById('sobrescribirReportes').checked;
+            let reportesActualizados = 0;
+            let reportesNuevosCount = 0;
+            const listasProcesadas = new Set();
+            let reportesInvalidos = 0;
 
             try {
-                if (existingReports.length > 0 && sobrescribir) {
-                    await fetchAPI(`/reports/${existingReports[0].id}`, {
-                        method: 'PUT',
-                        body: JSON.stringify(reporteNuevo)
-                    });
-                    reportesActualizados++;
-                } else if (existingReports.length === 0) {
-                    await fetchAPI('/reports', {
-                        method: 'POST',
-                        body: JSON.stringify(reporteNuevo)
-                    });
-                    reportesNuevosCount++;
-                }
-            } catch (error) {
-                console.error('Error procesando reporte individual:', error);
-            }
-        }
+                // Obtener todos los reportes existentes una sola vez
+                const reportesExistentes = await fetchAPI('/reports');
 
-        // Actualizar UI con resultados
-        const container = document.getElementById('resultadosCarga');
-        const estadisticas = document.getElementById('estadisticasCarga');
-        estadisticas.innerHTML = `
+                for (const reporteNuevo of reportesNuevos) {
+                    if (!reporteNuevo) {
+                        reportesInvalidos++;
+                        continue;
+                    }
+
+                    if (!reporteNuevo.infoGeneral) {
+                        console.warn('Reporte inválido encontrado:', reporteNuevo);
+                        continue;
+                    }
+
+                    if (reporteNuevo.listaId) {
+                        listasProcesadas.add(reporteNuevo.listaId);
+                    }
+
+                    // Buscar si existe un reporte con el mismo título y estudiante
+                    const reporteExistente = reportesExistentes.find(r =>
+                        r.infoGeneral.tituloEvaluacion === reporteNuevo.infoGeneral.tituloEvaluacion &&
+                        r.infoGeneral.nombreEstudiante === reporteNuevo.infoGeneral.nombreEstudiante
+                    );
+
+                    try {
+                        if (reporteExistente && sobrescribir) {
+                            await fetchAPI(`/reports/${reporteExistente.id}`, {
+                                method: 'PUT',
+                                body: JSON.stringify(reporteNuevo)
+                            });
+                            reportesActualizados++;
+                        } else if (!reporteExistente) {
+                            await fetchAPI('/reports', {
+                                method: 'POST',
+                                body: JSON.stringify(reporteNuevo)
+                            });
+                            reportesNuevosCount++;
+                        }
+                    } catch (error) {
+                        console.error('Error procesando reporte individual:', error);
+                    }
+                }
+
+                // Mostrar mensaje si hay reportes inválidos
+                if (reportesInvalidos > 0) {
+                    showToast(`Advertencia: ${reportesInvalidos} reportes fueron omitidos por datos inválidos`, 'warning');
+                }
+
+                // Actualizar UI con resultados
+                const container = document.getElementById('resultadosCarga');
+                const estadisticas = document.getElementById('estadisticasCarga');
+                estadisticas.innerHTML = `
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
                 <div class="result-item">
                     <div class="result-value">${reportesNuevos.length}</div>
@@ -3190,197 +3226,199 @@ async function procesarReportesMasivos(reportesNuevos) {
                 </ul>
             </div>
         `;
-        container.style.display = 'block';
-        showToast('Carga masiva completada exitosamente!', 'success');
-        await cargarReportesGuardados();
-        await loadLists();
+                container.style.display = 'block';
+                showToast('Carga masiva completada exitosamente!', 'success');
 
-    } catch (error) {
-        console.error('Error en procesamiento masivo:', error);
-        showToast('Error durante el procesamiento masivo: ' + error.message, 'error');
-        throw error;
-    }
-}
+                // Recargar datos
+                await cargarReportesGuardados();
+                await loadLists();
 
-
-/**
- * Procesa la lista y retorna el ID correspondiente
- */
-async function procesarLista(nombreLista) {
-    try {
-        if (!nombreLista || nombreLista.trim().toLowerCase() === 'false') {
-            return null;
-        }
-
-        const nombreListaLimpio = nombreLista.trim();
-        const listas = await fetchAPI('/lists');
-        let listaExistente = listas.find(l => 
-            l.name.toLowerCase() === nombreListaLimpio.toLowerCase()
-        );
-        
-        if (!listaExistente) {
-            const nuevaLista = await fetchAPI('/lists', {
-                method: 'POST',
-                body: JSON.stringify({ name: nombreListaLimpio })
-            });
-            return nuevaLista.id;
-        }
-        
-        return listaExistente.id;
-    } catch (error) {
-        console.error('Error procesando lista:', error);
-        return null;
-    }
-}
-
-/**
- * Genera un reporte desde una fila CSV
- */
-async function generarReporteDesdeCSV(headers, valores) {
-    try {
-        const datos = {};
-        headers.forEach((header, index) => {
-            datos[header] = valores[index] ? valores[index].trim() : '';
-        });
-
-        // Validación estricta de campos obligatorios
-        const camposObligatorios = [
-            'nombreEstudiante',
-            'fecha',
-            'nombreDocente',
-            'asignatura',
-            'carrera',
-            'tituloEvaluacion'
-        ];
-
-        // Verificar que todos los campos obligatorios tengan valores válidos
-        for (const campo of camposObligatorios) {
-            if (!datos[campo] || datos[campo] === 'FALSE' || datos[campo] === 'TRUE') {
-                throw new Error(`Campo ${campo} inválido o vacío en la fila`);
+            } catch (error) {
+                console.error('Error en procesamiento masivo:', error);
+                showToast('Error durante el procesamiento masivo: ' + error.message, 'error');
+                throw error;
             }
         }
 
-        // Validar fecha
-        const fecha = new Date(datos.fecha);
-        if (isNaN(fecha.getTime())) {
-            throw new Error('Formato de fecha inválido');
+
+        /**
+         * Procesa la lista y retorna el ID correspondiente
+         */
+        async function procesarLista(nombreLista) {
+            try {
+                if (!nombreLista || nombreLista.trim().toLowerCase() === 'false') {
+                    return null;
+                }
+
+                const nombreListaLimpio = nombreLista.trim();
+                const listas = await fetchAPI('/lists');
+                let listaExistente = listas.find(l =>
+                    l.name.toLowerCase() === nombreListaLimpio.toLowerCase()
+                );
+
+                if (!listaExistente) {
+                    const nuevaLista = await fetchAPI('/lists', {
+                        method: 'POST',
+                        body: JSON.stringify({ name: nombreListaLimpio })
+                    });
+                    return nuevaLista.id;
+                }
+
+                return listaExistente.id;
+            } catch (error) {
+                console.error('Error procesando lista:', error);
+                return null;
+            }
         }
 
-        // Procesar criterios
-        let criterios = [];
-        let puntajeTotal = 0;
-        let puntajeMaximo = 0;
-        let criterioIndex = 1;
-        let criteriosValidos = false;
-
-        while (datos[`criterio${criterioIndex}_nombre`]) {
-            const nombreCriterio = datos[`criterio${criterioIndex}_nombre`].trim();
-            const evaluacion = parseInt(datos[`criterio${criterioIndex}_evaluacion`]);
-
-            if (nombreCriterio && !isNaN(evaluacion) && evaluacion >= 0 && evaluacion <= 3) {
-                criterios.push({
-                    nombre: nombreCriterio,
-                    evaluacion: evaluacion,
-                    nivelAlcanzado: obtenerNivelPorPuntaje(evaluacion),
-                    excelente: "Nivel excelente (3 pts)",
-                    bueno: "Nivel bueno (2 pts)",
-                    regular: "Nivel regular (1 pt)",
-                    insuficiente: "Nivel insuficiente (0 pts)"
+        /**
+         * Genera un reporte desde una fila CSV
+         */
+        async function generarReporteDesdeCSV(headers, valores) {
+            try {
+                const datos = {};
+                headers.forEach((header, index) => {
+                    datos[header] = valores[index] ? valores[index].trim() : '';
                 });
-                puntajeTotal += evaluacion;
-                puntajeMaximo += 3;
-                criteriosValidos = true;
+
+                // Validación estricta de campos obligatorios
+                const camposObligatorios = [
+                    'nombreEstudiante',
+                    'fecha',
+                    'nombreDocente',
+                    'asignatura',
+                    'carrera',
+                    'tituloEvaluacion'
+                ];
+
+                // Verificar que todos los campos obligatorios tengan valores válidos
+                for (const campo of camposObligatorios) {
+                    if (!datos[campo] || datos[campo] === 'FALSE' || datos[campo] === 'TRUE') {
+                        throw new Error(`Campo ${campo} inválido o vacío en la fila`);
+                    }
+                }
+
+                // Validar fecha
+                const fecha = new Date(datos.fecha);
+                if (isNaN(fecha.getTime())) {
+                    throw new Error('Formato de fecha inválido');
+                }
+
+                // Procesar criterios
+                let criterios = [];
+                let puntajeTotal = 0;
+                let puntajeMaximo = 0;
+                let criterioIndex = 1;
+                let criteriosValidos = false;
+
+                while (datos[`criterio${criterioIndex}_nombre`]) {
+                    const nombreCriterio = datos[`criterio${criterioIndex}_nombre`].trim();
+                    const evaluacion = parseInt(datos[`criterio${criterioIndex}_evaluacion`]);
+
+                    if (nombreCriterio && !isNaN(evaluacion) && evaluacion >= 0 && evaluacion <= 3) {
+                        criterios.push({
+                            nombre: nombreCriterio,
+                            evaluacion: evaluacion,
+                            nivelAlcanzado: obtenerNivelPorPuntaje(evaluacion),
+                            excelente: "Nivel excelente (3 pts)",
+                            bueno: "Nivel bueno (2 pts)",
+                            regular: "Nivel regular (1 pt)",
+                            insuficiente: "Nivel insuficiente (0 pts)"
+                        });
+                        puntajeTotal += evaluacion;
+                        puntajeMaximo += 3;
+                        criteriosValidos = true;
+                    }
+                    criterioIndex++;
+                }
+
+                if (!criteriosValidos) {
+                    throw new Error('No se encontraron criterios válidos');
+                }
+
+                // Calcular nota
+                const notaMinima = 1.0;
+                const notaMaxima = 7.0;
+                const notaAprobacion = 4.0;
+                const exigencia = 60;
+
+                const porcentajeLogro = (puntajeTotal / puntajeMaximo) * 100;
+
+                let notaFinal;
+                if (porcentajeLogro >= exigencia) {
+                    const factorExtra = (porcentajeLogro - exigencia) / (100 - exigencia);
+                    notaFinal = notaAprobacion + (factorExtra * (notaMaxima - notaAprobacion));
+                } else {
+                    const factorBase = porcentajeLogro / exigencia;
+                    notaFinal = notaMinima + (factorBase * (notaAprobacion - notaMinima));
+                }
+
+                // Validar puntos adicionales
+                let puntosAdicionales = false;
+                let puntosAgregar = 0;
+                if (datos.puntosAdicionales && datos.puntosAdicionales.toLowerCase() === 'true') {
+                    puntosAdicionales = true;
+                    puntosAgregar = parseFloat(datos.puntosAgregar) || 0;
+                    if (puntosAgregar > 0) {
+                        notaFinal += puntosAgregar;
+                    }
+                }
+
+                notaFinal = Math.max(notaMinima, Math.min(notaMaxima, notaFinal));
+                notaFinal = Math.round(notaFinal * 10) / 10;
+
+                // Crear reporte con datos validados
+                const reporte = {
+                    id: crypto.randomUUID(),
+                    infoGeneral: {
+                        nombreEstudiante: datos.nombreEstudiante.trim(),
+                        fecha: fecha.toISOString().split('T')[0],
+                        nombreDocente: datos.nombreDocente.trim(),
+                        asignatura: datos.asignatura.trim(),
+                        carrera: datos.carrera.trim(),
+                        universidad: (datos.universidad || currentUser.university).trim(),
+                        tituloEvaluacion: datos.tituloEvaluacion.trim(),
+                        descripcionEvaluacion: (datos.descripcionEvaluacion || '').trim()
+                    },
+                    configuracion: {
+                        notaMinima,
+                        notaMaxima,
+                        notaAprobacion,
+                        exigencia,
+                        incremento: 0.1
+                    },
+                    nivelesDesempeno: [...nivelesDesempeno],
+                    criterios,
+                    feedback: {
+                        comentario: (datos.feedbackDocente || '').trim(),
+                        puntosAdicionales,
+                        puntosAgregar,
+                        justificacionPuntos: (datos.justificacionPuntos || '').trim()
+                    },
+                    resultados: {
+                        notaFinal,
+                        puntajeTotal,
+                        puntajeMaximo,
+                        porcentajeLogro
+                    },
+                    fechaCreacion: new Date().toISOString(),
+                    usuarioId: currentUser.id
+                };
+
+                // Procesar lista de manera más robusta
+                if (datos.lista) {
+                    const listaId = await procesarLista(datos.lista);
+                    if (listaId) {
+                        reporte.listaId = listaId;
+                        reporte.list_id = listaId; // Asegurar compatibilidad con ambos formatos
+                    }
+                }
+                return reporte;
+            } catch (error) {
+                console.error('Error en generación de reporte:', error);
+                return null;
             }
-            criterioIndex++;
         }
-
-        if (!criteriosValidos) {
-            throw new Error('No se encontraron criterios válidos');
-        }
-
-        // Calcular nota
-        const notaMinima = 1.0;
-        const notaMaxima = 7.0;
-        const notaAprobacion = 4.0;
-        const exigencia = 60;
-        
-        const porcentajeLogro = (puntajeTotal / puntajeMaximo) * 100;
-        
-        let notaFinal;
-        if (porcentajeLogro >= exigencia) {
-            const factorExtra = (porcentajeLogro - exigencia) / (100 - exigencia);
-            notaFinal = notaAprobacion + (factorExtra * (notaMaxima - notaAprobacion));
-        } else {
-            const factorBase = porcentajeLogro / exigencia;
-            notaFinal = notaMinima + (factorBase * (notaAprobacion - notaMinima));
-        }
-
-        // Validar puntos adicionales
-        let puntosAdicionales = false;
-        let puntosAgregar = 0;
-        if (datos.puntosAdicionales && datos.puntosAdicionales.toLowerCase() === 'true') {
-            puntosAdicionales = true;
-            puntosAgregar = parseFloat(datos.puntosAgregar) || 0;
-            if (puntosAgregar > 0) {
-                notaFinal += puntosAgregar;
-            }
-        }
-
-        notaFinal = Math.max(notaMinima, Math.min(notaMaxima, notaFinal));
-        notaFinal = Math.round(notaFinal * 10) / 10;
-
-        // Crear reporte con datos validados
-        const reporte = {
-            id: crypto.randomUUID(),
-            infoGeneral: {
-                nombreEstudiante: datos.nombreEstudiante.trim(),
-                fecha: fecha.toISOString().split('T')[0],
-                nombreDocente: datos.nombreDocente.trim(),
-                asignatura: datos.asignatura.trim(),
-                carrera: datos.carrera.trim(),
-                universidad: (datos.universidad || currentUser.university).trim(),
-                tituloEvaluacion: datos.tituloEvaluacion.trim(),
-                descripcionEvaluacion: (datos.descripcionEvaluacion || '').trim()
-            },
-            configuracion: {
-                notaMinima,
-                notaMaxima,
-                notaAprobacion,
-                exigencia,
-                incremento: 0.1
-            },
-            nivelesDesempeno: [...nivelesDesempeno],
-            criterios,
-            feedback: {
-                comentario: (datos.feedbackDocente || '').trim(),
-                puntosAdicionales,
-                puntosAgregar,
-                justificacionPuntos: (datos.justificacionPuntos || '').trim()
-            },
-            resultados: {
-                notaFinal,
-                puntajeTotal,
-                puntajeMaximo,
-                porcentajeLogro
-            },
-            fechaCreacion: new Date().toISOString(),
-            usuarioId: currentUser.id
-        };
-
-       // Procesar lista de manera más robusta
-        if (datos.lista) {
-            const listaId = await procesarLista(datos.lista);
-            if (listaId) {
-                reporte.listaId = listaId;
-                reporte.list_id = listaId; // Asegurar compatibilidad con ambos formatos
-            }
-        }
-        return reporte;
-    } catch (error) {
-        console.error('Error en generación de reporte:', error);
-        return null;
-    }
-} 
 
 
         /**
@@ -3391,78 +3429,78 @@ async function generarReporteDesdeCSV(headers, valores) {
             return nivel ? nivel.nombre : 'No definido';
         }
 
-/**
- * Procesa los reportes generados masivamente
- */
-async function procesarReportesMasivos(reportesNuevos) {
-    if (!Array.isArray(reportesNuevos) || reportesNuevos.length === 0) {
-        throw new Error('No hay reportes válidos para procesar');
-    }
-
-    const sobrescribir = document.getElementById('sobrescribirReportes').checked;
-    let reportesActualizados = 0;
-    let reportesNuevosCount = 0;
-    const listasProcesadas = new Set();
-
-    let reportesInvalidos = 0;
-for (const reporteNuevo of reportesNuevos) {
-    if (!reporteNuevo) {
-        reportesInvalidos++;
-        continue;
-    }
-    // ... resto del código
-}
-    
-
-// Actualizar el mensaje si hay reportes inválidos
-if (reportesInvalidos > 0) {
-    showToast(`Advertencia: ${reportesInvalidos} reportes fueron omitidos por datos inválidos`, 'warning');
-
-    try {
-        // Obtener todos los reportes existentes una sola vez
-        const reportesExistentes = await fetchAPI('/reports');
-        
-        for (const reporteNuevo of reportesNuevos) {
-            if (!reporteNuevo || !reporteNuevo.infoGeneral) {
-                console.warn('Reporte inválido encontrado:', reporteNuevo);
-                continue;
+        /**
+         * Procesa los reportes generados masivamente
+         */
+        async function procesarReportesMasivos(reportesNuevos) {
+            if (!Array.isArray(reportesNuevos) || reportesNuevos.length === 0) {
+                throw new Error('No hay reportes válidos para procesar');
             }
 
-            if (reporteNuevo.listaId) {
-                listasProcesadas.add(reporteNuevo.listaId);
-            }
+            const sobrescribir = document.getElementById('sobrescribirReportes').checked;
+            let reportesActualizados = 0;
+            let reportesNuevosCount = 0;
+            const listasProcesadas = new Set();
 
-            // Buscar si existe un reporte con el mismo título y estudiante
-            const reporteExistente = reportesExistentes.find(r => 
-                r.infoGeneral.tituloEvaluacion === reporteNuevo.infoGeneral.tituloEvaluacion &&
-                r.infoGeneral.nombreEstudiante === reporteNuevo.infoGeneral.nombreEstudiante
-            );
-
-            try {
-                if (reporteExistente && sobrescribir) {
-                    // Actualizar reporte existente
-                    await fetchAPI(`/reports/${reporteExistente.id}`, {
-                        method: 'PUT',
-                        body: JSON.stringify(reporteNuevo)
-                    });
-                    reportesActualizados++;
-                } else if (!reporteExistente) {
-                    // Crear nuevo reporte
-                    await fetchAPI('/reports', {
-                        method: 'POST',
-                        body: JSON.stringify(reporteNuevo)
-                    });
-                    reportesNuevosCount++;
+            let reportesInvalidos = 0;
+            for (const reporteNuevo of reportesNuevos) {
+                if (!reporteNuevo) {
+                    reportesInvalidos++;
+                    continue;
                 }
-            } catch (error) {
-                console.error('Error procesando reporte individual:', error);
+                // ... resto del código
             }
         }
 
-        // Actualizar UI con resultados
-        const container = document.getElementById('resultadosCarga');
-        const estadisticas = document.getElementById('estadisticasCarga');
-        estadisticas.innerHTML = `
+        // Actualizar el mensaje si hay reportes inválidos
+        if (reportesInvalidos > 0) {
+            showToast(`Advertencia: ${reportesInvalidos} reportes fueron omitidos por datos inválidos`, 'warning');
+
+            try {
+                // Obtener todos los reportes existentes una sola vez
+                const reportesExistentes = await fetchAPI('/reports');
+
+                for (const reporteNuevo of reportesNuevos) {
+                    if (!reporteNuevo || !reporteNuevo.infoGeneral) {
+                        console.warn('Reporte inválido encontrado:', reporteNuevo);
+                        continue;
+                    }
+
+                    if (reporteNuevo.listaId) {
+                        listasProcesadas.add(reporteNuevo.listaId);
+                    }
+
+                    // Buscar si existe un reporte con el mismo título y estudiante
+                    const reporteExistente = reportesExistentes.find(r =>
+                        r.infoGeneral.tituloEvaluacion === reporteNuevo.infoGeneral.tituloEvaluacion &&
+                        r.infoGeneral.nombreEstudiante === reporteNuevo.infoGeneral.nombreEstudiante
+                    );
+
+                    try {
+                        if (reporteExistente && sobrescribir) {
+                            // Actualizar reporte existente
+                            await fetchAPI(`/reports/${reporteExistente.id}`, {
+                                method: 'PUT',
+                                body: JSON.stringify(reporteNuevo)
+                            });
+                            reportesActualizados++;
+                        } else if (!reporteExistente) {
+                            // Crear nuevo reporte
+                            await fetchAPI('/reports', {
+                                method: 'POST',
+                                body: JSON.stringify(reporteNuevo)
+                            });
+                            reportesNuevosCount++;
+                        }
+                    } catch (error) {
+                        console.error('Error procesando reporte individual:', error);
+                    }
+                }
+
+                // Actualizar UI con resultados
+                const container = document.getElementById('resultadosCarga');
+                const estadisticas = document.getElementById('estadisticasCarga');
+                estadisticas.innerHTML = `
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
                 <div class="result-item">
                     <div class="result-value">${reportesNuevos.length}</div>
@@ -3492,25 +3530,25 @@ if (reportesInvalidos > 0) {
                 </ul>
             </div>
         `;
-        container.style.display = 'block';
-        showToast('Carga masiva completada exitosamente!', 'success');
-        
-        // Recargar datos
-        await cargarReportesGuardados();
-        await loadLists();
+                container.style.display = 'block';
+                showToast('Carga masiva completada exitosamente!', 'success');
 
-    } catch (error) {
-        console.error('Error en procesamiento masivo:', error);
-        showToast('Error durante el procesamiento masivo: ' + error.message, 'error');
-        throw error;
-    }
-}
+                // Recargar datos
+                await cargarReportesGuardados();
+                await loadLists();
+
+            } catch (error) {
+                console.error('Error en procesamiento masivo:', error);
+                showToast('Error durante el procesamiento masivo: ' + error.message, 'error');
+                throw error;
+            }
+        }
 
         // ==========================================
         // INICIALIZACIÓN
         // ==========================================
-        
-        document.addEventListener('DOMContentLoaded', function() {
+
+        document.addEventListener('DOMContentLoaded', function () {
             initAuth();
             const today = new Date().toISOString().split('T')[0];
             if (document.getElementById('fecha')) {

@@ -839,13 +839,6 @@
     document.getElementById('confirmarEliminarLista').addEventListener('click', eliminarListaCompleta);
 
 
-
- // Agregamos un único listener para el botón de confirmación
-    const confirmarEliminarListaBtn = document.getElementById('confirmarEliminarLista');
-    if (confirmarEliminarListaBtn) {
-        confirmarEliminarListaBtn.addEventListener('click', eliminarListaCompleta);
-    }
-
  
             initReportForm();
             initReportList();
@@ -3070,15 +3063,15 @@ function abrirModalEliminarLista() {
  * Elimina una lista y todos sus reportes asociados
  */
 async function eliminarListaCompleta() {
+    // Obtener el ID de la lista del <select> dentro del modal
     const select = document.getElementById('listaAEliminar');
     const listaId = select.value;
+    const listaNombre = select.options[select.selectedIndex].text.split(' (')[0];
 
     if (!listaId) {
         showToast('Por favor seleccione una lista para eliminar.', 'error');
         return;
     }
-
-    const listaNombre = select.options[select.selectedIndex].text;
 
     try {
         const confirmed = await showCustomDialog(
@@ -3087,26 +3080,25 @@ async function eliminarListaCompleta() {
         );
 
         if (!confirmed) return;
-
+        
         // Deshabilitar botón y mostrar carga
-        const confirmarBtn = document.getElementById('confirmarEliminarLista');
-        confirmarBtn.innerHTML = '<div class="loading"></div> Eliminando...';
-        confirmarBtn.disabled = true;
+        document.getElementById('confirmarEliminarLista').innerHTML = '<div class="loading"></div> Eliminando...';
+        document.getElementById('confirmarEliminarLista').disabled = true;
 
-        // Obtener reportes asociados
+        // Obtener todos los reportes asociados a la lista
         const reportes = await fetchAPI('/reports');
-        const reportesLista = reportes.filter(r =>
+        const reportesLista = reportes.filter(r => 
             r.listaId === listaId || r.list_id === listaId
         );
 
-        // Eliminar reportes en paralelo
+        // Eliminar reportes en paralelo para mayor eficiencia
         await Promise.all(
-            reportesLista.map(reporte =>
+            reportesLista.map(reporte => 
                 fetchAPI(`/reports/${reporte.id}`, { method: 'DELETE' })
             )
         );
 
-        // Eliminar lista
+        // Eliminar la lista
         await fetchAPI(`/lists/${listaId}`, { method: 'DELETE' });
 
         showToast(`Lista "${listaNombre}" y sus reportes eliminados exitosamente.`, 'success');
@@ -3121,12 +3113,11 @@ async function eliminarListaCompleta() {
         showToast(`Error al eliminar la lista: ${error.message}`, 'error');
     } finally {
         // Restaurar el botón
-        const confirmarBtn = document.getElementById('confirmarEliminarLista');
-        confirmarBtn.innerHTML = 'Eliminar Lista';
-        confirmarBtn.disabled = false;
+        document.getElementById('confirmarEliminarLista').innerHTML = 'Eliminar Lista';
+        document.getElementById('confirmarEliminarLista').disabled = false;
     }
 }
-   
+
    </script>
 </body>
 </html>

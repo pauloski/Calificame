@@ -2272,20 +2272,22 @@ async function loadLists() {
         /**
          * Inicializa la funcionalidad de carga masiva
          */
-        function initMassUpload() {
-            const uploadArea = document.getElementById('uploadArea');
-            const fileInput = document.getElementById('csvFile');
+    function initMassUpload() {
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('csvFile');
+    const procesarCSVBtn = document.getElementById('procesarCSV');
 
-            uploadArea.addEventListener('click', () => fileInput.click());
-            uploadArea.addEventListener('dragover', handleDragOver);
-            uploadArea.addEventListener('dragleave', handleDragLeave);
-            uploadArea.addEventListener('drop', handleDrop);
-            fileInput.addEventListener('change', handleFileSelect);
-
-            document.getElementById('descargarPlantilla').addEventListener('click', descargarPlantillaCSV);
-            document.getElementById('procesarCSV').addEventListener('click', procesarArchivoCSV);
-        }
-
+    // Verificar si los elementos existen en el DOM antes de asignar eventos
+    if (uploadArea && fileInput && procesarCSVBtn) {
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', handleDragOver);
+        uploadArea.addEventListener('dragleave', handleDragLeave);
+        uploadArea.addEventListener('drop', handleDrop);
+        fileInput.addEventListener('change', handleFileSelect);
+        document.getElementById('descargarPlantilla').addEventListener('click', descargarPlantillaCSV);
+        procesarCSVBtn.addEventListener('click', procesarArchivoCSV);
+    }
+}
         /**
          * Maneja el evento dragover para el área de carga
          */

@@ -61,12 +61,17 @@ function extractToken(request) {
 }
 
 // ==========================================
-// API Handlers
+// API Handlers - CORREGIDO CON DEBUGGING
 // ==========================================
 
 async function handleRequest(request, env) {
   const url = new URL(request.url);
   const path = url.pathname.replace('/api', '');
+
+  console.log(`=== REQUEST DEBUG ===`);
+  console.log(`Method: ${request.method}`);
+  console.log(`Original path: ${url.pathname}`);
+  console.log(`Processed path: ${path}`);
 
   // Manejar solicitudes de pre-vuelo OPTIONS para CORS
   if (request.method === 'OPTIONS') {
@@ -89,12 +94,18 @@ async function handleRequest(request, env) {
   }
 
   const userId = user.id;
+  console.log(`Authenticated user ID: ${userId}`);
 
+  // ROUTING CORREGIDO - el orden es importante
   if (path === '/reports') {
     if (request.method === 'GET') return getReports(request, env, userId);
     if (request.method === 'POST') return createReport(request, env, userId);
     return errorResponse('Method Not Allowed', 405);
+  } else if (path === '/reports/search') {
+    if (request.method === 'POST') return searchReports(request, env, userId);
+    return errorResponse('Method Not Allowed', 405);
   } else if (path.startsWith('/reports/')) {
+    console.log(`Processing individual report route: ${path}`);
     const parts = path.split('/');
     if (parts.length === 3) {
       const reportId = parts[2];
@@ -103,21 +114,31 @@ async function handleRequest(request, env) {
       if (request.method === 'DELETE') return deleteReport(request, env, userId, reportId);
     }
     return errorResponse('Not Found', 404);
-  } else if (path === '/reports/search') {
-    if (request.method === 'POST') return searchReports(request, env, userId);
-    return errorResponse('Method Not Allowed', 405);
-  } else if (path.startsWith('/lists/')) {
-    const parts = path.split('/');
-    if (parts.length === 3) {
-      const listId = parts[2];
-      if (request.method === 'DELETE') return deleteList(request, env, userId, listId);
-    }
-    return errorResponse('Not Found', 404);
   } else if (path === '/lists') {
     if (request.method === 'GET') return getLists(request, env, userId);
     if (request.method === 'POST') return createList(request, env, userId);
     return errorResponse('Method Not Allowed', 405);
+  } else if (path.startsWith('/lists/')) {
+    console.log(`Processing individual list route: ${path}`);
+    const parts = path.split('/');
+    console.log(`Path parts:`, parts);
+    
+    if (parts.length === 3) {
+      const listId = parts[2];
+      console.log(`List ID extracted: "${listId}"`);
+      
+      if (request.method === 'DELETE') {
+        console.log(`Calling deleteList for ID: ${listId}`);
+        return deleteList(request, env, userId, listId);
+      }
+      if (request.method === 'GET') return getList(request, env, userId, listId);
+      if (request.method === 'PUT') return updateList(request, env, userId, listId);
+      
+      return errorResponse('Method Not Allowed', 405);
+    }
+    return errorResponse('Invalid list path', 404);
   } else {
+    console.log(`Route not found: ${path}`);
     return errorResponse('Not Found', 404);
   }
 }
@@ -242,7 +263,7 @@ async function createReport(request, env, userId) {
     const { id, infoGeneral, configuracion, nivelesDesempeno, criterios, feedback, resultados, listaId } = await request.json();
     const result = await env.DB.prepare(
       `INSERT INTO reports (id, user_id, list_id, info_general, configuracion, niveles_desempeno, criterios, feedback, resultados) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).bind(
       id,
       userId,
@@ -318,11 +339,13 @@ async function searchReports(request, env, userId) {
 }
 
 // ==========================================
-// LISTS CRUD
+// LISTS CRUD - MEJORADO CON DEBUGGING
 // ==========================================
 
 async function getLists(request, env, userId) {
+  console.log(`Getting lists for user: ${userId}`);
   const { results } = await env.DB.prepare('SELECT * FROM lists WHERE user_id = ?').bind(userId).all();
+  console.log(`Found ${results.length} lists for user ${userId}`);
   return jsonResponse(results);
 }
 
@@ -334,18 +357,129 @@ async function createList(request, env, userId) {
     }
     const result = await env.DB.prepare('INSERT INTO lists (name, user_id) VALUES (?, ?)')
                                 .bind(name, userId).run();
+    console.log(`Created list with ID: ${result.meta.last_row_id}`);
     return jsonResponse({ id: result.meta.last_row_id, name }, 201);
   } catch (err) {
+    console.error(`Error creating list:`, err);
     return errorResponse(err.message, 500);
   }
 }
 
+// FUNCIÓN MEJORADA CON DEBUGGING COMPLETO
 async function deleteList(request, env, userId, id) {
-  const result = await env.DB.prepare('DELETE FROM lists WHERE id = ? AND user_id = ?').bind(id, userId).run();
-  if (result.meta.rows_affected === 0) {
-    return errorResponse('List not found or not authorized.', 404);
+  console.log(`=== DELETE LIST DEBUG ===`);
+  console.log(`ID to delete: ${id} (type: ${typeof id})`);
+  console.log(`User ID: ${userId} (type: ${typeof userId})`);
+  
+  try {
+    // Convertir ID a número para asegurar consistencia
+    const listIdNum = parseInt(id);
+    const userIdNum = parseInt(userId);
+    
+    console.log(`Converted - List ID: ${listIdNum}, User ID: ${userIdNum}`);
+    
+    if (isNaN(listIdNum) || isNaN(userIdNum)) {
+      console.log(`Invalid ID conversion - listId: ${listIdNum}, userId: ${userIdNum}`);
+      return errorResponse('Invalid ID format', 400);
+    }
+    
+    // Verificar si la lista existe
+    const existingList = await env.DB.prepare('SELECT * FROM lists WHERE id = ?').bind(listIdNum).first();
+    console.log(`Existing list found:`, existingList);
+    
+    if (!existingList) {
+      console.log(`List ${listIdNum} not found in database`);
+      return errorResponse('List not found', 404);
+    }
+    
+    if (existingList.user_id !== userIdNum) {
+      console.log(`List ${listIdNum} belongs to user ${existingList.user_id}, not ${userIdNum}`);
+      return errorResponse('Not authorized', 403);
+    }
+    
+    // Eliminar la lista
+    console.log(`Executing DELETE query for list ${listIdNum}...`);
+    const result = await env.DB.prepare('DELETE FROM lists WHERE id = ? AND user_id = ?')
+      .bind(listIdNum, userIdNum)
+      .run();
+    
+    console.log(`Delete result:`, result);
+    console.log(`Rows affected: ${result.meta.rows_affected}`);
+    
+    if (result.meta.rows_affected === 0) {
+      console.log(`No rows affected during deletion`);
+      return errorResponse('Failed to delete list', 500);
+    }
+    
+    console.log(`List ${listIdNum} deleted successfully`);
+    return jsonResponse({ 
+      message: 'List deleted successfully', 
+      deletedId: listIdNum,
+      rowsAffected: result.meta.rows_affected 
+    });
+    
+  } catch (error) {
+    console.error(`Error in deleteList:`, error);
+    return errorResponse(`Database error: ${error.message}`, 500);
   }
-  return jsonResponse({ message: 'List deleted' });
+}
+
+// FUNCIONES ADICIONALES PARA COMPLETITUD
+async function getList(request, env, userId, id) {
+  console.log(`Getting list ${id} for user ${userId}`);
+  
+  try {
+    const listIdNum = parseInt(id);
+    const userIdNum = parseInt(userId);
+    
+    const list = await env.DB.prepare('SELECT * FROM lists WHERE id = ? AND user_id = ?')
+      .bind(listIdNum, userIdNum)
+      .first();
+    
+    if (!list) {
+      console.log(`List ${listIdNum} not found for user ${userIdNum}`);
+      return errorResponse('List not found', 404);
+    }
+    
+    console.log(`Found list:`, list);
+    return jsonResponse(list);
+    
+  } catch (error) {
+    console.error(`Error getting list:`, error);
+    return errorResponse(error.message, 500);
+  }
+}
+
+async function updateList(request, env, userId, id) {
+  console.log(`Updating list ${id} for user ${userId}`);
+  
+  try {
+    const { name } = await request.json();
+    if (!name) {
+      return errorResponse('List name is required', 400);
+    }
+    
+    const listIdNum = parseInt(id);
+    const userIdNum = parseInt(userId);
+    
+    const result = await env.DB.prepare('UPDATE lists SET name = ? WHERE id = ? AND user_id = ?')
+      .bind(name, listIdNum, userIdNum)
+      .run();
+    
+    console.log(`Update result:`, result);
+    
+    if (result.meta.rows_affected === 0) {
+      console.log(`List ${listIdNum} not found or not authorized for user ${userIdNum}`);
+      return errorResponse('List not found or not authorized', 404);
+    }
+    
+    console.log(`List ${listIdNum} updated successfully`);
+    return jsonResponse({ message: 'List updated', id: listIdNum, name });
+    
+  } catch (error) {
+    console.error(`Error updating list:`, error);
+    return errorResponse(error.message, 500);
+  }
 }
 
 // ==========================================
@@ -357,8 +491,8 @@ export default {
     try {
       return handleRequest(request, env);
     } catch (e) {
+      console.error('Unhandled error in worker:', e);
       return errorResponse(e.message, 500);
     }
   },
-
 };

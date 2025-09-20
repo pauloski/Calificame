@@ -106,10 +106,6 @@ async function handleRequest(request, env) {
   } else if (path === '/reports/search') {
     if (request.method === 'POST') return searchReports(request, env, userId);
     return errorResponse('Method Not Allowed', 405);
-  } else if (path === '/lists') {
-    if (request.method === 'GET') return getLists(request, env, userId);
-    if (request.method === 'POST') return createList(request, env, userId);
-    return errorResponse('Method Not Allowed', 405);
   } else if (path.startsWith('/lists/')) {
     const parts = path.split('/');
     if (parts.length === 3) {
@@ -117,6 +113,10 @@ async function handleRequest(request, env) {
       if (request.method === 'DELETE') return deleteList(request, env, userId, listId);
     }
     return errorResponse('Not Found', 404);
+  } else if (path === '/lists') {
+    if (request.method === 'GET') return getLists(request, env, userId);
+    if (request.method === 'POST') return createList(request, env, userId);
+    return errorResponse('Method Not Allowed', 405);
   } else {
     return errorResponse('Not Found', 404);
   }

@@ -106,7 +106,11 @@ async function handleRequest(request, env) {
   } else if (path === '/reports/search') {
     if (request.method === 'POST') return searchReports(request, env, userId);
     return errorResponse('Method Not Allowed', 405);
-  } else if (path.startsWith('/lists/')) { // <<-- ¡NUEVO BLOQUE!
+  } else if (path === '/lists') {
+    if (request.method === 'GET') return getLists(request, env, userId);
+    if (request.method === 'POST') return createList(request, env, userId);
+    return errorResponse('Method Not Allowed', 405);
+  } else if (path.startsWith('/lists/')) {
     const parts = path.split('/');
     if (parts.length === 3) {
       const listId = parts[2];
@@ -336,41 +340,6 @@ async function createList(request, env, userId) {
   }
 }
 
-// ==========================================
-// EXPORT
-// ==========================================
-/*
-export default {
-  async fetch(request, env) {
-    try {
-      // Configura la ruta de la API
-      const url = new URL(request.url);
-      if (url.pathname.startsWith('/api')) {
-        return handleRequest(request, env);
-      }
-      // Sirve el archivo estático index.html para todas las demás rutas
-      const response = await env.ASSETS.fetch(request);
-      return response;
-    } catch (e) {
-      return errorResponse(e.message, 500);
-    }
-  },
-};*/
-
-
-export default {
-  async fetch(request, env) {
-    try {
-      // Cloudflare Pages maneja automáticamente las solicitudes de activos estáticos.
-      // Si la URL no es un activo estático, la solicitud llega a este Worker.
-      // Por lo tanto, no se necesita el `startsWith('/api')`.
-      return handleRequest(request, env);
-    } catch (e) {
-      return errorResponse(e.message, 500);
-    }
-  },
-};
-
 async function deleteList(request, env, userId, id) {
   const result = await env.DB.prepare('DELETE FROM lists WHERE id = ? AND user_id = ?').bind(id, userId).run();
   if (result.meta.rows_affected === 0) {
@@ -378,3 +347,17 @@ async function deleteList(request, env, userId, id) {
   }
   return jsonResponse({ message: 'List deleted' });
 }
+
+// ==========================================
+// EXPORT
+// ==========================================
+
+export default {
+  async fetch(request, env) {
+    try {
+      return handleRequest(request, env);
+    } catch (e) {
+      return errorResponse(e.message, 500);
+    }
+  },
+};

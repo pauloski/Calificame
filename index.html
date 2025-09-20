@@ -836,9 +836,13 @@
             });
 
               // Agregar listener para eliminar lista
-    document.getElementById('confirmarEliminarLista').addEventListener('click', eliminarListaCompleta);
+    //document.getElementById('confirmarEliminarLista').addEventListener('click', eliminarListaCompleta);
 
-
+ // Conectar el botón de confirmación del modal a la función de eliminación
+    const confirmarEliminarListaBtn = document.getElementById('confirmarEliminarLista');
+    if (confirmarEliminarListaBtn) {
+        confirmarEliminarListaBtn.addEventListener('click', eliminarListaCompleta);
+    }
  
             initReportForm();
             initReportList();
@@ -3067,6 +3071,10 @@ async function eliminarListaCompleta() {
     const select = document.getElementById('listaAEliminar');
     const listaId = select.value;
     const listaNombre = select.options[select.selectedIndex].text.split(' (')[0];
+      // Nueva línea para depurar:
+    console.log("Intentando eliminar lista con ID:", listaId);
+
+
 
     if (!listaId) {
         showToast('Por favor seleccione una lista para eliminar.', 'error');

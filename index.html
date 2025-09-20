@@ -824,7 +824,8 @@
         function initMainApp() {
             // Inicializar cache de reportes
             window.reportesCache = [];
-
+   // AGREGAR ESTA LÍNEA:
+    configurarEliminarLista();
             document.querySelectorAll('.nav-btn[data-page]').forEach(btn => {
                 btn.addEventListener('click', () => {
                     navigateToPage(btn.dataset.page);
@@ -3063,23 +3064,28 @@ function abrirModalEliminarLista() {
     document.getElementById('eliminarListaModal').classList.add('active');
 }
 
+// ==========================================
+// CORRECCIÓN PARA ELIMINAR LISTAS
+// ==========================================
+
 /**
  * Elimina una lista y todos sus reportes asociados
+ * VERSIÓN CORREGIDA - reemplazar la función existente
  */
 async function eliminarListaCompleta() {
-    // Obtener el ID de la lista del <select> dentro del modal
+    // Obtener el ID de la lista del select dentro del modal
     const select = document.getElementById('listaAEliminar');
     const listaId = select.value;
-    const listaNombre = select.options[select.selectedIndex].text.split(' (')[0];
-      // Nueva línea para depurar:
-    console.log("Intentando eliminar lista con ID:", listaId);
-
-
-
+    
     if (!listaId) {
         showToast('Por favor seleccione una lista para eliminar.', 'error');
         return;
     }
+
+    // Obtener el nombre de la lista para el mensaje
+    const listaNombre = select.options[select.selectedIndex].text.split(' (')[0];
+    
+    console.log("Intentando eliminar lista:", { id: listaId, nombre: listaNombre });
 
     try {
         const confirmed = await showCustomDialog(
@@ -3089,43 +3095,111 @@ async function eliminarListaCompleta() {
 
         if (!confirmed) return;
         
-        // Deshabilitar botón y mostrar carga
-        document.getElementById('confirmarEliminarLista').innerHTML = '<div class="loading"></div> Eliminando...';
-        document.getElementById('confirmarEliminarLista').disabled = true;
+        // Deshabilitar botón para evitar clics múltiples
+        const btnEliminar = document.getElementById('confirmarEliminarLista');
+        const textoOriginal = btnEliminar.innerHTML;
+        btnEliminar.innerHTML = '<div class="loading"></div> Eliminando...';
+        btnEliminar.disabled = true;
 
-        // Obtener todos los reportes asociados a la lista
+        // Obtener reportes asociados a la lista
         const reportes = await fetchAPI('/reports');
         const reportesLista = reportes.filter(r => 
-            r.listaId === listaId || r.list_id === listaId
+            (r.listaId && r.listaId.toString() === listaId.toString()) || 
+            (r.list_id && r.list_id.toString() === listaId.toString())
         );
 
-        // Eliminar reportes en paralelo para mayor eficiencia
-        await Promise.all(
-            reportesLista.map(reporte => 
-                fetchAPI(`/reports/${reporte.id}`, { method: 'DELETE' })
-            )
-        );
+        console.log(`Encontrados ${reportesLista.length} reportes asociados a la lista`);
+
+        // Eliminar reportes asociados primero
+        if (reportesLista.length > 0) {
+            await Promise.all(
+                reportesLista.map(reporte => {
+                    console.log(`Eliminando reporte ${reporte.id}`);
+                    return fetchAPI(`/reports/${reporte.id}`, { method: 'DELETE' });
+                })
+            );
+        }
 
         // Eliminar la lista
+        console.log(`Eliminando lista con ID: ${listaId}`);
         await fetchAPI(`/lists/${listaId}`, { method: 'DELETE' });
 
-        showToast(`Lista "${listaNombre}" y sus reportes eliminados exitosamente.`, 'success');
+        showToast(`Lista "${listaNombre}" y ${reportesLista.length} reportes eliminados exitosamente.`, 'success');
         cerrarModales();
 
-        // Recargar datos para actualizar la interfaz
+        // Recargar datos
         await cargarReportesGuardados();
         await loadLists();
 
     } catch (error) {
         console.error('Error al eliminar lista:', error);
         showToast(`Error al eliminar la lista: ${error.message}`, 'error');
+        
+        // Si el error es 404, significa que la lista ya no existe
+        if (error.message === 'Not Found') {
+            showToast('La lista ya fue eliminada. Actualizando interfaz...', 'info');
+            cerrarModales();
+            await cargarReportesGuardados();
+            await loadLists();
+        }
     } finally {
         // Restaurar el botón
-        document.getElementById('confirmarEliminarLista').innerHTML = 'Eliminar Lista';
-        document.getElementById('confirmarEliminarLista').disabled = false;
+        const btnEliminar = document.getElementById('confirmarEliminarLista');
+        if (btnEliminar) {
+            btnEliminar.innerHTML = textoOriginal || 'Eliminar Lista';
+            btnEliminar.disabled = false;
+        }
     }
 }
 
+/**
+ * Configuración mejorada del event listener para eliminar lista
+ * Agregar esto en la función initMainApp()
+ */
+function configurarEliminarLista() {
+    const btnConfirmar = document.getElementById('confirmarEliminarLista');
+    if (btnConfirmar) {
+        // Remover listeners existentes para evitar duplicados
+        btnConfirmar.replaceWith(btnConfirmar.cloneNode(true));
+        
+        // Agregar el nuevo listener
+        document.getElementById('confirmarEliminarLista').addEventListener('click', eliminarListaCompleta);
+    }
+}
+
+/**
+ * Mejora del fetchAPI para manejar mejor los errores 404
+ */
+async function fetchAPIWithBetterErrorHandling(endpoint, options = {}) {
+    const token = localStorage.getItem('userToken');
+    const headers = {
+        'Content-Type': 'application/json',
+        ...options.headers
+    };
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`/api${endpoint}`, {
+        ...options,
+        headers
+    });
+
+    if (!response.ok) {
+        if (response.status === 404) {
+            throw new Error('Not Found');
+        }
+        
+        try {
+            const error = await response.json();
+            throw new Error(error.message);
+        } catch (parseError) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+    }
+
+    return response.json();
+}
    </script>
 </body>
 </html>

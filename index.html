@@ -3138,159 +3138,186 @@ async function abrirModalEliminarLista() {
 
 
 /**
- * SOLUCIÓN: Manejar el caso donde la lista ya no existe
- * Reemplaza tu función eliminarListaCompleta actual con esta versión
+ * SOLUCIÓN SIMPLE Y DIRECTA
+ * Reemplaza completamente la función eliminarListaCompleta
  */
 async function eliminarListaCompleta() {
-    console.log("=== INICIANDO PROCESO DE ELIMINACIÓN ===");
+    console.log("=== INICIANDO ELIMINACIÓN SIMPLE ===");
     
     const select = document.getElementById('listaAEliminar');
     const listaId = select.value;
     
     if (!listaId) {
-        console.log("No se seleccionó ninguna lista");
-        showToast('Por favor seleccione una lista para eliminar.', 'error');
+        alert('Seleccione una lista para eliminar');
         return;
     }
 
     const listaNombre = select.options[select.selectedIndex].text.split(' (')[0];
-    console.log("Intentando eliminar lista:", { id: listaId, nombre: listaNombre });
+    console.log(`Intentando eliminar: ${listaNombre} (ID: ${listaId})`);
+    
+    // Usar confirm simple en lugar del modal personalizado
+    if (!confirm(`¿Eliminar la lista "${listaNombre}" y todos sus reportes asociados?`)) {
+        console.log("Eliminación cancelada por el usuario");
+        return;
+    }
+
+    const btnEliminar = document.getElementById('confirmarEliminarLista');
+    btnEliminar.innerHTML = 'Eliminando...';
+    btnEliminar.disabled = true;
 
     try {
-        console.log("📋 Mostrando diálogo de confirmación...");
-        
-        const confirmed = await new Promise((resolve) => {
-            const dialog = document.getElementById('custom-dialog');
-            const titleEl = document.getElementById('dialog-title');
-            const messageEl = document.getElementById('dialog-message');
-            const confirmBtn = document.getElementById('dialog-confirm-btn');
-            const cancelBtn = document.getElementById('dialog-cancel-btn');
-            
-            // Configurar el diálogo
-            titleEl.textContent = 'Confirmar eliminación';
-            messageEl.textContent = `¿Está seguro de eliminar la lista "${listaNombre}"? Se eliminarán todos los reportes asociados.`;
-            cancelBtn.style.display = 'inline-block';
-            confirmBtn.textContent = 'Confirmar';
-            
-            const handleConfirm = () => {
-                console.log("✅ Usuario confirmó la eliminación");
-                dialog.classList.remove('active');
-                cleanup();
-                resolve(true);
-            };
-            
-            const handleCancel = () => {
-                console.log("❌ Usuario canceló la eliminación");
-                dialog.classList.remove('active');
-                cleanup();
-                resolve(false);
-            };
-            
-            const cleanup = () => {
-                confirmBtn.removeEventListener('click', handleConfirm);
-                cancelBtn.removeEventListener('click', handleCancel);
-            };
-            
-            confirmBtn.addEventListener('click', handleConfirm);
-            cancelBtn.addEventListener('click', handleCancel);
-            
-            dialog.classList.add('active');
-        });
-
-        if (!confirmed) {
-            console.log("❌ Eliminación cancelada por el usuario");
-            return;
-        }
-        
-        console.log("🔄 Iniciando proceso de eliminación...");
-        
-        // Deshabilitar botón para evitar clics múltiples
-        const btnEliminar = document.getElementById('confirmarEliminarLista');
-        const textoOriginal = btnEliminar.innerHTML;
-        btnEliminar.innerHTML = '<div class="loading"></div> Eliminando...';
-        btnEliminar.disabled = true;
-        
-        console.log("📊 Obteniendo reportes...");
-
-        // Obtener reportes asociados a la lista
+        // Obtener todos los reportes
+        console.log("Obteniendo reportes...");
         const reportes = await fetchAPI('/reports');
-        console.log(`📋 Total de reportes del usuario: ${reportes.length}`);
+        console.log(`Total reportes: ${reportes.length}`);
         
+        // Filtrar reportes de esta lista
         const reportesLista = reportes.filter(r => {
-            const coincide = (r.listaId && r.listaId.toString() === listaId.toString()) || 
-                           (r.list_id && r.list_id.toString() === listaId.toString());
-            if (coincide) {
-                console.log(`📄 Reporte encontrado: ${r.id} - Lista ID: ${r.listaId || r.list_id}`);
-            }
-            return coincide;
+            const reporteListaId = r.listaId || r.list_id;
+            return reporteListaId && reporteListaId.toString() === listaId.toString();
         });
-
-        console.log(`🎯 Reportes asociados a eliminar: ${reportesLista.length}`);
-
-        // Eliminar reportes asociados primero
-        if (reportesLista.length > 0) {
-            console.log("🗑️ Eliminando reportes asociados...");
-            for (const reporte of reportesLista) {
-                try {
-                    console.log(`🗑️ Eliminando reporte ${reporte.id}...`);
-                    await fetchAPI(`/reports/${reporte.id}`, { method: 'DELETE' });
-                    console.log(`✅ Reporte ${reporte.id} eliminado exitosamente`);
-                } catch (error) {
-                    console.error(`❌ Error eliminando reporte ${reporte.id}:`, error);
-                }
+        
+        console.log(`Reportes a eliminar: ${reportesLista.length}`);
+        
+        // Eliminar reportes uno por uno
+        for (const reporte of reportesLista) {
+            console.log(`Eliminando reporte: ${reporte.id}`);
+            try {
+                await fetchAPI(`/reports/${reporte.id}`, { method: 'DELETE' });
+                console.log(`✓ Reporte ${reporte.id} eliminado`);
+            } catch (error) {
+                console.warn(`Error eliminando reporte ${reporte.id}:`, error);
             }
         }
-
-        // AQUÍ ES EL CAMBIO CLAVE: Manejar el caso de lista inexistente
+        
+        // Eliminar la lista
+        console.log(`Eliminando lista ID: ${listaId}`);
         try {
-            console.log(`🗑️ Eliminando lista con ID: ${listaId}...`);
             await fetchAPI(`/lists/${listaId}`, { method: 'DELETE' });
-            console.log(`✅ Lista ${listaId} eliminada exitosamente`);
+            console.log(`✓ Lista ${listaId} eliminada`);
         } catch (error) {
             if (error.message === 'Not Found') {
-                console.log(`⚠️ La lista ${listaId} ya no existe en la base de datos`);
-                console.log(`ℹ️ Esto puede ocurrir si la lista fue eliminada previamente`);
-                // No lanzar error, continuar con el proceso normal
+                console.log(`⚠ Lista ${listaId} ya no existía`);
             } else {
-                // Si es otro tipo de error, sí lanzarlo
-                throw error;
+                console.error(`Error eliminando lista:`, error);
             }
         }
-
-        // Mostrar mensaje de éxito
-        const reportesEliminados = reportesLista.length;
-        if (reportesEliminados > 0) {
-            showToast(`Lista "${listaNombre}" procesada: ${reportesEliminados} reportes eliminados.`, 'success');
-        } else {
-            showToast(`Lista "${listaNombre}" procesada exitosamente.`, 'success');
-        }
+        
+        alert(`Lista "${listaNombre}" procesada. ${reportesLista.length} reportes eliminados.`);
         
         // Cerrar modal
-        console.log("🔄 Cerrando modales...");
-        cerrarModales();
-
-        // Recargar datos para sincronizar
-        console.log("🔄 Recargando datos para sincronizar...");
-        await Promise.all([
-            cargarReportesGuardados(),
-            loadLists()
-        ]);
+        document.getElementById('eliminarListaModal').classList.remove('active');
         
-        console.log("✅ Proceso de eliminación completado exitosamente");
-
+        // Recargar datos
+        console.log("Recargando datos...");
+        await cargarReportesGuardados();
+        await loadLists();
+        console.log("✓ Proceso completado");
+        
     } catch (error) {
-        console.error('❌ Error en el proceso de eliminación:', error);
-        showToast(`Error al procesar la eliminación: ${error.message}`, 'error');
+        console.error('Error en eliminación:', error);
+        alert(`Error: ${error.message}`);
     } finally {
-        // Restaurar el botón
-        console.log("🔧 Restaurando botón...");
-        const btnEliminar = document.getElementById('confirmarEliminarLista');
-        if (btnEliminar) {
-            btnEliminar.innerHTML = 'Eliminar Lista';
-            btnEliminar.disabled = false;
-        }
+        btnEliminar.innerHTML = 'Eliminar Lista';
+        btnEliminar.disabled = false;
     }
 }
+
+/**
+ * FUNCIÓN DE LIMPIEZA DE DATOS INCONSISTENTES
+ * Ejecuta esto en consola para limpiar la inconsistencia entre frontend y backend
+ */
+async function limpiarDatosInconsistentes() {
+    console.log("=== LIMPIEZA DE DATOS INCONSISTENTES ===");
+    
+    try {
+        const [reportes, listas] = await Promise.all([
+            fetchAPI('/reports'),
+            fetchAPI('/lists')
+        ]);
+        
+        console.log(`Reportes totales: ${reportes.length}`);
+        console.log(`Listas totales: ${listas.length}`);
+        
+        // Encontrar reportes huérfanos (con listaId que no existe)
+        const reportesHuerfanos = reportes.filter(reporte => {
+            const listaId = reporte.listaId || reporte.list_id;
+            if (!listaId) return false; // Reportes sin lista están OK
+            
+            const listaExiste = listas.find(lista => lista.id === listaId);
+            return !listaExiste;
+        });
+        
+        console.log(`Reportes huérfanos encontrados: ${reportesHuerfanos.length}`);
+        
+        if (reportesHuerfanos.length > 0) {
+            console.log("Reportes huérfanos:", reportesHuerfanos.map(r => ({
+                id: r.id,
+                estudiante: r.infoGeneral.nombreEstudiante,
+                listaId: r.listaId || r.list_id
+            })));
+            
+            if (confirm(`Se encontraron ${reportesHuerfanos.length} reportes con referencias a listas inexistentes. ¿Limpiar estas referencias?`)) {
+                for (const reporte of reportesHuerfanos) {
+                    console.log(`Limpiando reporte ${reporte.id}...`);
+                    // Limpiar la referencia a la lista inexistente
+                    const reporteActualizado = { ...reporte };
+                    reporteActualizado.listaId = null;
+                    delete reporteActualizado.list_id;
+                    
+                    await fetchAPI(`/reports/${reporte.id}`, {
+                        method: 'PUT',
+                        body: JSON.stringify(reporteActualizado)
+                    });
+                }
+                
+                console.log("✓ Referencias limpiadas");
+                alert("Referencias a listas inexistentes eliminadas");
+                
+                // Recargar datos
+                await cargarReportesGuardados();
+                await loadLists();
+            }
+        } else {
+            console.log("✓ No se encontraron inconsistencias");
+        }
+        
+    } catch (error) {
+        console.error("Error en limpieza:", error);
+    }
+}
+
+/**
+ * VERIFICACIÓN DE ESTADO ACTUAL
+ * Ejecuta esto para ver el estado actual de tus datos
+ */
+async function verificarEstadoActual() {
+    console.log("=== VERIFICACIÓN DE ESTADO ===");
+    
+    const [reportes, listas] = await Promise.all([
+        fetchAPI('/reports'),
+        fetchAPI('/lists')
+    ]);
+    
+    console.log("LISTAS EN BD:", listas);
+    console.log("REPORTES CON LISTA:", reportes.filter(r => r.listaId || r.list_id).map(r => ({
+        id: r.id,
+        estudiante: r.infoGeneral.nombreEstudiante,
+        listaId: r.listaId || r.list_id
+    })));
+    
+    // Verificar consistencia
+    const listaIds = listas.map(l => l.id);
+    const reportesConLista = reportes.filter(r => r.listaId || r.list_id);
+    
+    console.log("IDs de listas existentes:", listaIds);
+    console.log("IDs de listas referenciadas por reportes:", 
+        [...new Set(reportesConLista.map(r => r.listaId || r.list_id))]);
+}
+
+
+
+
 /**
  * Configuración mejorada del event listener para eliminar lista
  * Agregar esto en la función initMainApp()

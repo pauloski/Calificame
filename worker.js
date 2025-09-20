@@ -106,10 +106,13 @@ async function handleRequest(request, env) {
   } else if (path === '/reports/search') {
     if (request.method === 'POST') return searchReports(request, env, userId);
     return errorResponse('Method Not Allowed', 405);
-  } else if (path === '/lists') {
-    if (request.method === 'GET') return getLists(request, env, userId);
-    if (request.method === 'POST') return createList(request, env, userId);
-    return errorResponse('Method Not Allowed', 405);
+  } else if (path.startsWith('/lists/')) { // <<-- ¡NUEVO BLOQUE!
+    const parts = path.split('/');
+    if (parts.length === 3) {
+      const listId = parts[2];
+      if (request.method === 'DELETE') return deleteList(request, env, userId, listId);
+    }
+    return errorResponse('Not Found', 404);
   } else {
     return errorResponse('Not Found', 404);
   }
@@ -367,3 +370,11 @@ export default {
     }
   },
 };
+
+async function deleteList(request, env, userId, id) {
+  const result = await env.DB.prepare('DELETE FROM lists WHERE id = ? AND user_id = ?').bind(id, userId).run();
+  if (result.meta.rows_affected === 0) {
+    return errorResponse('List not found or not authorized.', 404);
+  }
+  return jsonResponse({ message: 'List deleted' });
+}

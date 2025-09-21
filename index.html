@@ -2406,10 +2406,31 @@ function initMassUpload() {
 
   
 
+// La función auxiliar debe estar en tu código
+function dividirLineaCSV(linea, separador) {
+    const resultado = [];
+    let campo = '';
+    let dentroComillas = false;
+    
+    for (let i = 0; i < linea.length; i++) {
+        const char = linea[i];
+        
+        if (char === '"') {
+            dentroComillas = !dentroComillas;
+            campo += char;
+        } else if (char === separador && !dentroComillas) {
+            resultado.push(campo);
+            campo = '';
+        } else {
+            campo += char;
+        }
+    }
+    
+    resultado.push(campo);
+    return resultado;
+}
 
-/**
- * Procesa el archivo CSV subido - CORREGIDO (5.0)
- */
+// Reemplaza tu función actual con esta versión
 async function procesarArchivoCSV() {
     if (!window.selectedCSVFile) {
         showToast('Por favor seleccione un archivo CSV primero.', 'error');
@@ -2443,12 +2464,12 @@ async function procesarArchivoCSV() {
             throw new Error('El archivo debe tener al menos encabezados y una fila de datos.');
         }
 
-        // === CORRECCIÓN CLAVE AQUÍ: DETECCIÓN DE DELIMITADOR ===
         const primeraLinea = lineas[0];
         const separador = primeraLinea.includes('\t') ? '\t' : ',';
         console.log("Separador detectado:", separador === '\t' ? 'TAB' : 'COMMA');
-        const headers = primeraLinea.split(separador).map(h => h.trim());
-        // =======================================================
+        
+        // Usar la función mejorada para dividir los encabezados
+        const headers = dividirLineaCSV(primeraLinea, separador).map(h => h.trim());
         
         const reportesGenerados = []; 
 
@@ -2462,7 +2483,9 @@ async function procesarArchivoCSV() {
 
         for (let i = 1; i < lineas.length; i++) {
             try {
-                const valores = lineas[i].split(separador).map(v => v.trim()); // Usar `separador` aquí
+                // Usar la función mejorada para dividir los valores de cada fila
+                const valores = dividirLineaCSV(lineas[i], separador).map(v => v.trim());
+                
                 if (valores.length !== headers.length) {
                     console.warn(`Fila ${i + 1} omitida por número de columnas incorrecto.`);
                     reportesConError++;
@@ -2603,33 +2626,6 @@ async function procesarArchivoCSV() {
 
 
 
-
-
-
-
-// Función auxiliar para dividir CSV respetando comillas
-function dividirCSV(linea, separador) {
-    const resultado = [];
-    let campo = '';
-    let dentroComillas = false;
-    
-    for (let i = 0; i < linea.length; i++) {
-        const char = linea[i];
-        
-        if (char === '"') {
-            dentroComillas = !dentroComillas;
-            campo += char;
-        } else if (char === separador && !dentroComillas) {
-            resultado.push(campo);
-            campo = '';
-        } else {
-            campo += char;
-        }
-    }
-    
-    resultado.push(campo);
-    return resultado;
-}
 
 
 

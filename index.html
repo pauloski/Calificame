@@ -2466,8 +2466,13 @@ async function procesarArchivoCSV() {
  /**
  * Parser CSV mejorado con mejor manejo de errores
  */
-async function parsearCSVMejorado(csvContent) {
-    console.log("=== PARSING CSV ===");
+
+
+ /**
+ * Función mejorada para limpiar y validar CSV problemático
+ */
+async function parsearCSVConValidacion(csvContent) {
+    console.log("=== PARSING CSV CON VALIDACIÓN ===");
     
     try {
         // Detectar separador
@@ -2475,14 +2480,22 @@ async function parsearCSVMejorado(csvContent) {
         const separador = primeraLinea.includes('\t') ? '\t' : ',';
         console.log(`Separador detectado: "${separador}"`);
 
-        // Limpiar contenido
-        const contenidoProcesado = csvContent
-            .replace(/"\s*\n\s*"/g, ' ')
+        // LIMPIEZA MEJORADA del contenido
+        let contenidoLimpio = csvContent
+            // Normalizar saltos de línea
             .replace(/\r\n/g, '\n')
-            .replace(/\r/g, '\n');
+            .replace(/\r/g, '\n')
+            // Limpiar saltos de línea dentro de campos entrecomillados
+            .replace(/"([^"]*)\n([^"]*?)"/g, '"$1 $2"')
+            // Normalizar espacios múltiples
+            .replace(/\s+/g, ' ')
+            // Limpiar emojis problemáticos (opcional)
+            .replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]/gu, '');
 
-        // Dividir líneas
-        const lineas = contenidoProcesado.split('\n')
+        console.log("Contenido CSV limpiado");
+
+        // Dividir en líneas
+        const lineas = contenidoLimpio.split('\n')
             .map(linea => linea.trim())
             .filter(linea => linea.length > 0);
 
@@ -2491,14 +2504,14 @@ async function parsearCSVMejorado(csvContent) {
         }
 
         // Procesar encabezados
-        const headers = lineas[0].split(separador).map(h => h.trim());
-        console.log('Headers encontrados:', headers);
+        const headers = lineas[0].split(separador).map(h => h.trim().replace(/^["']|["']$/g, ''));
+        console.log(`Headers encontrados (${headers.length}):`, headers);
 
         const reportesGenerados = [];
         let procesados = 0;
         let errores = [];
 
-        // Validar campos críticos
+        // Validar estructura esperada
         const camposRequeridos = ['nombreEstudiante', 'fecha', 'nombreDocente', 'asignatura', 'carrera', 'tituloEvaluacion'];
         const camposFaltantes = camposRequeridos.filter(campo => !headers.includes(campo));
         
@@ -2506,12 +2519,15 @@ async function parsearCSVMejorado(csvContent) {
             throw new Error(`Faltan columnas requeridas: ${camposFaltantes.join(', ')}`);
         }
 
-        // Procesar cada fila
+        // Procesar cada fila con validación robusta
         for (let i = 1; i < lineas.length; i++) {
             try {
-                let valores = lineas[i].split(separador);
+                console.log(`Procesando fila ${i}: ${lineas[i].substring(0, 50)}...`);
                 
-                // Ajustar número de campos
+                // Dividir respetando campos entrecomillados
+                let valores = dividirLineaCSV(lineas[i], separador);
+                
+                // Normalizar número de campos
                 while (valores.length < headers.length) {
                     valores.push('');
                 }
@@ -2519,52 +2535,100 @@ async function parsearCSVMejorado(csvContent) {
                     valores = valores.slice(0, headers.length);
                 }
 
-                // Limpiar valores
-                valores = valores.map(v => v.trim().replace(/^["']|["']$/g, ''));
+                // Limpiar y validar valores
+                valores = valores.map((v, index) => {
+                    let valor = v.trim().replace(/^["']|["']$/g, '');
+                    
+                    // Validaciones específicas por campo
+                    const nombreCampo = headers[index];
+                    
+                    if (nombreCampo.includes('evaluacion')) {
+                        // Los campos de evaluación deben ser números 0-3
+                        if (valor === '' || valor === undefined) {
+                            valor = '0'; // Valor por defecto
+                        }
+                        const num = parseInt(valor);
+                        if (isNaN(num) || num < 0 || num > 3) {
+                            console.warn(`Fila ${i}: ${nombreCampo} tiene valor inválido "${valor}", usando 0`);
+                            valor = '0';
+                        }
+                    }
+                    
+                    if (nombreCampo === 'puntosAdicionales') {
+                        // Campo booleano
+                        if (valor === '') valor = 'false';
+                        valor = valor.toLowerCase();
+                        if (!['true', 'false'].includes(valor)) {
+                            valor = 'false';
+                        }
+                    }
+                    
+                    if (nombreCampo === 'puntosAgregar') {
+                        // Campo numérico
+                        if (valor === '') valor = '0';
+                        const num = parseFloat(valor);
+                        if (isNaN(num)) valor = '0';
+                    }
+                    
+                    return valor;
+                });
+
+                // Validar datos críticos
+                const datos = {};
+                headers.forEach((header, index) => {
+                    datos[header] = valores[index];
+                });
+
+                // Validar campos obligatorios
+                const camposVacios = camposRequeridos.filter(campo => !datos[campo] || datos[campo].trim() === '');
+                if (camposVacios.length > 0) {
+                    throw new Error(`Campos obligatorios vacíos: ${camposVacios.join(', ')}`);
+                }
+
+                // Validar fecha
+                const fecha = new Date(datos.fecha);
+                if (isNaN(fecha.getTime())) {
+                    throw new Error(`Fecha inválida: ${datos.fecha}`);
+                }
 
                 // Generar reporte
-                const reporte = await generarReporteDesdeCSVMejorado(headers, valores);
+                const reporte = await generarReporteDesdeCSVValidado(headers, valores);
                 if (reporte) {
                     reportesGenerados.push(reporte);
                     procesados++;
                     
                     if (procesados % 5 === 0) {
-                        console.log(`Procesados: ${procesados}/${lineas.length - 1}`);
+                        console.log(`✓ Procesados: ${procesados}/${lineas.length - 1}`);
                     }
                 }
+
             } catch (error) {
-                errores.push(`Fila ${i + 1}: ${error.message}`);
-                console.warn(`Error en fila ${i + 1}:`, error.message);
+                const mensajeError = `Fila ${i + 1}: ${error.message}`;
+                errores.push(mensajeError);
+                console.warn(`❌ ${mensajeError}`);
             }
         }
 
         console.log(`
-=== RESUMEN PARSING ===
+=== RESUMEN VALIDACIÓN ===
 Total filas: ${lineas.length - 1}
 Procesados exitosamente: ${procesados}
 Errores: ${errores.length}
+${errores.length > 0 ? `\nPrimeros errores:\n${errores.slice(0, 3).join('\n')}` : ''}
         `);
 
-        if (errores.length > 0 && errores.length < 5) {
-            console.log('Errores encontrados:', errores);
-        }
-
         if (reportesGenerados.length === 0) {
-            throw new Error('No se pudo procesar ningún reporte del archivo.');
+            throw new Error('No se pudo procesar ningún reporte válido del archivo.');
         }
 
         return reportesGenerados;
 
     } catch (error) {
-        console.error('Error en parsing:', error);
+        console.error('Error en parsing con validación:', error);
         throw new Error(`Error procesando CSV: ${error.message}`);
     }
 }
 
-// Remover este bloque que está suelto y causando el error
-// if (reportesInvalidos > 0) {
-//     showToast(`Advertencia: ${reportesInvalidos} reportes fueron omitidos por datos inválidos`, 'warning');
-// }
 
 
 /**
@@ -2724,29 +2788,27 @@ async function procesarListaMejorado(nombreLista) {
 }
 
 
-
-async function generarReporteDesdeCSVMejorado(headers, valores) {
+/**
+ * Generador de reporte con validación extra
+ */
+async function generarReporteDesdeCSVValidado(headers, valores) {
     try {
         const datos = {};
         headers.forEach((header, index) => {
             datos[header] = valores[index] ? valores[index].trim() : '';
         });
 
-        // Validar campos obligatorios
+        console.log(`Generando reporte para: ${datos.nombreEstudiante}`);
+
+        // Validaciones robustas
         const camposObligatorios = ['nombreEstudiante', 'fecha', 'nombreDocente', 'asignatura', 'carrera', 'tituloEvaluacion'];
         for (const campo of camposObligatorios) {
             if (!datos[campo] || datos[campo] === 'FALSE' || datos[campo] === 'TRUE') {
-                throw new Error(`Campo ${campo} inválido o vacío`);
+                throw new Error(`Campo ${campo} inválido: "${datos[campo]}"`);
             }
         }
 
-        // Validar fecha
-        const fecha = new Date(datos.fecha);
-        if (isNaN(fecha.getTime())) {
-            throw new Error('Formato de fecha inválido');
-        }
-
-        // Procesar criterios
+        // Validar y procesar criterios con manejo de errores
         let criterios = [];
         let puntajeTotal = 0;
         let puntajeMaximo = 0;
@@ -2754,9 +2816,15 @@ async function generarReporteDesdeCSVMejorado(headers, valores) {
 
         while (datos[`criterio${criterioIndex}_nombre`]) {
             const nombreCriterio = datos[`criterio${criterioIndex}_nombre`].trim();
-            const evaluacion = parseInt(datos[`criterio${criterioIndex}_evaluacion`]);
+            let evaluacion = parseInt(datos[`criterio${criterioIndex}_evaluacion`]);
+            
+            // Validar evaluación
+            if (isNaN(evaluacion) || evaluacion < 0 || evaluacion > 3) {
+                console.warn(`Evaluación inválida para criterio ${criterioIndex}: ${datos[`criterio${criterioIndex}_evaluacion`]}, usando 0`);
+                evaluacion = 0;
+            }
 
-            if (nombreCriterio && !isNaN(evaluacion) && evaluacion >= 0 && evaluacion <= 3) {
+            if (nombreCriterio) {
                 criterios.push({
                     nombre: nombreCriterio,
                     evaluacion: evaluacion,
@@ -2776,7 +2844,7 @@ async function generarReporteDesdeCSVMejorado(headers, valores) {
             throw new Error('No se encontraron criterios válidos');
         }
 
-        // Calcular nota
+        // Calcular nota final
         const notaMinima = 1.0;
         const notaMaxima = 7.0;
         const notaAprobacion = 4.0;
@@ -2792,14 +2860,17 @@ async function generarReporteDesdeCSVMejorado(headers, valores) {
             notaFinal = notaMinima + (factorBase * (notaAprobacion - notaMinima));
         }
 
-        // Procesar puntos adicionales
+        // Procesar puntos adicionales con validación
         let puntosAdicionales = false;
         let puntosAgregar = 0;
         if (datos.puntosAdicionales && datos.puntosAdicionales.toLowerCase() === 'true') {
             puntosAdicionales = true;
             puntosAgregar = parseFloat(datos.puntosAgregar) || 0;
-            if (puntosAgregar > 0) {
+            if (puntosAgregar > 0 && puntosAgregar <= 2.3) {
                 notaFinal += puntosAgregar;
+            } else {
+                puntosAgregar = 0;
+                puntosAdicionales = false;
             }
         }
 
@@ -2811,7 +2882,7 @@ async function generarReporteDesdeCSVMejorado(headers, valores) {
             id: crypto.randomUUID(),
             infoGeneral: {
                 nombreEstudiante: datos.nombreEstudiante.trim(),
-                fecha: fecha.toISOString().split('T')[0],
+                fecha: new Date(datos.fecha).toISOString().split('T')[0],
                 nombreDocente: datos.nombreDocente.trim(),
                 asignatura: datos.asignatura.trim(),
                 carrera: datos.carrera.trim(),
@@ -2846,16 +2917,14 @@ async function generarReporteDesdeCSVMejorado(headers, valores) {
             }
         }
 
+        console.log(`✓ Reporte generado: ${datos.nombreEstudiante} - Nota: ${notaFinal}`);
         return reporte;
 
     } catch (error) {
-        console.error('Error generando reporte:', error);
-        throw error; // Re-lanzar para manejo en nivel superior
+        console.error('Error generando reporte validado:', error);
+        throw error;
     }
 }
-
-
-
 
         /**
          * Obtiene el nivel por puntaje

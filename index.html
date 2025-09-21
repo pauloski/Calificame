@@ -2406,8 +2406,10 @@ function initMassUpload() {
 
   
 
-/**
- * Procesa el archivo CSV subido - VERSIÓN MEJORADA
+
+
+ /**
+ * Procesa el archivo CSV subido - CORREGIDO (4.0)
  */
 async function procesarArchivoCSV() {
     if (!window.selectedCSVFile) {
@@ -2416,15 +2418,15 @@ async function procesarArchivoCSV() {
     }
 
     console.log("=== INICIANDO PROCESAMIENTO CSV ===");
-    
+
     const procesarBtn = document.getElementById('procesarCSV');
     const textoOriginal = procesarBtn.innerHTML;
-    
+
     try {
         // Deshabilitar botón
         procesarBtn.innerHTML = '🔄 Procesando...';
         procesarBtn.disabled = true;
-        
+
         // Leer archivo
         console.log("Leyendo archivo CSV...");
         const fileContent = await new Promise((resolve, reject) => {
@@ -2435,33 +2437,165 @@ async function procesarArchivoCSV() {
         });
 
         console.log("Archivo leído, parseando contenido...");
-        
-        // Parsear CSV y generar reportes
-       // const reportesGenerados = await parsearCSVMejorado(fileContent);
-        
-        if (!reportesGenerados || reportesGenerados.length === 0) {
-            throw new Error('No se encontraron datos válidos en el archivo CSV.');
+
+        // Parser CSV simplificado y unificado
+        const lineas = fileContent.split('\n').filter(linea => linea.trim().length > 0);
+        if (lineas.length < 2) {
+            throw new Error('El archivo debe tener al menos encabezados y una fila de datos.');
         }
+
+        const headers = lineas[0].split('\t').map(h => h.trim());
         
-        console.log(`Reportes generados: ${reportesGenerados.length}`);
-        
-        // Procesar reportes
-        await procesarReportesMasivosMejorado(reportesGenerados);
-        
-        console.log("✅ Procesamiento CSV completado exitosamente");
-        
+        // --- AQUÍ ESTÁ LA CORRECCIÓN CLAVE ---
+        const reportesGenerados = []; 
+        // ------------------------------------
+
+        const sobrescribir = document.getElementById('sobrescribirReportes').checked;
+        const listasProcesadas = new Set();
+        let reportesNuevosCount = 0;
+        let reportesActualizados = 0;
+        let reportesConError = 0;
+
+        const reportesExistentes = await fetchAPI('/reports');
+
+        for (let i = 1; i < lineas.length; i++) {
+            try {
+                const valores = lineas[i].split('\t').map(v => v.trim());
+                if (valores.length !== headers.length) {
+                    console.warn(`Fila ${i + 1} omitida por número de columnas incorrecto.`);
+                    reportesConError++;
+                    continue;
+                }
+
+                const datos = {};
+                headers.forEach((header, index) => {
+                    datos[header] = valores[index];
+                });
+
+                // Validar campos obligatorios
+                if (!datos.nombreEstudiante || !datos.fecha || !datos.tituloEvaluacion) {
+                    console.warn(`Fila ${i + 1} omitida por falta de datos obligatorios.`);
+                    reportesConError++;
+                    continue;
+                }
+
+                // ... (el resto del código para crear el objeto de reporte) ...
+                const reporteNuevo = {
+                    infoGeneral: {
+                        nombreEstudiante: datos.nombreEstudiante,
+                        fecha: datos.fecha,
+                        nombreDocente: datos.nombreDocente,
+                        asignatura: datos.asignatura,
+                        tituloEvaluacion: datos.tituloEvaluacion,
+                        universidad: datos.universidad || currentUser.university,
+                        carrera: datos.carrera
+                    },
+                    configuracion: {
+                        notaMinima: 1.0, 
+                        notaMaxima: 7.0, 
+                        notaAprobacion: 4.0, 
+                        exigencia: 60, 
+                        incremento: 0.1
+                    },
+                    nivelesDesempeno: nivelesDesempeno,
+                    criterios: [],
+                    feedback: {
+                        comentario: datos.feedbackDocente,
+                        puntosAdicionales: datos.puntosAdicionales === 'true',
+                        puntosAgregar: parseFloat(datos.puntosAgregar) || 0,
+                        justificacionPuntos: datos.justificacionPuntos
+                    },
+                };
+                
+                let puntajeTotal = 0;
+                let puntajeMaximo = 0;
+                let criterioIndex = 1;
+
+                while (datos[`criterio${criterioIndex}_nombre`]) {
+                    const nombreCriterio = datos[`criterio${criterioIndex}_nombre`];
+                    const evaluacion = parseInt(datos[`criterio${criterioIndex}_evaluacion`]) || 0;
+                    
+                    reporteNuevo.criterios.push({
+                        nombre: nombreCriterio,
+                        evaluacion: evaluacion,
+                        nivelAlcanzado: obtenerNivelPorPuntaje(evaluacion)
+                    });
+                    
+                    puntajeTotal += evaluacion;
+                    puntajeMaximo += 3; // Asumiendo máximo 3
+                    criterioIndex++;
+                }
+
+                const porcentajeLogro = (puntajeTotal / puntajeMaximo) * 100;
+                const notaFinal = (porcentajeLogro >= 60) ? (4.0 + ((porcentajeLogro - 60) / 40) * 3.0) : (1.0 + (porcentajeLogro / 60) * 3.0);
+                const notaFinalRedondeada = Math.round(notaFinal * 10) / 10;
+                
+                reporteNuevo.resultados = { 
+                    notaFinal: notaFinalRedondeada, 
+                    puntajeTotal, 
+                    puntajeMaximo, 
+                    porcentajeLogro 
+                };
+
+                // Procesar lista y añadir ID
+                if (datos.lista) {
+                    const listaId = await procesarListaMejorado(datos.lista);
+                    if (listaId) {
+                        reporteNuevo.listaId = listaId;
+                        listasProcesadas.add(listaId);
+                    }
+                }
+                
+                // Buscar coincidencia y enviar a la API
+                const reporteExistente = reportesExistentes.find(r => 
+                    r.infoGeneral.tituloEvaluacion === reporteNuevo.infoGeneral.tituloEvaluacion &&
+                    r.infoGeneral.nombreEstudiante === reporteNuevo.infoGeneral.nombreEstudiante
+                );
+
+                if (reporteExistente && sobrescribir) {
+                    await fetchAPI(`/reports/${reporteExistente.id}`, {
+                        method: 'PUT',
+                        body: JSON.stringify(reporteNuevo)
+                    });
+                    reportesActualizados++;
+                } else if (!reporteExistente) {
+                    await fetchAPI('/reports', {
+                        method: 'POST',
+                        body: JSON.stringify(reporteNuevo)
+                    });
+                    reportesNuevosCount++;
+                }
+                
+                reportesGenerados.push(reporteNuevo);
+
+            } catch (error) {
+                console.error(`Error procesando fila ${i + 1}:`, error);
+                reportesConError++;
+            }
+        }
+
+        // Mostrar resultados
+        mostrarResultadosCarga({
+            total: reportesGenerados.length,
+            nuevos: reportesNuevosCount,
+            actualizados: reportesActualizados,
+            errores: reportesConError,
+            listas: listasProcesadas.size
+        });
+
+        // Recargar datos para que se muestren en el frontend
+        await cargarReportesGuardados();
+        await loadLists();
+
+        console.log("✅ Procesamiento completado exitosamente");
     } catch (error) {
         console.error('❌ Error procesando CSV:', error);
         showToast('Error al procesar el archivo: ' + error.message, 'error');
     } finally {
-        // Restaurar botón
         procesarBtn.innerHTML = textoOriginal;
         procesarBtn.disabled = false;
     }
 }
-
-
-
 
  /**
  * Parser CSV mejorado con mejor manejo de errores

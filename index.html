@@ -2407,9 +2407,8 @@ function initMassUpload() {
   
 
 
-
- /**
- * Procesa el archivo CSV subido - CORREGIDO (4.0)
+/**
+ * Procesa el archivo CSV subido - CORREGIDO (5.0)
  */
 async function procesarArchivoCSV() {
     if (!window.selectedCSVFile) {
@@ -2444,11 +2443,14 @@ async function procesarArchivoCSV() {
             throw new Error('El archivo debe tener al menos encabezados y una fila de datos.');
         }
 
-        const headers = lineas[0].split('\t').map(h => h.trim());
+        // === CORRECCIÓN CLAVE AQUÍ: DETECCIÓN DE DELIMITADOR ===
+        const primeraLinea = lineas[0];
+        const separador = primeraLinea.includes('\t') ? '\t' : ',';
+        console.log("Separador detectado:", separador === '\t' ? 'TAB' : 'COMMA');
+        const headers = primeraLinea.split(separador).map(h => h.trim());
+        // =======================================================
         
-        // --- AQUÍ ESTÁ LA CORRECCIÓN CLAVE ---
         const reportesGenerados = []; 
-        // ------------------------------------
 
         const sobrescribir = document.getElementById('sobrescribirReportes').checked;
         const listasProcesadas = new Set();
@@ -2460,7 +2462,7 @@ async function procesarArchivoCSV() {
 
         for (let i = 1; i < lineas.length; i++) {
             try {
-                const valores = lineas[i].split('\t').map(v => v.trim());
+                const valores = lineas[i].split(separador).map(v => v.trim()); // Usar `separador` aquí
                 if (valores.length !== headers.length) {
                     console.warn(`Fila ${i + 1} omitida por número de columnas incorrecto.`);
                     reportesConError++;
@@ -2597,136 +2599,13 @@ async function procesarArchivoCSV() {
     }
 }
 
- /**
- * Parser CSV mejorado con mejor manejo de errores
- */
 
-async function parsearCSVMejorado(csvContent) {
-    console.log("=== PARSING CSV CORREGIDO ===");
-    
-    try {
-        // Separador
-        const separador = csvContent.includes('\t') ? '\t' : ',';
-        console.log(`Separador: "${separador}"`);
 
-        // PARSER MEJORADO PARA MANEJAR SALTOS DE LÍNEA
-        const lineas = [];
-        let lineaActual = '';
-        let dentroComillas = false;
-        
-        for (let i = 0; i < csvContent.length; i++) {
-            const char = csvContent[i];
-            const prevChar = i > 0 ? csvContent[i-1] : '';
-            
-            if (char === '"') {
-                // Toggle estado de comillas
-                if (!dentroComillas && (prevChar === separador || prevChar === '\n' || i === 0)) {
-                    dentroComillas = true;
-                } else if (dentroComillas && (i === csvContent.length - 1 || csvContent[i+1] === separador || csvContent[i+1] === '\n')) {
-                    dentroComillas = false;
-                }
-                lineaActual += char;
-            } else if (char === '\n' && !dentroComillas) {
-                // Fin de línea solo si no estamos dentro de comillas
-                if (lineaActual.trim()) {
-                    lineas.push(lineaActual.trim());
-                }
-                lineaActual = '';
-            } else {
-                // Convertir saltos de línea dentro de comillas a espacios
-                if (char === '\n' && dentroComillas) {
-                    lineaActual += ' ';
-                } else {
-                    lineaActual += char;
-                }
-            }
-        }
-        
-        // Agregar última línea si existe
-        if (lineaActual.trim()) {
-            lineas.push(lineaActual.trim());
-        }
-        
-        console.log(`Líneas procesadas: ${lineas.length}`);
 
-        if (lineas.length < 2) {
-            throw new Error('Archivo debe tener encabezados y al menos una fila de datos');
-        }
 
-        // Headers
-        const headers = lineas[0].split(separador)
-            .map(h => h.trim().replace(/^["']|["']$/g, ''));
-        
-        console.log(`Headers (${headers.length}):`, headers.slice(0, 5));
 
-        // Validar estructura
-        const requeridos = ['nombreEstudiante', 'fecha', 'nombreDocente', 'asignatura', 'carrera', 'tituloEvaluacion'];
-        const faltantes = requeridos.filter(campo => !headers.includes(campo));
-        
-        if (faltantes.length > 0) {
-            throw new Error(`Faltan columnas: ${faltantes.join(', ')}`);
-        }
 
-        const reportes = [];
-        let procesados = 0;
-        let errores = 0;
 
-        // Procesar filas
-        for (let i = 1; i < lineas.length; i++) {
-            try {
-                // Dividir línea manteniendo campos entrecomillados
-                const valores = dividirCSV(lineas[i], separador);
-                
-                // Ajustar número de campos
-                while (valores.length < headers.length) valores.push('');
-                if (valores.length > headers.length) valores.splice(headers.length);
-
-                // Crear objeto datos
-                const datos = {};
-                headers.forEach((header, idx) => {
-                    datos[header] = (valores[idx] || '').trim().replace(/^["']|["']$/g, '');
-                });
-
-                // Validar campos críticos
-                const vacios = requeridos.filter(campo => !datos[campo]);
-                if (vacios.length > 0) {
-                    console.warn(`Fila ${i+1}: campos vacíos:`, vacios);
-                    errores++;
-                    continue;
-                }
-
-                // Validar fecha
-                if (isNaN(new Date(datos.fecha).getTime())) {
-                    console.warn(`Fila ${i+1}: fecha inválida:`, datos.fecha);
-                    errores++;
-                    continue;
-                }
-
-                console.log(`Procesando: ${datos.nombreEstudiante}`);
-                const reporte = await generarReporteCorregido(headers, valores);
-                
-                if (reporte) {
-                    reportes.push(reporte);
-                    procesados++;
-                }
-
-            } catch (error) {
-                console.warn(`Error fila ${i+1}:`, error.message);
-                errores++;
-            }
-        }
-
-        console.log(`=== RESUMEN ===`);
-        console.log(`Procesados: ${procesados}`);
-        console.log(`Errores: ${errores}`);
-
-        return reportes;
-
-    } catch (error) {
-        console.error('Error en parsing:', error);
-        throw error;
-    }
-}
 
 // Función auxiliar para dividir CSV respetando comillas
 function dividirCSV(linea, separador) {

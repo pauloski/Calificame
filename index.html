@@ -2272,21 +2272,35 @@ async function loadLists() {
         /**
          * Inicializa la funcionalidad de carga masiva
          */
-    function initMassUpload() {
+/**
+ * Inicializa la funcionalidad de carga masiva - CORREGIDO
+ */
+function initMassUpload() {
+    console.log("Inicializando carga masiva...");
+    
     const uploadArea = document.getElementById('uploadArea');
     const fileInput = document.getElementById('csvFile');
     const procesarCSVBtn = document.getElementById('procesarCSV');
+    const descargarPlantillaBtn = document.getElementById('descargarPlantilla');
 
-    // Verificar si los elementos existen en el DOM antes de asignar eventos
-    if (uploadArea && fileInput && procesarCSVBtn) {
-        uploadArea.addEventListener('click', () => fileInput.click());
-        uploadArea.addEventListener('dragover', handleDragOver);
-        uploadArea.addEventListener('dragleave', handleDragLeave);
-        uploadArea.addEventListener('drop', handleDrop);
-        fileInput.addEventListener('change', handleFileSelect);
-        document.getElementById('descargarPlantilla').addEventListener('click', descargarPlantillaCSV);
-        procesarCSVBtn.addEventListener('click', procesarArchivoCSV);
+    // Verificar si todos los elementos existen
+    if (!uploadArea || !fileInput || !procesarCSVBtn || !descargarPlantillaBtn) {
+        console.error("Faltan elementos de carga masiva en el DOM");
+        return;
     }
+
+    console.log("Elementos de carga masiva encontrados, configurando eventos...");
+
+    // Configurar eventos
+    uploadArea.addEventListener('click', () => fileInput.click());
+    uploadArea.addEventListener('dragover', handleDragOver);
+    uploadArea.addEventListener('dragleave', handleDragLeave);
+    uploadArea.addEventListener('drop', handleDrop);
+    fileInput.addEventListener('change', handleFileSelect);
+    descargarPlantillaBtn.addEventListener('click', descargarPlantillaCSV);
+    procesarCSVBtn.addEventListener('click', procesarArchivoCSV);
+    
+    console.log("Carga masiva inicializada correctamente");
 }
         /**
          * Maneja el evento dragover para el área de carga
@@ -2390,153 +2404,162 @@ async function loadLists() {
             showToast('Plantilla CSV descargada exitosamente.', 'success');
         }
 
-        /**
-      * Procesa el archivo CSV subido
-      */
-        async function procesarArchivoCSV() {
-            if (!window.selectedCSVFile) {
-                showToast('Por favor seleccione un archivo CSV primero.', 'error');
-                return;
-            }
+  
 
-            try {
-                const fileContent = await new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onload = (e) => resolve(e.target.result);
-                    reader.onerror = (e) => reject(e);
-                    reader.readAsText(window.selectedCSVFile);
-                });
+/**
+ * Procesa el archivo CSV subido - VERSIÓN MEJORADA
+ */
+async function procesarArchivoCSV() {
+    if (!window.selectedCSVFile) {
+        showToast('Por favor seleccione un archivo CSV primero.', 'error');
+        return;
+    }
 
-                // Parsear CSV y generar reportes
-                const reportesGenerados = await parsearCSV(fileContent);
+    console.log("=== INICIANDO PROCESAMIENTO CSV ===");
+    
+    const procesarBtn = document.getElementById('procesarCSV');
+    const textoOriginal = procesarBtn.innerHTML;
+    
+    try {
+        // Deshabilitar botón
+        procesarBtn.innerHTML = '🔄 Procesando...';
+        procesarBtn.disabled = true;
+        
+        // Leer archivo
+        console.log("Leyendo archivo CSV...");
+        const fileContent = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.onerror = (e) => reject(new Error('Error leyendo archivo'));
+            reader.readAsText(window.selectedCSVFile);
+        });
 
-                if (reportesGenerados && reportesGenerados.length > 0) {
-                    await procesarReportesMasivos(reportesGenerados);
-                } else {
-                    showToast('No se encontraron datos válidos en el archivo CSV.', 'error');
-                }
-            } catch (error) {
-                console.error('Error procesando CSV:', error);
-                showToast('Error al procesar el archivo: ' + error.message, 'error');
-            }
+        console.log("Archivo leído, parseando contenido...");
+        
+        // Parsear CSV y generar reportes
+        const reportesGenerados = await parsearCSVMejorado(fileContent);
+        
+        if (!reportesGenerados || reportesGenerados.length === 0) {
+            throw new Error('No se encontraron datos válidos en el archivo CSV.');
+        }
+        
+        console.log(`Reportes generados: ${reportesGenerados.length}`);
+        
+        // Procesar reportes
+        await procesarReportesMasivosMejorado(reportesGenerados);
+        
+        console.log("✅ Procesamiento CSV completado exitosamente");
+        
+    } catch (error) {
+        console.error('❌ Error procesando CSV:', error);
+        showToast('Error al procesar el archivo: ' + error.message, 'error');
+    } finally {
+        // Restaurar botón
+        procesarBtn.innerHTML = textoOriginal;
+        procesarBtn.disabled = false;
+    }
+}
+
+
+
+
+ /**
+ * Parser CSV mejorado con mejor manejo de errores
+ */
+async function parsearCSVMejorado(csvContent) {
+    console.log("=== PARSING CSV ===");
+    
+    try {
+        // Detectar separador
+        const primeraLinea = csvContent.split('\n')[0];
+        const separador = primeraLinea.includes('\t') ? '\t' : ',';
+        console.log(`Separador detectado: "${separador}"`);
+
+        // Limpiar contenido
+        const contenidoProcesado = csvContent
+            .replace(/"\s*\n\s*"/g, ' ')
+            .replace(/\r\n/g, '\n')
+            .replace(/\r/g, '\n');
+
+        // Dividir líneas
+        const lineas = contenidoProcesado.split('\n')
+            .map(linea => linea.trim())
+            .filter(linea => linea.length > 0);
+
+        if (lineas.length < 2) {
+            throw new Error('El archivo debe tener al menos encabezados y una fila de datos.');
         }
 
-        /**
-         * Parsea el contenido CSV y genera reportes
-         */
+        // Procesar encabezados
+        const headers = lineas[0].split(separador).map(h => h.trim());
+        console.log('Headers encontrados:', headers);
 
-        async function parsearCSV(csvContent) {
+        const reportesGenerados = [];
+        let procesados = 0;
+        let errores = [];
+
+        // Validar campos críticos
+        const camposRequeridos = ['nombreEstudiante', 'fecha', 'nombreDocente', 'asignatura', 'carrera', 'tituloEvaluacion'];
+        const camposFaltantes = camposRequeridos.filter(campo => !headers.includes(campo));
+        
+        if (camposFaltantes.length > 0) {
+            throw new Error(`Faltan columnas requeridas: ${camposFaltantes.join(', ')}`);
+        }
+
+        // Procesar cada fila
+        for (let i = 1; i < lineas.length; i++) {
             try {
-                // Detectar el separador (coma o tabulación)
-                const primeraLinea = csvContent.split('\n')[0];
-                const separador = primeraLinea.includes('\t') ? '\t' : ',';
-
-                // Preprocesar el contenido para manejar saltos de línea en campos
-                let contenidoProcesado = csvContent
-                    .replace(/"\s*\n\s*"/g, ' ') // Reemplazar saltos de línea dentro de comillas por espacios
-                    .replace(/\r\n/g, '\n') // Normalizar saltos de línea
-                    .replace(/\r/g, '\n');
-
-                // Dividir por líneas y limpiar
-                const lineas = contenidoProcesado.split('\n')
-                    .map(linea => linea.trim())
-                    .filter(linea => linea.length > 0);
-
-                if (lineas.length < 2) {
-                    throw new Error('El archivo debe tener al menos una fila de encabezados y una fila de datos.');
+                let valores = lineas[i].split(separador);
+                
+                // Ajustar número de campos
+                while (valores.length < headers.length) {
+                    valores.push('');
+                }
+                if (valores.length > headers.length) {
+                    valores = valores.slice(0, headers.length);
                 }
 
-                // Procesar encabezados
-                const headers = lineas[0].split(separador).map(h => h.trim());
-                console.log('Headers detectados:', headers);
-                console.log('Número esperado de campos:', headers.length);
+                // Limpiar valores
+                valores = valores.map(v => v.trim().replace(/^["']|["']$/g, ''));
 
-                const reportesGenerados = [];
-                let reportesProcesados = 0;
-                let reportesConError = 0;
-                let errores = [];
-
-                // Procesar cada línea de datos
-                for (let i = 1; i < lineas.length; i++) {
-                    try {
-                        let valores = lineas[i].split(separador);
-
-                        // Verificar y ajustar el número de campos
-                        if (valores.length !== headers.length) {
-                            console.warn(`Línea ${i + 1}: se encontraron ${valores.length} campos, se esperaban ${headers.length}`);
-
-                            // Si hay menos campos, rellenar con valores vacíos
-                            while (valores.length < headers.length) {
-                                valores.push('');
-                            }
-                            // Si hay más campos, truncar
-                            if (valores.length > headers.length) {
-                                valores = valores.slice(0, headers.length);
-                            }
-                        }
-
-                        // Limpiar valores
-                        valores = valores.map(v => v.trim().replace(/^["']|["']$/g, ''));
-
-                        // Validar campos críticos
-                        const camposCriticos = ['nombreEstudiante', 'fecha', 'nombreDocente', 'asignatura', 'carrera'];
-                        const indicesCriticos = camposCriticos.map(campo => headers.indexOf(campo));
-                        const tieneValoresCriticos = indicesCriticos.every(index => index >= 0 && valores[index]);
-
-                        if (tieneValoresCriticos) {
-                            const reporte = await generarReporteDesdeCSV(headers, valores);
-                            if (reporte) {
-                                reportesGenerados.push(reporte);
-                                reportesProcesados++;
-                                console.log(`Procesado correctamente: ${valores[0]}`);
-                            }
-                        } else {
-                            const error = `Fila ${i + 1}: faltan campos obligatorios`;
-                            errores.push(error);
-                            reportesConError++;
-                        }
-                    } catch (error) {
-                        const mensajeError = `Error en fila ${i + 1}: ${error.message}`;
-                        errores.push(mensajeError);
-                        console.warn(mensajeError);
-                        reportesConError++;
+                // Generar reporte
+                const reporte = await generarReporteDesdeCSVMejorado(headers, valores);
+                if (reporte) {
+                    reportesGenerados.push(reporte);
+                    procesados++;
+                    
+                    if (procesados % 5 === 0) {
+                        console.log(`Procesados: ${procesados}/${lineas.length - 1}`);
                     }
                 }
-
-                // Mostrar resumen detallado
-                console.log(`
-Resumen de procesamiento:
-------------------------
-Total de filas: ${lineas.length - 1}
-Reportes procesados exitosamente: ${reportesProcesados}
-Reportes con error: ${reportesConError}
-------------------------
-Errores encontrados:
-${errores.join('\n')}
-        `);
-
-                if (reportesGenerados.length === 0) {
-                    throw new Error('No se pudo procesar ningún reporte del archivo.');
-                }
-
-                // Agregar esto al final de la función procesarArchivoCSV
-                if (reportesGenerados.length < lineas.length - 1) {
-                    showToast(`Advertencia: Solo se procesaron ${reportesGenerados.length} de ${lineas.length - 1} registros. Revise la consola para más detalles.`, 'warning');
-                }
- console.log('\n=== Resumen de Procesamiento ===');
-        console.log(`Total líneas procesadas: ${lineas.length - 1}`);
-        console.log(`Reportes generados exitosamente: ${reportesProcesados}`);
-        console.log(`Reportes con error: ${reportesConError}`);
-        console.log('Errores encontrados:', errores);
-
-                return reportesGenerados;
-
             } catch (error) {
-                console.error('Error al parsear CSV:', error);
-                throw new Error(`Error al procesar el archivo: ${error.message}`);
+                errores.push(`Fila ${i + 1}: ${error.message}`);
+                console.warn(`Error en fila ${i + 1}:`, error.message);
             }
         }
 
+        console.log(`
+=== RESUMEN PARSING ===
+Total filas: ${lineas.length - 1}
+Procesados exitosamente: ${procesados}
+Errores: ${errores.length}
+        `);
+
+        if (errores.length > 0 && errores.length < 5) {
+            console.log('Errores encontrados:', errores);
+        }
+
+        if (reportesGenerados.length === 0) {
+            throw new Error('No se pudo procesar ningún reporte del archivo.');
+        }
+
+        return reportesGenerados;
+
+    } catch (error) {
+        console.error('Error en parsing:', error);
+        throw new Error(`Error procesando CSV: ${error.message}`);
+    }
+}
 
 // Remover este bloque que está suelto y causando el error
 // if (reportesInvalidos > 0) {
@@ -2661,184 +2684,177 @@ async function procesarReportesMasivos(reportesNuevos) {
 
 
 
-        /**
-         * Procesa la lista y retorna el ID correspondiente
-         */
-        async function procesarLista(nombreLista) {
-            try {
-                if (!nombreLista || nombreLista.trim().toLowerCase() === 'false') {
-                    return null;
-                }
+     
 
-                const nombreListaLimpio = nombreLista.trim();
-                const listas = await fetchAPI('/lists');
-                let listaExistente = listas.find(l =>
-                    l.name.toLowerCase() === nombreListaLimpio.toLowerCase()
-                );
+/**
+ * Procesa lista con mejor manejo de errores
+ */
+async function procesarListaMejorado(nombreLista) {
+    try {
+        if (!nombreLista || nombreLista.toLowerCase() === 'false') {
+            return null;
+        }
 
-                if (!listaExistente) {
-                    const nuevaLista = await fetchAPI('/lists', {
-                        method: 'POST',
-                        body: JSON.stringify({ name: nombreListaLimpio })
-                    });
-                    return nuevaLista.id;
-                }
+        console.log(`Procesando lista: "${nombreLista}"`);
+        
+        const listas = await fetchAPI('/lists');
+        let listaExistente = listas.find(l => 
+            l.name.toLowerCase() === nombreLista.toLowerCase()
+        );
 
-                return listaExistente.id;
-            } catch (error) {
-                console.error('Error procesando lista:', error);
-                return null;
+        if (listaExistente) {
+            console.log(`Lista existente encontrada: ${listaExistente.id}`);
+            return listaExistente.id;
+        }
+
+        // Crear nueva lista
+        console.log(`Creando nueva lista: "${nombreLista}"`);
+        const nuevaLista = await fetchAPI('/lists', {
+            method: 'POST',
+            body: JSON.stringify({ name: nombreLista })
+        });
+        
+        console.log(`Nueva lista creada: ${nuevaLista.id}`);
+        return nuevaLista.id;
+
+    } catch (error) {
+        console.error(`Error procesando lista "${nombreLista}":`, error);
+        return null;
+    }
+}
+
+
+
+async function generarReporteDesdeCSVMejorado(headers, valores) {
+    try {
+        const datos = {};
+        headers.forEach((header, index) => {
+            datos[header] = valores[index] ? valores[index].trim() : '';
+        });
+
+        // Validar campos obligatorios
+        const camposObligatorios = ['nombreEstudiante', 'fecha', 'nombreDocente', 'asignatura', 'carrera', 'tituloEvaluacion'];
+        for (const campo of camposObligatorios) {
+            if (!datos[campo] || datos[campo] === 'FALSE' || datos[campo] === 'TRUE') {
+                throw new Error(`Campo ${campo} inválido o vacío`);
             }
         }
 
-        /**
-         * Genera un reporte desde una fila CSV
-         */
-        async function generarReporteDesdeCSV(headers, valores) {
-            try {
-                const datos = {};
-                headers.forEach((header, index) => {
-                    datos[header] = valores[index] ? valores[index].trim() : '';
+        // Validar fecha
+        const fecha = new Date(datos.fecha);
+        if (isNaN(fecha.getTime())) {
+            throw new Error('Formato de fecha inválido');
+        }
+
+        // Procesar criterios
+        let criterios = [];
+        let puntajeTotal = 0;
+        let puntajeMaximo = 0;
+        let criterioIndex = 1;
+
+        while (datos[`criterio${criterioIndex}_nombre`]) {
+            const nombreCriterio = datos[`criterio${criterioIndex}_nombre`].trim();
+            const evaluacion = parseInt(datos[`criterio${criterioIndex}_evaluacion`]);
+
+            if (nombreCriterio && !isNaN(evaluacion) && evaluacion >= 0 && evaluacion <= 3) {
+                criterios.push({
+                    nombre: nombreCriterio,
+                    evaluacion: evaluacion,
+                    nivelAlcanzado: obtenerNivelPorPuntaje(evaluacion),
+                    excelente: "Nivel excelente (3 pts)",
+                    bueno: "Nivel bueno (2 pts)",
+                    regular: "Nivel regular (1 pt)",
+                    insuficiente: "Nivel insuficiente (0 pts)"
                 });
+                puntajeTotal += evaluacion;
+                puntajeMaximo += 3;
+            }
+            criterioIndex++;
+        }
 
-                // Validación estricta de campos obligatorios
-                const camposObligatorios = [
-                    'nombreEstudiante',
-                    'fecha',
-                    'nombreDocente',
-                    'asignatura',
-                    'carrera',
-                    'tituloEvaluacion'
-                ];
+        if (criterios.length === 0) {
+            throw new Error('No se encontraron criterios válidos');
+        }
 
-                // Verificar que todos los campos obligatorios tengan valores válidos
-                for (const campo of camposObligatorios) {
-                    if (!datos[campo] || datos[campo] === 'FALSE' || datos[campo] === 'TRUE') {
-                        throw new Error(`Campo ${campo} inválido o vacío en la fila`);
-                    }
-                }
+        // Calcular nota
+        const notaMinima = 1.0;
+        const notaMaxima = 7.0;
+        const notaAprobacion = 4.0;
+        const exigencia = 60;
+        const porcentajeLogro = (puntajeTotal / puntajeMaximo) * 100;
 
-                // Validar fecha
-                const fecha = new Date(datos.fecha);
-                if (isNaN(fecha.getTime())) {
-                    throw new Error('Formato de fecha inválido');
-                }
+        let notaFinal;
+        if (porcentajeLogro >= exigencia) {
+            const factorExtra = (porcentajeLogro - exigencia) / (100 - exigencia);
+            notaFinal = notaAprobacion + (factorExtra * (notaMaxima - notaAprobacion));
+        } else {
+            const factorBase = porcentajeLogro / exigencia;
+            notaFinal = notaMinima + (factorBase * (notaAprobacion - notaMinima));
+        }
 
-                // Procesar criterios
-                let criterios = [];
-                let puntajeTotal = 0;
-                let puntajeMaximo = 0;
-                let criterioIndex = 1;
-                let criteriosValidos = false;
-
-                while (datos[`criterio${criterioIndex}_nombre`]) {
-                    const nombreCriterio = datos[`criterio${criterioIndex}_nombre`].trim();
-                    const evaluacion = parseInt(datos[`criterio${criterioIndex}_evaluacion`]);
-
-                    if (nombreCriterio && !isNaN(evaluacion) && evaluacion >= 0 && evaluacion <= 3) {
-                        criterios.push({
-                            nombre: nombreCriterio,
-                            evaluacion: evaluacion,
-                            nivelAlcanzado: obtenerNivelPorPuntaje(evaluacion),
-                            excelente: "Nivel excelente (3 pts)",
-                            bueno: "Nivel bueno (2 pts)",
-                            regular: "Nivel regular (1 pt)",
-                            insuficiente: "Nivel insuficiente (0 pts)"
-                        });
-                        puntajeTotal += evaluacion;
-                        puntajeMaximo += 3;
-                        criteriosValidos = true;
-                    }
-                    criterioIndex++;
-                }
-
-                if (!criteriosValidos) {
-                    throw new Error('No se encontraron criterios válidos');
-                }
-
-                // Calcular nota
-                const notaMinima = 1.0;
-                const notaMaxima = 7.0;
-                const notaAprobacion = 4.0;
-                const exigencia = 60;
-
-                const porcentajeLogro = (puntajeTotal / puntajeMaximo) * 100;
-
-                let notaFinal;
-                if (porcentajeLogro >= exigencia) {
-                    const factorExtra = (porcentajeLogro - exigencia) / (100 - exigencia);
-                    notaFinal = notaAprobacion + (factorExtra * (notaMaxima - notaAprobacion));
-                } else {
-                    const factorBase = porcentajeLogro / exigencia;
-                    notaFinal = notaMinima + (factorBase * (notaAprobacion - notaMinima));
-                }
-
-                // Validar puntos adicionales
-                let puntosAdicionales = false;
-                let puntosAgregar = 0;
-                if (datos.puntosAdicionales && datos.puntosAdicionales.toLowerCase() === 'true') {
-                    puntosAdicionales = true;
-                    puntosAgregar = parseFloat(datos.puntosAgregar) || 0;
-                    if (puntosAgregar > 0) {
-                        notaFinal += puntosAgregar;
-                    }
-                }
-
-                notaFinal = Math.max(notaMinima, Math.min(notaMaxima, notaFinal));
-                notaFinal = Math.round(notaFinal * 10) / 10;
-
-                // Crear reporte con datos validados
-                const reporte = {
-                    id: crypto.randomUUID(),
-                    infoGeneral: {
-                        nombreEstudiante: datos.nombreEstudiante.trim(),
-                        fecha: fecha.toISOString().split('T')[0],
-                        nombreDocente: datos.nombreDocente.trim(),
-                        asignatura: datos.asignatura.trim(),
-                        carrera: datos.carrera.trim(),
-                        universidad: (datos.universidad || currentUser.university).trim(),
-                        tituloEvaluacion: datos.tituloEvaluacion.trim(),
-                        descripcionEvaluacion: (datos.descripcionEvaluacion || '').trim()
-                    },
-                    configuracion: {
-                        notaMinima,
-                        notaMaxima,
-                        notaAprobacion,
-                        exigencia,
-                        incremento: 0.1
-                    },
-                    nivelesDesempeno: [...nivelesDesempeno],
-                    criterios,
-                    feedback: {
-                        comentario: (datos.feedbackDocente || '').trim(),
-                        puntosAdicionales,
-                        puntosAgregar,
-                        justificacionPuntos: (datos.justificacionPuntos || '').trim()
-                    },
-                    resultados: {
-                        notaFinal,
-                        puntajeTotal,
-                        puntajeMaximo,
-                        porcentajeLogro
-                    },
-                    fechaCreacion: new Date().toISOString(),
-                    usuarioId: currentUser.id
-                };
-
-                // Procesar lista de manera más robusta
-                if (datos.lista) {
-                    const listaId = await procesarLista(datos.lista);
-                    if (listaId) {
-                        reporte.listaId = listaId;
-                        reporte.list_id = listaId; // Asegurar compatibilidad con ambos formatos
-                    }
-                }
-                return reporte;
-            } catch (error) {
-                console.error('Error en generación de reporte:', error);
-                return null;
+        // Procesar puntos adicionales
+        let puntosAdicionales = false;
+        let puntosAgregar = 0;
+        if (datos.puntosAdicionales && datos.puntosAdicionales.toLowerCase() === 'true') {
+            puntosAdicionales = true;
+            puntosAgregar = parseFloat(datos.puntosAgregar) || 0;
+            if (puntosAgregar > 0) {
+                notaFinal += puntosAgregar;
             }
         }
+
+        notaFinal = Math.max(notaMinima, Math.min(notaMaxima, notaFinal));
+        notaFinal = Math.round(notaFinal * 10) / 10;
+
+        // Crear reporte
+        const reporte = {
+            id: crypto.randomUUID(),
+            infoGeneral: {
+                nombreEstudiante: datos.nombreEstudiante.trim(),
+                fecha: fecha.toISOString().split('T')[0],
+                nombreDocente: datos.nombreDocente.trim(),
+                asignatura: datos.asignatura.trim(),
+                carrera: datos.carrera.trim(),
+                universidad: (datos.universidad || currentUser.university).trim(),
+                tituloEvaluacion: datos.tituloEvaluacion.trim(),
+                descripcionEvaluacion: (datos.descripcionEvaluacion || '').trim()
+            },
+            configuracion: {
+                notaMinima, notaMaxima, notaAprobacion, exigencia, incremento: 0.1
+            },
+            nivelesDesempeno: [...nivelesDesempeno],
+            criterios,
+            feedback: {
+                comentario: (datos.feedbackDocente || '').trim(),
+                puntosAdicionales,
+                puntosAgregar,
+                justificacionPuntos: (datos.justificacionPuntos || '').trim()
+            },
+            resultados: {
+                notaFinal, puntajeTotal, puntajeMaximo, porcentajeLogro
+            },
+            fechaCreacion: new Date().toISOString(),
+            usuarioId: currentUser.id
+        };
+
+        // Procesar lista
+        if (datos.lista && datos.lista.trim()) {
+            const listaId = await procesarListaMejorado(datos.lista.trim());
+            if (listaId) {
+                reporte.listaId = listaId;
+                reporte.list_id = listaId;
+            }
+        }
+
+        return reporte;
+
+    } catch (error) {
+        console.error('Error generando reporte:', error);
+        throw error; // Re-lanzar para manejo en nivel superior
+    }
+}
+
+
 
 
         /**
@@ -2849,29 +2865,109 @@ async function procesarReportesMasivos(reportesNuevos) {
             return nivel ? nivel.nombre : 'No definido';
         }
 
-        /**
-         * Procesa los reportes generados masivamente
-         */
-        async function procesarReportesMasivos(reportesNuevos) {
-            if (!Array.isArray(reportesNuevos) || reportesNuevos.length === 0) {
-                throw new Error('No hay reportes válidos para procesar');
-            }
+/**
+ * Procesa reportes masivos con mejor sincronización
+ */
+async function procesarReportesMasivosMejorado(reportesNuevos) {
+    console.log("=== PROCESANDO REPORTES MASIVOS ===");
+    console.log(`Reportes a procesar: ${reportesNuevos.length}`);
+    
+    if (!Array.isArray(reportesNuevos) || reportesNuevos.length === 0) {
+        throw new Error('No hay reportes válidos para procesar');
+    }
 
-            const sobrescribir = document.getElementById('sobrescribirReportes').checked;
-            let reportesActualizados = 0;
-            let reportesNuevosCount = 0;
-            const listasProcesadas = new Set();
+    const sobrescribir = document.getElementById('sobrescribirReportes').checked;
+    let reportesActualizados = 0;
+    let reportesNuevosCount = 0;
+    let reportesConError = 0;
+    const listasProcesadas = new Set();
 
-            let reportesInvalidos = 0;
-            for (const reporteNuevo of reportesNuevos) {
-                if (!reporteNuevo) {
-                    reportesInvalidos++;
-                    continue;
+    try {
+        // Obtener reportes existentes
+        console.log("Obteniendo reportes existentes...");
+        const reportesExistentes = await fetchAPI('/reports');
+        console.log(`Reportes existentes: ${reportesExistentes.length}`);
+
+        // Procesar en lotes para mejor rendimiento
+        const tamanoLote = 5;
+        for (let i = 0; i < reportesNuevos.length; i += tamanoLote) {
+            const lote = reportesNuevos.slice(i, i + tamanoLote);
+            console.log(`Procesando lote ${Math.floor(i / tamanoLote) + 1}/${Math.ceil(reportesNuevos.length / tamanoLote)}`);
+            
+            await Promise.all(lote.map(async (reporteNuevo) => {
+                try {
+                    if (!reporteNuevo || !reporteNuevo.infoGeneral) {
+                        throw new Error('Reporte inválido');
+                    }
+
+                    if (reporteNuevo.listaId) {
+                        listasProcesadas.add(reporteNuevo.listaId);
+                    }
+
+                    // Buscar coincidencia
+                    const reporteExistente = reportesExistentes.find(r => 
+                        r.infoGeneral.tituloEvaluacion === reporteNuevo.infoGeneral.tituloEvaluacion &&
+                        r.infoGeneral.nombreEstudiante === reporteNuevo.infoGeneral.nombreEstudiante
+                    );
+
+                    if (reporteExistente && sobrescribir) {
+                        await fetchAPI(`/reports/${reporteExistente.id}`, {
+                            method: 'PUT',
+                            body: JSON.stringify(reporteNuevo)
+                        });
+                        reportesActualizados++;
+                        console.log(`Reporte actualizado: ${reporteNuevo.infoGeneral.nombreEstudiante}`);
+                    } else if (!reporteExistente) {
+                        await fetchAPI('/reports', {
+                            method: 'POST',
+                            body: JSON.stringify(reporteNuevo)
+                        });
+                        reportesNuevosCount++;
+                        console.log(`Reporte creado: ${reporteNuevo.infoGeneral.nombreEstudiante}`);
+                    }
+
+                } catch (error) {
+                    console.error('Error procesando reporte individual:', error);
+                    reportesConError++;
                 }
-                // ... resto del código
-            }
+            }));
         }
 
+        console.log("=== RESUMEN PROCESAMIENTO ===");
+        console.log(`Nuevos: ${reportesNuevosCount}`);
+        console.log(`Actualizados: ${reportesActualizados}`);
+        console.log(`Errores: ${reportesConError}`);
+        console.log(`Listas procesadas: ${listasProcesadas.size}`);
+
+        // Mostrar resultados
+        mostrarResultadosCarga({
+            total: reportesNuevos.length,
+            nuevos: reportesNuevosCount,
+            actualizados: reportesActualizados,
+            errores: reportesConError,
+            listas: listasProcesadas.size
+        });
+
+        // CLAVE: Recargar datos con retraso para sincronización
+        console.log("🔄 Recargando interfaz...");
+        
+        // Esperar un poco para que la BD se sincronice
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Recargar en secuencia para evitar conflictos
+        await cargarReportesGuardados();
+        await loadLists();
+        
+        console.log("✅ Interfaz actualizada");
+        
+        showToast('Carga masiva completada exitosamente!', 'success');
+
+    } catch (error) {
+        console.error('Error en procesamiento masivo:', error);
+        showToast('Error durante el procesamiento: ' + error.message, 'error');
+        throw error;
+    }
+}
 
         // ==========================================
         // INICIALIZACIÓN
@@ -3224,6 +3320,52 @@ async function eliminarListaCompleta() {
         btnEliminar.disabled = false;
     }
 }
+
+
+/**
+ * Muestra los resultados de la carga
+ */
+function mostrarResultadosCarga(stats) {
+    const container = document.getElementById('resultadosCarga');
+    const estadisticas = document.getElementById('estadisticasCarga');
+    
+    if (!container || !estadisticas) return;
+    
+    estadisticas.innerHTML = `
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+            <div class="result-item">
+                <div class="result-value">${stats.total}</div>
+                <div class="result-label">Reportes Procesados</div>
+            </div>
+            <div class="result-item">
+                <div class="result-value">${stats.nuevos}</div>
+                <div class="result-label">Reportes Nuevos</div>
+            </div>
+            <div class="result-item">
+                <div class="result-value">${stats.actualizados}</div>
+                <div class="result-label">Reportes Actualizados</div>
+            </div>
+            <div class="result-item">
+                <div class="result-value">${stats.listas}</div>
+                <div class="result-label">Listas Procesadas</div>
+            </div>
+        </div>
+        
+        <div style="margin-top: 1.5rem;">
+            <h4>Resumen de Importación:</h4>
+            <ul>
+                <li>✅ ${stats.total} reportes procesados</li>
+                <li>➕ ${stats.nuevos} reportes nuevos agregados</li>
+                <li>🔄 ${stats.actualizados} reportes actualizados</li>
+                <li>📁 ${stats.listas} listas procesadas</li>
+                ${stats.errores > 0 ? `<li>⚠️ ${stats.errores} reportes con errores</li>` : ''}
+            </ul>
+        </div>
+    `;
+    
+    container.style.display = 'block';
+}
+
 
 /**
  * FUNCIÓN DE LIMPIEZA DE DATOS INCONSISTENTES

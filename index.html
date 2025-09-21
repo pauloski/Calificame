@@ -2437,7 +2437,7 @@ async function procesarArchivoCSV() {
         console.log("Archivo leído, parseando contenido...");
         
         // Parsear CSV y generar reportes
-        const reportesGenerados = await parsearCSVMejorado(fileContent);
+       // const reportesGenerados = await parsearCSVMejorado(fileContent);
         
         if (!reportesGenerados || reportesGenerados.length === 0) {
             throw new Error('No se encontraron datos válidos en el archivo CSV.');

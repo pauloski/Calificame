@@ -2601,6 +2601,159 @@ async function procesarArchivoCSV() {
  * Parser CSV mejorado con mejor manejo de errores
  */
 
+async function parsearCSVMejorado(csvContent) {
+    console.log("=== PARSING CSV CORREGIDO ===");
+    
+    try {
+        // Separador
+        const separador = csvContent.includes('\t') ? '\t' : ',';
+        console.log(`Separador: "${separador}"`);
+
+        // PARSER MEJORADO PARA MANEJAR SALTOS DE LÍNEA
+        const lineas = [];
+        let lineaActual = '';
+        let dentroComillas = false;
+        
+        for (let i = 0; i < csvContent.length; i++) {
+            const char = csvContent[i];
+            const prevChar = i > 0 ? csvContent[i-1] : '';
+            
+            if (char === '"') {
+                // Toggle estado de comillas
+                if (!dentroComillas && (prevChar === separador || prevChar === '\n' || i === 0)) {
+                    dentroComillas = true;
+                } else if (dentroComillas && (i === csvContent.length - 1 || csvContent[i+1] === separador || csvContent[i+1] === '\n')) {
+                    dentroComillas = false;
+                }
+                lineaActual += char;
+            } else if (char === '\n' && !dentroComillas) {
+                // Fin de línea solo si no estamos dentro de comillas
+                if (lineaActual.trim()) {
+                    lineas.push(lineaActual.trim());
+                }
+                lineaActual = '';
+            } else {
+                // Convertir saltos de línea dentro de comillas a espacios
+                if (char === '\n' && dentroComillas) {
+                    lineaActual += ' ';
+                } else {
+                    lineaActual += char;
+                }
+            }
+        }
+        
+        // Agregar última línea si existe
+        if (lineaActual.trim()) {
+            lineas.push(lineaActual.trim());
+        }
+        
+        console.log(`Líneas procesadas: ${lineas.length}`);
+
+        if (lineas.length < 2) {
+            throw new Error('Archivo debe tener encabezados y al menos una fila de datos');
+        }
+
+        // Headers
+        const headers = lineas[0].split(separador)
+            .map(h => h.trim().replace(/^["']|["']$/g, ''));
+        
+        console.log(`Headers (${headers.length}):`, headers.slice(0, 5));
+
+        // Validar estructura
+        const requeridos = ['nombreEstudiante', 'fecha', 'nombreDocente', 'asignatura', 'carrera', 'tituloEvaluacion'];
+        const faltantes = requeridos.filter(campo => !headers.includes(campo));
+        
+        if (faltantes.length > 0) {
+            throw new Error(`Faltan columnas: ${faltantes.join(', ')}`);
+        }
+
+        const reportes = [];
+        let procesados = 0;
+        let errores = 0;
+
+        // Procesar filas
+        for (let i = 1; i < lineas.length; i++) {
+            try {
+                // Dividir línea manteniendo campos entrecomillados
+                const valores = dividirCSV(lineas[i], separador);
+                
+                // Ajustar número de campos
+                while (valores.length < headers.length) valores.push('');
+                if (valores.length > headers.length) valores.splice(headers.length);
+
+                // Crear objeto datos
+                const datos = {};
+                headers.forEach((header, idx) => {
+                    datos[header] = (valores[idx] || '').trim().replace(/^["']|["']$/g, '');
+                });
+
+                // Validar campos críticos
+                const vacios = requeridos.filter(campo => !datos[campo]);
+                if (vacios.length > 0) {
+                    console.warn(`Fila ${i+1}: campos vacíos:`, vacios);
+                    errores++;
+                    continue;
+                }
+
+                // Validar fecha
+                if (isNaN(new Date(datos.fecha).getTime())) {
+                    console.warn(`Fila ${i+1}: fecha inválida:`, datos.fecha);
+                    errores++;
+                    continue;
+                }
+
+                console.log(`Procesando: ${datos.nombreEstudiante}`);
+                const reporte = await generarReporteCorregido(headers, valores);
+                
+                if (reporte) {
+                    reportes.push(reporte);
+                    procesados++;
+                }
+
+            } catch (error) {
+                console.warn(`Error fila ${i+1}:`, error.message);
+                errores++;
+            }
+        }
+
+        console.log(`=== RESUMEN ===`);
+        console.log(`Procesados: ${procesados}`);
+        console.log(`Errores: ${errores}`);
+
+        return reportes;
+
+    } catch (error) {
+        console.error('Error en parsing:', error);
+        throw error;
+    }
+}
+
+// Función auxiliar para dividir CSV respetando comillas
+function dividirCSV(linea, separador) {
+    const resultado = [];
+    let campo = '';
+    let dentroComillas = false;
+    
+    for (let i = 0; i < linea.length; i++) {
+        const char = linea[i];
+        
+        if (char === '"') {
+            dentroComillas = !dentroComillas;
+            campo += char;
+        } else if (char === separador && !dentroComillas) {
+            resultado.push(campo);
+            campo = '';
+        } else {
+            campo += char;
+        }
+    }
+    
+    resultado.push(campo);
+    return resultado;
+}
+
+
+
 
  /**
  * Función mejorada para limpiar y validar CSV problemático
@@ -2925,140 +3078,120 @@ async function procesarListaMejorado(nombreLista) {
 /**
  * Generador de reporte con validación extra
  */
-async function generarReporteDesdeCSVValidado(headers, valores) {
-    try {
-        const datos = {};
-        headers.forEach((header, index) => {
-            datos[header] = valores[index] ? valores[index].trim() : '';
-        });
 
-        console.log(`Generando reporte para: ${datos.nombreEstudiante}`);
+async function generarReporteCorregido(headers, valores) {
+    const datos = {};
+    headers.forEach((header, idx) => {
+        datos[header] = (valores[idx] || '').trim().replace(/^["']|["']$/g, '');
+    });
 
-        // Validaciones robustas
-        const camposObligatorios = ['nombreEstudiante', 'fecha', 'nombreDocente', 'asignatura', 'carrera', 'tituloEvaluacion'];
-        for (const campo of camposObligatorios) {
-            if (!datos[campo] || datos[campo] === 'FALSE' || datos[campo] === 'TRUE') {
-                throw new Error(`Campo ${campo} inválido: "${datos[campo]}"`);
-            }
+    // Validar campos obligatorios
+    const requeridos = ['nombreEstudiante', 'fecha', 'nombreDocente', 'asignatura', 'carrera', 'tituloEvaluacion'];
+    for (const campo of requeridos) {
+        if (!datos[campo]) {
+            throw new Error(`Campo ${campo} vacío`);
         }
-
-        // Validar y procesar criterios con manejo de errores
-        let criterios = [];
-        let puntajeTotal = 0;
-        let puntajeMaximo = 0;
-        let criterioIndex = 1;
-
-        while (datos[`criterio${criterioIndex}_nombre`]) {
-            const nombreCriterio = datos[`criterio${criterioIndex}_nombre`].trim();
-            let evaluacion = parseInt(datos[`criterio${criterioIndex}_evaluacion`]);
-            
-            // Validar evaluación
-            if (isNaN(evaluacion) || evaluacion < 0 || evaluacion > 3) {
-                console.warn(`Evaluación inválida para criterio ${criterioIndex}: ${datos[`criterio${criterioIndex}_evaluacion`]}, usando 0`);
-                evaluacion = 0;
-            }
-
-            if (nombreCriterio) {
-                criterios.push({
-                    nombre: nombreCriterio,
-                    evaluacion: evaluacion,
-                    nivelAlcanzado: obtenerNivelPorPuntaje(evaluacion),
-                    excelente: "Nivel excelente (3 pts)",
-                    bueno: "Nivel bueno (2 pts)",
-                    regular: "Nivel regular (1 pt)",
-                    insuficiente: "Nivel insuficiente (0 pts)"
-                });
-                puntajeTotal += evaluacion;
-                puntajeMaximo += 3;
-            }
-            criterioIndex++;
-        }
-
-        if (criterios.length === 0) {
-            throw new Error('No se encontraron criterios válidos');
-        }
-
-        // Calcular nota final
-        const notaMinima = 1.0;
-        const notaMaxima = 7.0;
-        const notaAprobacion = 4.0;
-        const exigencia = 60;
-        const porcentajeLogro = (puntajeTotal / puntajeMaximo) * 100;
-
-        let notaFinal;
-        if (porcentajeLogro >= exigencia) {
-            const factorExtra = (porcentajeLogro - exigencia) / (100 - exigencia);
-            notaFinal = notaAprobacion + (factorExtra * (notaMaxima - notaAprobacion));
-        } else {
-            const factorBase = porcentajeLogro / exigencia;
-            notaFinal = notaMinima + (factorBase * (notaAprobacion - notaMinima));
-        }
-
-        // Procesar puntos adicionales con validación
-        let puntosAdicionales = false;
-        let puntosAgregar = 0;
-        if (datos.puntosAdicionales && datos.puntosAdicionales.toLowerCase() === 'true') {
-            puntosAdicionales = true;
-            puntosAgregar = parseFloat(datos.puntosAgregar) || 0;
-            if (puntosAgregar > 0 && puntosAgregar <= 2.3) {
-                notaFinal += puntosAgregar;
-            } else {
-                puntosAgregar = 0;
-                puntosAdicionales = false;
-            }
-        }
-
-        notaFinal = Math.max(notaMinima, Math.min(notaMaxima, notaFinal));
-        notaFinal = Math.round(notaFinal * 10) / 10;
-
-        // Crear reporte
-        const reporte = {
-            id: crypto.randomUUID(),
-            infoGeneral: {
-                nombreEstudiante: datos.nombreEstudiante.trim(),
-                fecha: new Date(datos.fecha).toISOString().split('T')[0],
-                nombreDocente: datos.nombreDocente.trim(),
-                asignatura: datos.asignatura.trim(),
-                carrera: datos.carrera.trim(),
-                universidad: (datos.universidad || currentUser.university).trim(),
-                tituloEvaluacion: datos.tituloEvaluacion.trim(),
-                descripcionEvaluacion: (datos.descripcionEvaluacion || '').trim()
-            },
-            configuracion: {
-                notaMinima, notaMaxima, notaAprobacion, exigencia, incremento: 0.1
-            },
-            nivelesDesempeno: [...nivelesDesempeno],
-            criterios,
-            feedback: {
-                comentario: (datos.feedbackDocente || '').trim(),
-                puntosAdicionales,
-                puntosAgregar,
-                justificacionPuntos: (datos.justificacionPuntos || '').trim()
-            },
-            resultados: {
-                notaFinal, puntajeTotal, puntajeMaximo, porcentajeLogro
-            },
-            fechaCreacion: new Date().toISOString(),
-            usuarioId: currentUser.id
-        };
-
-        // Procesar lista
-        if (datos.lista && datos.lista.trim()) {
-            const listaId = await procesarListaMejorado(datos.lista.trim());
-            if (listaId) {
-                reporte.listaId = listaId;
-                reporte.list_id = listaId;
-            }
-        }
-
-        console.log(`✓ Reporte generado: ${datos.nombreEstudiante} - Nota: ${notaFinal}`);
-        return reporte;
-
-    } catch (error) {
-        console.error('Error generando reporte validado:', error);
-        throw error;
     }
+
+    // Procesar criterios
+    const criterios = [];
+    let puntajeTotal = 0;
+    let puntajeMaximo = 0;
+    let criterioIndex = 1;
+
+    while (datos[`criterio${criterioIndex}_nombre`]) {
+        const nombre = datos[`criterio${criterioIndex}_nombre`].trim();
+        let evaluacion = parseInt(datos[`criterio${criterioIndex}_evaluacion`]);
+        
+        if (isNaN(evaluacion) || evaluacion < 0 || evaluacion > 3) {
+            evaluacion = 0;
+        }
+
+        if (nombre) {
+            criterios.push({
+                nombre,
+                evaluacion,
+                nivelAlcanzado: obtenerNivelPorPuntaje(evaluacion),
+                excelente: "Nivel excelente (3 pts)",
+                bueno: "Nivel bueno (2 pts)", 
+                regular: "Nivel regular (1 pt)",
+                insuficiente: "Nivel insuficiente (0 pts)"
+            });
+            puntajeTotal += evaluacion;
+            puntajeMaximo += 3;
+        }
+        criterioIndex++;
+    }
+
+    if (criterios.length === 0) {
+        throw new Error('Sin criterios válidos');
+    }
+
+    // Calcular nota
+    const porcentajeLogro = (puntajeTotal / puntajeMaximo) * 100;
+    const exigencia = 60;
+    let notaFinal;
+    
+    if (porcentajeLogro >= exigencia) {
+        notaFinal = 4.0 + ((porcentajeLogro - exigencia) / (100 - exigencia)) * 3.0;
+    } else {
+        notaFinal = 1.0 + (porcentajeLogro / exigencia) * 3.0;
+    }
+
+    // Puntos adicionales
+    let puntosAdicionales = false;
+    let puntosAgregar = 0;
+    if (datos.puntosAdicionales === 'true') {
+        puntosAdicionales = true;
+        puntosAgregar = parseFloat(datos.puntosAgregar) || 0;
+        if (puntosAgregar > 0) notaFinal += puntosAgregar;
+    }
+
+    notaFinal = Math.max(1.0, Math.min(7.0, Math.round(notaFinal * 10) / 10));
+
+    // Crear reporte
+    const reporte = {
+        id: crypto.randomUUID(),
+        infoGeneral: {
+            nombreEstudiante: datos.nombreEstudiante,
+            fecha: new Date(datos.fecha).toISOString().split('T')[0],
+            nombreDocente: datos.nombreDocente,
+            asignatura: datos.asignatura,
+            carrera: datos.carrera,
+            universidad: datos.universidad || currentUser.university,
+            tituloEvaluacion: datos.tituloEvaluacion,
+            descripcionEvaluacion: datos.descripcionEvaluacion || ''
+        },
+        configuracion: {
+            notaMinima: 1.0, notaMaxima: 7.0, notaAprobacion: 4.0, 
+            exigencia: 60, incremento: 0.1
+        },
+        nivelesDesempeno: [...nivelesDesempeno],
+        criterios,
+        feedback: {
+            comentario: datos.feedbackDocente || '',
+            puntosAdicionales,
+            puntosAgregar,
+            justificacionPuntos: datos.justificacionPuntos || ''
+        },
+        resultados: { notaFinal, puntajeTotal, puntajeMaximo, porcentajeLogro },
+        fechaCreacion: new Date().toISOString(),
+        usuarioId: currentUser.id
+    };
+
+    // Procesar lista
+    if (datos.lista?.trim()) {
+        const listaId = await procesarListaMejorado(datos.lista.trim());
+        if (listaId) {
+            reporte.listaId = listaId;
+            reporte.list_id = listaId;
+        }
+    }
+
+    return reporte;
 }
+
+
 
         /**
          * Obtiene el nivel por puntaje

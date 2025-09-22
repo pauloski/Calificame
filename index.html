@@ -2408,9 +2408,8 @@ function initMassUpload() {
 
 
 
-        
 /**
- * Procesa el archivo CSV subido - CORREGIDO (6.0)
+ * Procesa el archivo CSV subido - CORREGIDO (7.0)
  */
 async function procesarArchivoCSV() {
     if (!window.selectedCSVFile) {
@@ -2449,9 +2448,8 @@ async function procesarArchivoCSV() {
         const separador = primeraLinea.includes('\t') ? '\t' : ',';
         console.log("Separador detectado:", separador === '\t' ? 'TAB' : 'COMMA');
         
-        // === CORRECCIÓN CLAVE: Usar la función robusta para dividir ===
+        // Usar la función mejorada para dividir los encabezados
         const headers = dividirLineaCSV(primeraLinea, separador).map(h => h.trim());
-        // =============================================================
         
         const reportesGenerados = []; 
 
@@ -2465,9 +2463,7 @@ async function procesarArchivoCSV() {
 
         for (let i = 1; i < lineas.length; i++) {
             try {
-                // === CORRECCIÓN CLAVE: Usar la función robusta para dividir los valores ===
                 const valores = dividirLineaCSV(lineas[i], separador).map(v => v.trim());
-                // ========================================================================
                 
                 if (valores.length !== headers.length) {
                     console.warn(`Fila ${i + 1} omitida por número de columnas incorrecto. Esperado: ${headers.length}, Encontrado: ${valores.length}`);
@@ -2477,7 +2473,6 @@ async function procesarArchivoCSV() {
 
                 const datos = {};
                 headers.forEach((header, index) => {
-                    // Remover comillas adicionales si existen después del trim
                     datos[header] = valores[index].replace(/^"|"$/g, '');
                 });
 
@@ -2487,64 +2482,10 @@ async function procesarArchivoCSV() {
                     reportesConError++;
                     continue;
                 }
-
-                const reporteNuevo = {
-                    infoGeneral: {
-                        nombreEstudiante: datos.nombreEstudiante,
-                        fecha: datos.fecha,
-                        nombreDocente: datos.nombreDocente,
-                        asignatura: datos.asignatura,
-                        tituloEvaluacion: datos.tituloEvaluacion,
-                        universidad: datos.universidad || currentUser.university,
-                        carrera: datos.carrera
-                    },
-                    configuracion: {
-                        notaMinima: 1.0, 
-                        notaMaxima: 7.0, 
-                        notaAprobacion: 4.0, 
-                        exigencia: 60, 
-                        incremento: 0.1
-                    },
-                    nivelesDesempeno: nivelesDesempeno,
-                    criterios: [],
-                    feedback: {
-                        comentario: datos.feedbackDocente,
-                        puntosAdicionales: datos.puntosAdicionales === 'true',
-                        puntosAgregar: parseFloat(datos.puntosAgregar) || 0,
-                        justificacionPuntos: datos.justificacionPuntos
-                    },
-                };
                 
-                let puntajeTotal = 0;
-                let puntajeMaximo = 0;
-                let criterioIndex = 1;
-
-                while (datos[`criterio${criterioIndex}_nombre`]) {
-                    const nombreCriterio = datos[`criterio${criterioIndex}_nombre`];
-                    const evaluacion = parseInt(datos[`criterio${criterioIndex}_evaluacion`]) || 0;
-                    
-                    reporteNuevo.criterios.push({
-                        nombre: nombreCriterio,
-                        evaluacion: evaluacion,
-                        nivelAlcanzado: obtenerNivelPorPuntaje(evaluacion)
-                    });
-                    
-                    puntajeTotal += evaluacion;
-                    puntajeMaximo += 3; // Asumiendo máximo 3
-                    criterioIndex++;
-                }
-
-                const porcentajeLogro = (puntajeTotal / puntajeMaximo) * 100;
-                const notaFinal = (porcentajeLogro >= 60) ? (4.0 + ((porcentajeLogro - 60) / 40) * 3.0) : (1.0 + (porcentajeLogro / 60) * 3.0);
-                const notaFinalRedondeada = Math.round(notaFinal * 10) / 10;
+                // Generar reporte con la función corregida
+                const reporteNuevo = await generarReporteCorregido(datos);
                 
-                reporteNuevo.resultados = { 
-                    notaFinal: notaFinalRedondeada, 
-                    puntajeTotal, 
-                    puntajeMaximo, 
-                    porcentajeLogro 
-                };
-
                 // Procesar lista y añadir ID
                 if (datos.lista) {
                     const listaId = await procesarListaMejorado(datos.lista);
@@ -2604,6 +2545,7 @@ async function procesarArchivoCSV() {
         procesarBtn.disabled = false;
     }
 }
+
 
 // Esta es la función auxiliar que necesitas agregar
 function dividirLineaCSV(linea, separador) {
@@ -2953,15 +2895,9 @@ async function procesarListaMejorado(nombreLista) {
 
 
 /**
- * Generador de reporte con validación extra
+ * Generador de reporte con validación extra y criterios completos - CORREGIDO
  */
-
-async function generarReporteCorregido(headers, valores) {
-    const datos = {};
-    headers.forEach((header, idx) => {
-        datos[header] = (valores[idx] || '').trim().replace(/^["']|["']$/g, '');
-    });
-
+async function generarReporteCorregido(datos) {
     // Validar campos obligatorios
     const requeridos = ['nombreEstudiante', 'fecha', 'nombreDocente', 'asignatura', 'carrera', 'tituloEvaluacion'];
     for (const campo of requeridos) {
@@ -2989,10 +2925,12 @@ async function generarReporteCorregido(headers, valores) {
                 nombre,
                 evaluacion,
                 nivelAlcanzado: obtenerNivelPorPuntaje(evaluacion),
-                excelente: "Nivel excelente (3 pts)",
-                bueno: "Nivel bueno (2 pts)", 
-                regular: "Nivel regular (1 pt)",
-                insuficiente: "Nivel insuficiente (0 pts)"
+                // === CORRECCIÓN CLAVE: Leer los campos de descripción del CSV ===
+                excelente: datos[`criterio${criterioIndex}_excelente`] || '',
+                bueno: datos[`criterio${criterioIndex}_bueno`] || '',
+                regular: datos[`criterio${criterioIndex}_regular`] || '',
+                insuficiente: datos[`criterio${criterioIndex}_insuficiente`] || ''
+                // ===============================================================
             });
             puntajeTotal += evaluacion;
             puntajeMaximo += 3;
@@ -3040,7 +2978,7 @@ async function generarReporteCorregido(headers, valores) {
             descripcionEvaluacion: datos.descripcionEvaluacion || ''
         },
         configuracion: {
-            notaMinima: 1.0, notaMaxima: 7.0, notaAprobacion: 4.0, 
+            notaMinima: 1.0, notaMaxima: 7.0, notaAprobacion: 4.0,
             exigencia: 60, incremento: 0.1
         },
         nivelesDesempeno: [...nivelesDesempeno],
@@ -3067,9 +3005,6 @@ async function generarReporteCorregido(headers, valores) {
 
     return reporte;
 }
-
-
-
         /**
          * Obtiene el nivel por puntaje
          */

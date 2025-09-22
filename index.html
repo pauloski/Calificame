@@ -1445,7 +1445,7 @@
         /**
          * Genera el HTML del reporte para vista previa
          */
-        function generarHTMLReporte(data) {
+      /*  function generarHTMLReporte(data) {
             const { infoGeneral, criterios, feedback, resultados } = data;
 
             return `
@@ -1554,6 +1554,120 @@
                 </div>
             `;
         }
+
+*/
+
+
+
+/**
+ * Genera el HTML del reporte para vista previa - CORREGIDO
+ */
+function generarHTMLReporte(data) {
+    const { infoGeneral, criterios, feedback, resultados } = data;
+
+    return `
+        <div class="report-header">
+            <h1 class="report-title">Reporte de Evaluación</h1>
+            <div style="color: #718096;">
+                <strong>Evaluación / Taller:</strong> ${infoGeneral.tituloEvaluacion || 'No especificada'}
+            </div>
+        </div>
+
+        <div class="report-info">
+            <div>
+                <div class="report-info-item">
+                    <span class="report-info-label">Estudiante:</span>
+                    <span>${infoGeneral.nombreEstudiante}</span>
+                </div>
+                <div class="report-info-item">
+                    <span class="report-info-label">Carrera:</span>
+                    <span>${infoGeneral.carrera}</span>
+                </div>
+                <div class="report-info-item">
+                    <span class="report-info-label">Asignatura:</span>
+                    <span>${infoGeneral.asignatura}</span>
+                </div>
+                <div class="report-info-item">
+                    <span class="report-info-label">Universidad:</span>
+                    <span>${infoGeneral.universidad}</span>
+                </div>
+            </div>
+            <div>
+                <div class="report-info-item">
+                    <span class="report-info-label">Docente:</span>
+                    <span>${infoGeneral.nombreDocente}</span>
+                </div>
+                <div class="report-info-item">
+                    <span class="report-info-label">Fecha:</span>
+                    <span>${new Date(infoGeneral.fecha).toLocaleDateString()}</span>
+                </div>
+                <div class="report-info-item">
+                    <span class="report-info-label">Descripción:</span>
+                    <span>${infoGeneral.descripcionEvaluacion || 'No especificada'}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="report-results">
+            <h3>Resultados</h3>
+            <div class="results-grid">
+                <div class="result-item">
+                    <div class="result-value">${resultados.notaFinal || 0}</div>
+                    <div class="result-label">Nota Final</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-value">${resultados.puntajeTotal || 0} de ${resultados.puntajeMaximo || 0}</div>
+                    <div class="result-label">Puntaje Total</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-value">${Math.round(resultados.porcentajeLogro || 0)}%</div>
+                    <div class="result-label">% de Logro</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="criteria-details">
+            <h3>Detalle de Criterios Evaluados</h3>
+            <table class="criteria-table-report">
+                <thead>
+                    <tr>
+                        <th>Criterio</th>
+                        <th>Nivel Alcanzado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${criterios.map(criterio => `
+                        <tr>
+                            <td><strong>${criterio.nombre}</strong></td>
+                            <td style="text-align: center;">
+                                <span style="background: #4299e1; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-weight: bold;">
+                                    ${criterio.nivelAlcanzado} (${criterio.evaluacion} pts)
+                                </span>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="feedback-section">
+            <h3>Feedback del Docente</h3>
+            <p>${feedback.comentario || 'Sin comentarios adicionales.'}</p>
+            
+            ${feedback.puntosAdicionales ? `
+                <div style="margin-top: 1rem; padding: 1rem; background: #e6fffa; border-left: 4px solid #38b2ac; border-radius: 4px;">
+                    <strong>✨ Puntos Adicionales: +${feedback.puntosAgregar}</strong><br>
+                    <strong>Justificación:</strong> ${feedback.justificacionPuntos}
+                </div>
+            ` : ''}
+        </div>
+    `;
+}
+
+
+
+
+
 
         // ==========================================
         // GESTIÓN DE REPORTES GUARDADOS
@@ -3263,7 +3377,7 @@ async function loadLists() {
                         }
                         
                         // Mostrar información de las listas
-                        const infoHTML = `
+                     /*  const infoHTML = `
                             <div style="margin-bottom: 1rem; padding: 1rem; background: #f8fafc; border-radius: 0.5rem;">
                                 <h4 style="margin-bottom: 0.5rem;">Resumen de Listas:</h4>
                                 <ul style="list-style: none; padding: 0;">
@@ -3279,7 +3393,7 @@ async function loadLists() {
                             </div>
                         `;
                         
-                        infoContainer.innerHTML = infoHTML;
+                        infoContainer.innerHTML = infoHTML;*/
                     }
                     modal.classList.add('active');
                 };
